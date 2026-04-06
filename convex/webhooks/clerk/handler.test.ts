@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@convex/server", () => ({
   httpAction: (fn: unknown) => fn,
@@ -31,6 +31,7 @@ const { handleClerkWebhook } = await import("./handler");
 const handler = handleClerkWebhook as unknown as HandlerFn;
 
 function makeRequest(body: string) {
+  // svix-id/svix-timestamp/svix-signature headers intentionally omitted — verifyWebhook is mocked
   return new Request("https://example.com/webhooks/clerk", {
     method: "POST",
     body,
@@ -53,6 +54,10 @@ describe("handleClerkWebhook", () => {
     ctx = { runMutation: vi.fn() };
     mockVerifyWebhook.mockReset();
     vi.stubEnv("CLERK_WEBHOOK_SECRET", "whsec_test");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   describe("error cases", () => {
@@ -129,6 +134,37 @@ describe("handleClerkWebhook", () => {
           email: "test@example.com",
         }),
       );
+    });
+
+    test("calls userUpdated with email undefined when primary email is missing", async () => {
+      const noEmailPayload = {
+        ...userPayload,
+        email_addresses: [],
+        primary_email_address_id: null,
+      };
+      mockVerifyWebhook.mockResolvedValue({ type: "user.updated", data: noEmailPayload });
+      const response = await handler(
+        ctx,
+        makeRequest(JSON.stringify({ type: "user.updated", data: noEmailPayload })),
+      );
+      expect(response.status).toBe(200);
+      expect(ctx.runMutation).toHaveBeenCalledOnce();
+      expect(ctx.runMutation).toHaveBeenCalledWith(
+        "users:webhooks:userUpdated",
+        expect.objectContaining({ externalAuthId: "user_abc", email: undefined }),
+      );
+    });
+  });
+
+  describe("unknown event types", () => {
+    test("ignores unknown event type and returns 200", async () => {
+      mockVerifyWebhook.mockResolvedValue({ type: "user.signed_in", data: { id: "user_abc" } });
+      const response = await handler(
+        ctx,
+        makeRequest(JSON.stringify({ type: "user.signed_in", data: { id: "user_abc" } })),
+      );
+      expect(response.status).toBe(200);
+      expect(ctx.runMutation).not.toHaveBeenCalled();
     });
   });
 
