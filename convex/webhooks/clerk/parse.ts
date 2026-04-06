@@ -52,7 +52,7 @@ function resolvePrimaryEmail(
   return email_addresses.find((e) => e.id === primary_email_address_id)?.email_address;
 }
 
-export function parseClerkEvent(event: ClerkWebhookEvent): ParsedClerkEvent {
+export function parseClerkEvent(event: ClerkWebhookEvent): ParsedClerkEvent | null {
   switch (event.type) {
     case "user.created": {
       const { id, email_addresses, primary_email_address_id, first_name, last_name, image_url } =
@@ -89,5 +89,7 @@ export function parseClerkEvent(event: ClerkWebhookEvent): ParsedClerkEvent {
         type: "userDeleted",
         args: { externalAuthId: event.data.id },
       };
+    default:
+      return null;
   }
 }

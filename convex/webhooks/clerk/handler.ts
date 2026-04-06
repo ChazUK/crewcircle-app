@@ -2,8 +2,7 @@ import { internal } from "@convex/api";
 import { httpAction } from "@convex/server";
 import { Webhook } from "svix";
 
-import { parseClerkEvent } from "./parse";
-import type { ClerkWebhookEvent } from "./parse";
+import { ClerkWebhookEvent, parseClerkEvent } from "./parse";
 
 export const handleClerkWebhook = httpAction(async (ctx, request) => {
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
@@ -36,6 +35,11 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
 
   const parsed = parseClerkEvent(event);
 
+  if (!parsed) {
+    console.log("Ignoring unhandled Clerk event type:", event.type);
+    return new Response(null, { status: 200 });
+  }
+
   switch (parsed.type) {
     case "userCreated":
       await ctx.runMutation(internal.users.webhooks.userCreated, parsed.args);
@@ -46,10 +50,6 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
     case "userDeleted":
       await ctx.runMutation(internal.users.webhooks.userDeleted, parsed.args);
       break;
-    default:
-      const unhandled = parsed as { type: string };
-
-      console.warn("Unhandled Clerk webhook event type:", unhandled.type);
   }
 
   return new Response(null, { status: 200 });
