@@ -67,6 +67,16 @@ describe("handleClerkWebhook", () => {
       const response = await handler(ctx, makeRequest("{}"));
       expect(response.status).toBe(400);
     });
+
+    test("returns 500 when mutation throws", async () => {
+      mockVerifyWebhook.mockResolvedValue({ type: "user.created", data: userPayload });
+      ctx.runMutation.mockRejectedValue(new Error("Database error"));
+      const response = await handler(
+        ctx,
+        makeRequest(JSON.stringify({ type: "user.created", data: userPayload })),
+      );
+      expect(response.status).toBe(500);
+    });
   });
 
   describe("user.created", () => {

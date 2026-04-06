@@ -6,9 +6,16 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!webhookSecret) return new Response("Webhook secret not configured", { status: 500 });
-  try {
-    const event = await verifyWebhook(request, { signingSecret: webhookSecret });
 
+  let event: Awaited<ReturnType<typeof verifyWebhook>>;
+  try {
+    event = await verifyWebhook(request, { signingSecret: webhookSecret });
+  } catch (err) {
+    console.error("Webhook verification failed:", err);
+    return new Response("Webhook verification failed", { status: 400 });
+  }
+
+  try {
     switch (event.type) {
       case "user.created": {
         const { id, email_addresses, primary_email_address_id, first_name, last_name, image_url } =
@@ -57,8 +64,8 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
 
     return new Response(null, { status: 200 });
   } catch (err) {
-    console.error("Webhook verification failed:", err);
-    return new Response("Webhook verification failed", { status: 400 });
+    console.error("Webhook processing failed:", err);
+    return new Response("Webhook processing failed", { status: 500 });
   }
 });
 
