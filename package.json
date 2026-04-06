@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@babel/core": "^7.29.0",
+    "@clerk/backend": "^3.2.4",
     "@clerk/expo": "^3.1.4",
     "@expo/metro-config": "~55.0.9",
     "@gorhom/bottom-sheet": "^5.2.8",
@@ -44,7 +45,6 @@
     "react-native-safe-area-context": "~5.6.2",
     "react-native-svg": "^15.15.4",
     "storybook": "^10.3.3",
-    "svix": "^1.89.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

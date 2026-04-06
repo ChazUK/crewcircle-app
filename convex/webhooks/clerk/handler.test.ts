@@ -16,11 +16,9 @@ vi.mock("@convex/api", () => ({
   },
 }));
 
-const mockVerify = vi.hoisted(() => vi.fn());
-vi.mock("svix", () => ({
-  Webhook: class {
-    verify = mockVerify;
-  },
+const mockVerifyWebhook = vi.hoisted(() => vi.fn());
+vi.mock("@clerk/backend/webhooks", () => ({
+  verifyWebhook: mockVerifyWebhook,
 }));
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
@@ -32,17 +30,10 @@ type HandlerFn = (
 const { handleClerkWebhook } = await import("./handler");
 const handler = handleClerkWebhook as unknown as HandlerFn;
 
-const SVIX_HEADERS = {
-  "svix-id": "msg_123",
-  "svix-timestamp": "1234567890",
-  "svix-signature": "v1,abc123",
-};
-
-function makeRequest(body: string, headerOverrides: Record<string, string> = {}) {
+function makeRequest(body: string) {
   return new Request("https://example.com/webhooks/clerk", {
     method: "POST",
     body,
-    headers: { ...SVIX_HEADERS, ...headerOverrides },
   });
 }
 
@@ -60,7 +51,7 @@ describe("handleClerkWebhook", () => {
 
   beforeEach(() => {
     ctx = { runMutation: vi.fn() };
-    mockVerify.mockReset();
+    mockVerifyWebhook.mockReset();
     vi.stubEnv("CLERK_WEBHOOK_SECRET", "whsec_test");
   });
 
@@ -71,64 +62,8 @@ describe("handleClerkWebhook", () => {
       expect(response.status).toBe(500);
     });
 
-    test("returns 400 when svix-id header is empty", async () => {
-      const response = await handler(ctx, makeRequest("{}", { "svix-id": "" }));
-      expect(response.status).toBe(400);
-    });
-
-    test("returns 400 when svix-timestamp header is empty", async () => {
-      const response = await handler(ctx, makeRequest("{}", { "svix-timestamp": "" }));
-      expect(response.status).toBe(400);
-    });
-
-    test("returns 400 when svix-signature header is empty", async () => {
-      const response = await handler(ctx, makeRequest("{}", { "svix-signature": "" }));
-      expect(response.status).toBe(400);
-    });
-
-    test("returns 400 when svix-id header is absent", async () => {
-      const { "svix-id": _omit, ...rest } = SVIX_HEADERS;
-      const response = await handler(
-        ctx,
-        new Request("https://example.com/webhooks/clerk", {
-          method: "POST",
-          body: "{}",
-          headers: rest,
-        }),
-      );
-      expect(response.status).toBe(400);
-    });
-
-    test("returns 400 when svix-timestamp header is absent", async () => {
-      const { "svix-timestamp": _omit, ...rest } = SVIX_HEADERS;
-      const response = await handler(
-        ctx,
-        new Request("https://example.com/webhooks/clerk", {
-          method: "POST",
-          body: "{}",
-          headers: rest,
-        }),
-      );
-      expect(response.status).toBe(400);
-    });
-
-    test("returns 400 when svix-signature header is absent", async () => {
-      const { "svix-signature": _omit, ...rest } = SVIX_HEADERS;
-      const response = await handler(
-        ctx,
-        new Request("https://example.com/webhooks/clerk", {
-          method: "POST",
-          body: "{}",
-          headers: rest,
-        }),
-      );
-      expect(response.status).toBe(400);
-    });
-
-    test("returns 400 when webhook signature verification fails", async () => {
-      mockVerify.mockImplementation(() => {
-        throw new Error("Invalid signature");
-      });
+    test("returns 400 when webhook verification fails", async () => {
+      mockVerifyWebhook.mockRejectedValue(new Error("Invalid signature"));
       const response = await handler(ctx, makeRequest("{}"));
       expect(response.status).toBe(400);
     });
@@ -136,7 +71,7 @@ describe("handleClerkWebhook", () => {
 
   describe("user.created", () => {
     test("calls userCreated mutation and returns 200", async () => {
-      mockVerify.mockReturnValue({ type: "user.created", data: userPayload });
+      mockVerifyWebhook.mockResolvedValue({ type: "user.created", data: userPayload });
       const response = await handler(
         ctx,
         makeRequest(JSON.stringify({ type: "user.created", data: userPayload })),
@@ -155,7 +90,7 @@ describe("handleClerkWebhook", () => {
 
   describe("user.updated", () => {
     test("calls userUpdated mutation and returns 200", async () => {
-      mockVerify.mockReturnValue({ type: "user.updated", data: userPayload });
+      mockVerifyWebhook.mockResolvedValue({ type: "user.updated", data: userPayload });
       const response = await handler(
         ctx,
         makeRequest(JSON.stringify({ type: "user.updated", data: userPayload })),
@@ -174,7 +109,10 @@ describe("handleClerkWebhook", () => {
 
   describe("user.deleted", () => {
     test("calls userDeleted mutation and returns 200", async () => {
-      mockVerify.mockReturnValue({ type: "user.deleted", data: { id: "user_del", deleted: true } });
+      mockVerifyWebhook.mockResolvedValue({
+        type: "user.deleted",
+        data: { id: "user_del", deleted: true },
+      });
       const response = await handler(
         ctx,
         makeRequest(
@@ -186,6 +124,16 @@ describe("handleClerkWebhook", () => {
       expect(ctx.runMutation).toHaveBeenCalledWith("users:webhooks:userDeleted", {
         externalAuthId: "user_del",
       });
+    });
+
+    test("skips mutation and returns 200 when deleted user has no id", async () => {
+      mockVerifyWebhook.mockResolvedValue({ type: "user.deleted", data: { deleted: true } });
+      const response = await handler(
+        ctx,
+        makeRequest(JSON.stringify({ type: "user.deleted", data: { deleted: true } })),
+      );
+      expect(response.status).toBe(200);
+      expect(ctx.runMutation).not.toHaveBeenCalled();
     });
   });
 });

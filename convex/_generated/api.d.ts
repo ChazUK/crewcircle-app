@@ -16,7 +16,6 @@ import type * as users_domain_upsertCurrentUser from "../users/domain/upsertCurr
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_webhooks from "../users/webhooks.js";
 import type * as webhooks_clerk_handler from "../webhooks/clerk/handler.js";
-import type * as webhooks_clerk_parse from "../webhooks/clerk/parse.js";
 
 import type {
   ApiFromModules,
@@ -33,7 +32,6 @@ declare const fullApi: ApiFromModules<{
   "users/mutations": typeof users_mutations;
   "users/webhooks": typeof users_webhooks;
   "webhooks/clerk/handler": typeof webhooks_clerk_handler;
-  "webhooks/clerk/parse": typeof webhooks_clerk_parse;
 }>;
 
 /**
