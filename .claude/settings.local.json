@@ -1,5 +1,18 @@
 {
   "permissions": {
     "allow": ["Bash(ls:*)", "Bash(gh issue:*)", "Bash(npx vitest:*)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | xargs oxfmt 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
   }
 }
