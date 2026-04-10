@@ -173,6 +173,7 @@ export default function Page() {
           <Text>Sign up</Text>
         </Link>
       </View>
+      {__DEV__ && <Link href="/storybook">Open Storybook</Link>}
     </View>
   );
 }
