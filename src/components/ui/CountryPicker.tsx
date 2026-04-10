@@ -1,7 +1,6 @@
-import BottomSheet, { BottomSheetFlatList, BottomSheetTextInput } from "@gorhom/bottom-sheet";
+import { BottomSheetFlatList, BottomSheetModal, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { COUNTRIES } from "@/data/countries";
 
@@ -15,9 +14,8 @@ type Props = {
 };
 
 export function CountryPicker({ value, onChange, placeholder = "Select a country", label }: Props) {
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [search, setSearch] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
 
   const selectedCountry = useMemo(
     () => (value ? COUNTRIES.find((c) => c.code === value) : null),
@@ -32,12 +30,11 @@ export function CountryPicker({ value, onChange, placeholder = "Select a country
 
   const openSheet = useCallback(() => {
     setSearch("");
-    setIsOpen(true);
-    bottomSheetRef.current?.expand();
+    bottomSheetRef.current?.present();
   }, []);
 
   const closeSheet = useCallback(() => {
-    bottomSheetRef.current?.close();
+    bottomSheetRef.current?.dismiss();
   }, []);
 
   const handleSelect = useCallback(
@@ -48,11 +45,8 @@ export function CountryPicker({ value, onChange, placeholder = "Select a country
     [onChange, closeSheet],
   );
 
-  const handleSheetChange = useCallback((index: number) => {
-    if (index === -1) {
-      setIsOpen(false);
-      setSearch("");
-    }
+  const handleDismiss = useCallback(() => {
+    setSearch("");
   }, []);
 
   const renderItem = useCallback(
@@ -72,7 +66,7 @@ export function CountryPicker({ value, onChange, placeholder = "Select a country
   const keyExtractor = useCallback((item: Country) => item.code, []);
 
   return (
-    <GestureHandlerRootView style={styles.root}>
+    <View style={styles.root}>
       {label ? (
         <Text style={styles.label} accessibilityRole="text">
           {label}
@@ -93,39 +87,37 @@ export function CountryPicker({ value, onChange, placeholder = "Select a country
         <Text style={styles.chevron}>›</Text>
       </Pressable>
 
-      {isOpen ? (
-        <BottomSheet
-          ref={bottomSheetRef}
-          snapPoints={["75%"]}
-          enablePanDownToClose
-          onChange={handleSheetChange}
-          accessibilityLabel="Country picker"
-        >
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Select Country</Text>
-          </View>
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        snapPoints={["75%"]}
+        enablePanDownToClose
+        onDismiss={handleDismiss}
+        accessibilityLabel="Country picker"
+      >
+        <View style={styles.sheetHeader}>
+          <Text style={styles.sheetTitle}>Select Country</Text>
+        </View>
 
-          <View style={styles.searchContainer}>
-            <BottomSheetTextInput
-              style={styles.searchInput}
-              placeholder="Search countries…"
-              value={search}
-              onChangeText={setSearch}
-              autoFocus
-              accessibilityLabel="Search countries"
-              returnKeyType="search"
-            />
-          </View>
-
-          <BottomSheetFlatList
-            data={filtered}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            keyboardShouldPersistTaps="handled"
+        <View style={styles.searchContainer}>
+          <BottomSheetTextInput
+            style={styles.searchInput}
+            placeholder="Search countries…"
+            value={search}
+            onChangeText={setSearch}
+            accessibilityLabel="Search countries"
+            returnKeyType="search"
           />
-        </BottomSheet>
-      ) : null}
-    </GestureHandlerRootView>
+        </View>
+
+        <BottomSheetFlatList
+          data={filtered}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          keyboardShouldPersistTaps="handled"
+          style={styles.list}
+        />
+      </BottomSheetModal>
+    </View>
   );
 }
 
@@ -183,6 +175,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
     backgroundColor: "#f5f5f5",
+  },
+  list: {
+    flex: 1,
   },
   row: {
     paddingHorizontal: 16,
