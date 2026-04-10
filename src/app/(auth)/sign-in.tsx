@@ -128,7 +128,7 @@ export default function Page() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sign in</Text>
+      <Text className="text-lg font-bold text-gray-900 dark:text-white">Sign in</Text>
 
       <Text style={styles.label}>Email address</Text>
       <TextInput
