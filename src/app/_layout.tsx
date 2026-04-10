@@ -1,3 +1,4 @@
+import "../global.css";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { api } from "@convex/api";

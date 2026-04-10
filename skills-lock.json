@@ -66,6 +66,11 @@
       "sourceType": "github",
       "computedHash": "5f0985cb5bfc8dad3664882a4b384fb7d0c625ef454ef420c5c4e6b9cb580b51"
     },
+    "uniwind": {
+      "source": "uni-stack/uniwind",
+      "sourceType": "github",
+      "computedHash": "76e8e9be3a60fe60d9229c7a0c6e4c30bdde2e23ff377dbfa827b80226bd4d89"
+    },
     "write-a-prd": {
       "source": "mattpocock/skills",
       "sourceType": "github",
