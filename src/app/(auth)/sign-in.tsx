@@ -1,5 +1,6 @@
 import { useSignIn } from "@clerk/expo";
 import { type Href, Link, useRouter } from "expo-router";
+import { Button } from "heroui-native";
 import React from "react";
 import { Pressable, StyleSheet, TextInput, View, Text } from "react-native";
 
@@ -153,17 +154,13 @@ export default function Page() {
         onChangeText={(password) => setPassword(password)}
       />
       {errors.fields.password && <Text style={styles.error}>{errors.fields.password.message}</Text>}
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          (!emailAddress || !password || fetchStatus === "fetching") && styles.buttonDisabled,
-          pressed && styles.buttonPressed,
-        ]}
+      <Button
+        variant="primary"
         onPress={handleSubmit}
-        disabled={!emailAddress || !password || fetchStatus === "fetching"}
+        isDisabled={!emailAddress || !password || fetchStatus === "fetching"}
       >
-        <Text style={styles.buttonText}>Continue</Text>
-      </Pressable>
+        Sign In
+      </Button>
       {/* For your debugging purposes. You can just console.log errors, but we put them in the UI for convenience */}
       {errors && <Text style={styles.debug}>{JSON.stringify(errors, null, 2)}</Text>}
 
