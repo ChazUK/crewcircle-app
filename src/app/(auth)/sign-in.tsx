@@ -3,28 +3,23 @@ import { useForm } from "@tanstack/react-form";
 import { Image } from "expo-image";
 import { type Href, Link, useRouter } from "expo-router";
 import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
+import { useCountdown } from "@/hooks/useCountdown";
 
 export default function Page() {
   const { signIn, errors: clerkErrors, fetchStatus } = useSignIn();
   const router = useRouter();
 
-  const [resendCountdown, setResendCountdown] = useState(30);
+  const [resendCountdown, setResendCountdown] = useCountdown(30);
   const [secondFactorStrategy, setSecondFactorStrategy] = useState<
     "totp" | "email_code" | "phone_code" | null
   >(null);
   const [isNavigating, setIsNavigating] = useState(false);
-
-  useEffect(() => {
-    if (resendCountdown === 0) return;
-    const timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [resendCountdown]);
 
   const signInForm = useForm({
     defaultValues: {

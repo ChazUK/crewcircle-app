@@ -3,12 +3,14 @@ import { useForm } from "@tanstack/react-form";
 import { Image } from "expo-image";
 import { type Href, Link, useRouter } from "expo-router";
 import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
+import { useCountdown } from "@/hooks/useCountdown";
 
 type Step = "email" | "code" | "new-password";
 
@@ -17,14 +19,7 @@ export default function Page() {
   const router = useRouter();
 
   const [step, setStep] = useState<Step>("email");
-  const [resendCountdown, setResendCountdown] = useState(0);
-
-  useEffect(() => {
-    if (resendCountdown === 0) return;
-    const timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
-
-    return () => clearTimeout(timer);
-  }, [resendCountdown]);
+  const [resendCountdown, setResendCountdown] = useCountdown();
 
   const emailForm = useForm({
     defaultValues: {
@@ -145,11 +140,7 @@ export default function Page() {
     return (
       <View style={{ flex: 1 }}>
         <SafeAreaView className="flex-1">
-          <View className="self-start">
-            <Button variant="ghost" onPress={() => setStep("code")} className="-ml-2">
-              ← Back
-            </Button>
-          </View>
+          <BackButton onPress={() => setStep("code")} />
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <View className="flex-1 gap-6">
               <View className="items-center gap-4 mx-4 my-8">
@@ -248,13 +239,7 @@ export default function Page() {
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView className="flex-1">
-        <View className="self-start">
-          <Link href="/sign-in" asChild>
-            <Button variant="ghost" className="-ml-2">
-              ← Back
-            </Button>
-          </Link>
-        </View>
+        <BackButton href="/sign-in" />
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View className="flex-1 gap-6">
             <View className="items-center gap-4 mx-4 my-8">

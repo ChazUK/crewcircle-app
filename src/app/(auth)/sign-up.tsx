@@ -9,6 +9,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
+import { useCountdown } from "@/hooks/useCountdown";
 
 export default function Page() {
   const { signUp, errors: clerkErrors, fetchStatus } = useSignUp();
@@ -16,21 +17,13 @@ export default function Page() {
   const router = useRouter();
 
   const [pendingVerification, setPendingVerification] = useState(false);
-  const [resendCountdown, setResendCountdown] = useState(0);
+  const [resendCountdown, setResendCountdown] = useCountdown();
 
   useEffect(() => {
     return () => {
       signUp.reset();
     };
   }, []);
-
-  useEffect(() => {
-    if (resendCountdown === 0) return;
-
-    const timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
-
-    return () => clearTimeout(timer);
-  }, [resendCountdown]);
 
   const signUpForm = useForm({
     defaultValues: {

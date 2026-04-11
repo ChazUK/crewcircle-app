@@ -3,6 +3,8 @@ import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BackButton } from "./BackButton";
+
 type Props = {
   title: string;
   subtitle: string;
@@ -36,11 +38,7 @@ export function VerifyCodeScreen({
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView className="flex-1">
-        <View className="self-start">
-          <Button variant="ghost" onPress={onBack} className="-ml-2">
-            ← Back
-          </Button>
-        </View>
+        <BackButton onPress={onBack} />
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View className="flex-1 gap-6 p-5">
             <View className="items-center gap-4 mx-4 mb-2">
