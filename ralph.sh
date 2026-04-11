@@ -283,6 +283,27 @@ For new functionality:
 
 Use \`/tdd\` skill if helpful for structuring the loop.
 
+### Step 3b — Storybook file (required for all UI components)
+If the issue creates or modifies a React Native component, you **must** also create a
+Storybook story file at the same level as the component:
+
+\`\`\`
+src/components/ui/MyComponent.stories.tsx   # mirrors MyComponent.tsx
+\`\`\`
+
+The story file must:
+- Import the component and any required types
+- Export a default meta object typed with \`Meta<typeof MyComponent>\`
+- Export a named story for **every meaningful visual variation** (e.g. Default, WithLabel,
+  Placeholder, Disabled, Selected, Error) so a reviewer can see all states without running
+  the full app
+- Use \`StoryObj<typeof MyComponent>\` for each story
+- Pass realistic \`args\` values — no empty strings or undefined where a real value would be shown
+
+Storybook is already installed in this project — check \`package.json\` for the exact
+Storybook React Native version and follow existing \`.stories.tsx\` files in \`src/\` as
+reference before writing your own.
+
 ### Step 4 — Feedback loops (MUST all pass before opening a PR)
 Run these in order and fix every failure before continuing:
 \`\`\`bash
@@ -353,6 +374,7 @@ If something blocks you (missing dependency, unclear spec, requires human decisi
 - Accessible UI components (labels, a11y props)
 - Error handling for all user-facing mutations
 - Follow existing code patterns — read before you write
+- **Every new or modified UI component must have a \`.stories.tsx\` file covering all visual variations**
 
 Begin now. Update \`progress.txt\` first, then explore, then implement.
 PROMPT
@@ -372,16 +394,39 @@ run_claude() {
     # Each worktree gets its own named sandbox (claude-agent-N); they are fully isolated
     # from each other and from the host outside the workspace.
     # Requires: Docker Desktop 4.58+ (macOS/Windows).
-    printf 'y\n' | docker sandbox run claude "$worktree" \
-      -- --dangerously-skip-permissions \
-      -p "$(cat "$prompt_file")" \
+    #
+    # We stage the prompt and a runner script in the worktree root so they're accessible
+    # inside the sandbox at the same absolute path. In a git worktree, .git is a FILE
+    # (not a directory), so we can't use .git/ subdirs. Instead we drop the files into
+    # the worktree root and register them in the per-worktree git exclude so the agent
+    # never accidentally commits them.
+    local gitdir
+    gitdir=$(git -C "$worktree" rev-parse --git-dir)
+    cp "$prompt_file" "$worktree/.ralph-prompt.txt"
+    printf '.ralph-prompt.txt\n.ralph-run.sh\n' >> "$gitdir/info/exclude"
+    cat > "$worktree/.ralph-run.sh" << 'RUNNER'
+#!/usr/bin/env bash
+set -euo pipefail
+# Read prompt into a variable — avoids re-expansion of special chars when passing to -p
+prompt=$(cat .ralph-prompt.txt)
+exec claude --dangerously-skip-permissions --verbose --output-format stream-json -p "$prompt"
+RUNNER
+    chmod +x "$worktree/.ralph-run.sh"
+
+    docker sandbox run claude "$worktree" \
+      -- bash .ralph-run.sh \
       2>&1 | tee "$log_file"
+
+    rm -f "$worktree/.ralph-prompt.txt" "$worktree/.ralph-run.sh" 2>/dev/null || true
   else
     # Local mode: run claude directly in the worktree
     (
       cd "$worktree"
-      claude --dangerously-skip-permissions \
-        -p "$(cat "$prompt_file")" \
+      # Read prompt into a variable — avoids re-expansion of special chars when passing to -p
+      local prompt
+      prompt=$(cat "$prompt_file")
+      claude --dangerously-skip-permissions --verbose --output-format stream-json \
+        -p "$prompt" \
         2>&1 | tee "$log_file"
     )
   fi
@@ -480,6 +525,52 @@ agent_loop() {
 
     else
       warn "Agent #$agent_id — no promise signal for #$issue_number. Marking blocked. Check: $log_file"
+      # Extract the most useful error detail from the log:
+      # prefer the last API error message, otherwise fall back to the last result/error line
+      local error_detail=""
+      if [[ -f "$log_file" ]]; then
+        error_detail=$(python3 -c "
+import sys, json
+lines = open('$log_file').readlines()
+# Walk backwards looking for a meaningful error
+for line in reversed(lines):
+    line = line.strip()
+    if not line: continue
+    try:
+        obj = json.loads(line)
+        # Explicit API error in result
+        if obj.get('type') == 'result' and obj.get('is_error'):
+            print(obj.get('result','').strip())
+            sys.exit(0)
+        # Error text in assistant message
+        if obj.get('type') == 'assistant':
+            for block in obj.get('message',{}).get('content',[]):
+                if block.get('type') == 'text':
+                    txt = block.get('text','').strip()
+                    if 'error' in txt.lower() or 'blocked' in txt.lower():
+                        print(txt[:500])
+                        sys.exit(0)
+    except Exception:
+        pass
+" 2>/dev/null || true)
+      fi
+
+      local comment_body
+      comment_body="$(cat <<COMMENT
+**Ralph agent crashed on this issue** (exit code: ${run_exit})
+
+**Error:**
+\`\`\`
+${error_detail:-No structured error found — agent produced no promise signal}
+\`\`\`
+
+**Full log:** \`${log_file}\`
+
+To retry, remove the \`blocked\` label and \`${ASSIGNEE}\` assignee from this issue.
+COMMENT
+)"
+      gh issue comment "$issue_number" --body "$comment_body" --repo "$REPO" 2>/dev/null || \
+        warn "Could not post failure comment on #$issue_number"
       mark_blocked "$issue_number"
     fi
 

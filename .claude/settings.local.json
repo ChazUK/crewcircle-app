@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "allow": ["Bash(ls:*)", "Bash(gh issue:*)", "Bash(npx vitest:*)"]
+    "allow": ["Bash(ls:*)", "Bash(gh issue:*)", "Bash(npx vitest:*)", "Bash(npx tsc:*)"]
   },
   "hooks": {
     "PostToolUse": [

@@ -61,17 +61,17 @@ import { Button } from "heroui-native";
 
 ```bash
 # List all available components
-node scripts/list_components.mjs
+node .agents/skills/heroui-native/scripts/list_components.mjs
 
 # Get component documentation (MDX)
-node scripts/get_component_docs.mjs Button
-node scripts/get_component_docs.mjs Button Card TextField
+node .agents/skills/heroui-native/scripts/get_component_docs.mjs Button
+node .agents/skills/heroui-native/scripts/get_component_docs.mjs Button Card TextField
 
 # Get theme variables
-node scripts/get_theme.mjs
+node .agents/skills/heroui-native/scripts/get_theme.mjs
 
 # Get non-component docs (guides, releases)
-node scripts/get_docs.mjs /docs/native/getting-started/theming
+node .agents/skills/heroui-native/scripts/get_docs.mjs /docs/native/getting-started/theming
 ```
 
 ### Direct MDX URLs
@@ -206,7 +206,7 @@ HeroUI Native uses CSS variables via Tailwind/Uniwind for theming. Theme colors 
 **Get current theme variables:**
 
 ```bash
-node scripts/get_theme.mjs
+node .agents/skills/heroui-native/scripts/get_theme.mjs
 ```
 
 **Access theme colors programmatically:**

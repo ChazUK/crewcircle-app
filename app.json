@@ -22,8 +22,9 @@
       "package": "com.crewcircle.crewcircle"
     },
     "plugins": [
-      "expo-router",
       "@clerk/expo",
+      "expo-image",
+      "expo-router",
       "expo-secure-store",
       [
         "expo-splash-screen",
