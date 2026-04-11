@@ -93,8 +93,12 @@ export function VerifyCodeScreen({
                   size="sm"
                   isDisabled={isDisabled || isLoading || countdown > 0}
                   onPress={async () => {
-                    await onResend();
-                    setCountdown(30);
+                    try {
+                      await onResend();
+                      setCountdown(30);
+                    } catch (error) {
+                      console.error("[VerifyCodeScreen] Resend failed:", error);
+                    }
                   }}
                 >
                   {countdown > 0 ? `Resend code in ${countdown}s` : "Resend code"}
