@@ -19,7 +19,9 @@ export default function Page() {
   const [resendCountdown, setResendCountdown] = useState(0);
 
   useEffect(() => {
-    signUp.reset();
+    return () => {
+      signUp.reset();
+    };
   }, []);
 
   useEffect(() => {
