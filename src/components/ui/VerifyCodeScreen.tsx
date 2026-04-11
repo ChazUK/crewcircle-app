@@ -92,7 +92,7 @@ export function VerifyCodeScreen({
                 <Button
                   variant="ghost"
                   size="sm"
-                  isDisabled={resendCountdown > 0}
+                  isDisabled={isDisabled || isLoading || resendCountdown > 0}
                   onPress={onResend}
                 >
                   {resendCountdown > 0 ? `Resend code in ${resendCountdown}s` : "Resend code"}

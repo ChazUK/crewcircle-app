@@ -43,7 +43,14 @@ export default function Page() {
       }
 
       if (signIn.status === "complete") {
-        await finalizeSignIn();
+        setIsNavigating(true);
+
+        try {
+          await finalizeSignIn();
+        } catch (e) {
+          setIsNavigating(false);
+          throw e;
+        }
       } else if (signIn.status === "needs_second_factor") {
         // See https://clerk.com/docs/guides/development/custom-flows/authentication/multi-factor-authentication
         const totpFactor = signIn.supportedSecondFactors?.find(
