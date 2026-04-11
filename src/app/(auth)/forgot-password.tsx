@@ -11,13 +11,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 
-type Step = "email" | "code" | "new-password";
+type Step = "email" | "code" | "new-password" | "mfa";
 
 export default function Page() {
   const { signIn, errors: clerkErrors, fetchStatus } = useSignIn();
   const router = useRouter();
 
   const [step, setStep] = useState<Step>("email");
+  const [mfaStrategy, setMfaStrategy] = useState<"totp" | "phone_code" | "email_code" | null>(null);
 
   const emailForm = useForm({
     defaultValues: {
@@ -90,18 +91,107 @@ export default function Page() {
               return;
             }
 
-            const url = decorateUrl("/");
-
-            if (url.startsWith("http")) {
-              window.location.href = url;
-            } else {
-              router.push(url as Href);
-            }
+            router.replace(decorateUrl("/") as Href);
           },
         });
+      } else if (signIn.status === "needs_second_factor") {
+        // MFA required after password reset (user has MFA enabled)
+        const totpFactor = signIn.supportedSecondFactors?.find((f) => f.strategy === "totp");
+        const phoneFactor = signIn.supportedSecondFactors?.find((f) => f.strategy === "phone_code");
+        const emailFactor = signIn.supportedSecondFactors?.find((f) => f.strategy === "email_code");
+
+        if (totpFactor) {
+          setMfaStrategy("totp");
+        } else if (phoneFactor) {
+          await signIn.mfa.sendPhoneCode();
+          setMfaStrategy("phone_code");
+        } else if (emailFactor) {
+          await signIn.mfa.sendEmailCode();
+          setMfaStrategy("email_code");
+        }
+
+        setStep("mfa");
+      } else {
+        console.error(
+          `[forgot-password] Unexpected sign-in status after password reset: "${signIn.status}".`,
+        );
       }
     },
   });
+
+  const mfaForm = useForm({
+    defaultValues: {
+      code: "",
+    },
+    onSubmit: async ({ value }) => {
+      if (mfaStrategy === "totp") {
+        await signIn.mfa.verifyTOTP({ code: value.code });
+      } else if (mfaStrategy === "phone_code") {
+        await signIn.mfa.verifyPhoneCode({ code: value.code });
+      } else {
+        await signIn.mfa.verifyEmailCode({ code: value.code });
+      }
+
+      if (signIn.status === "complete") {
+        await signIn.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) {
+              console.log(session?.currentTask);
+
+              return;
+            }
+
+            router.replace(decorateUrl("/") as Href);
+          },
+        });
+      } else {
+        console.error("Sign-in attempt not complete after MFA:", signIn);
+      }
+    },
+  });
+
+  if (step === "mfa" && mfaStrategy) {
+    const subtitleByStrategy = {
+      totp: "Enter the 6-digit code from your authenticator app",
+      phone_code: "Enter the 6-digit code sent to your phone",
+      email_code: "Enter the 6-digit code sent to your email",
+    };
+
+    const handleResend =
+      mfaStrategy !== "totp"
+        ? async () => {
+            if (mfaStrategy === "phone_code") {
+              await signIn.mfa.sendPhoneCode();
+            } else {
+              await signIn.mfa.sendEmailCode();
+            }
+          }
+        : undefined;
+
+    return (
+      <mfaForm.Field name="code">
+        {(field) => (
+          <mfaForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+            {([canSubmit, isSubmitting]) => (
+              <VerifyCodeScreen
+                title="Two-factor authentication"
+                subtitle={subtitleByStrategy[mfaStrategy]}
+                value={field.state.value}
+                onChange={field.handleChange}
+                onBlur={field.handleBlur}
+                onSubmit={() => mfaForm.handleSubmit()}
+                onBack={() => setStep("new-password")}
+                isLoading={!!isSubmitting}
+                isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
+                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
+                onResend={handleResend}
+              />
+            )}
+          </mfaForm.Subscribe>
+        )}
+      </mfaForm.Field>
+    );
+  }
 
   if (step === "code") {
     return (
@@ -119,7 +209,7 @@ export default function Page() {
                 onBack={() => setStep("email")}
                 isLoading={!!isSubmitting}
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
-                error={clerkErrors.fields.code?.message}
+                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
                 onResend={() => signIn.resetPasswordEmailCode.sendCode()}
               />
             )}
@@ -222,6 +312,12 @@ export default function Page() {
                   </passwordForm.Subscribe>
                 </Card.Footer>
               </Card>
+
+              {clerkErrors.global?.[0] && (
+                <Text className="text-danger text-sm text-center mx-4">
+                  {clerkErrors.global[0].message}
+                </Text>
+              )}
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -288,6 +384,12 @@ export default function Page() {
                 </emailForm.Subscribe>
               </Card.Footer>
             </Card>
+
+            {clerkErrors.global?.[0] && (
+              <Text className="text-danger text-sm text-center mx-4">
+                {clerkErrors.global[0].message}
+              </Text>
+            )}
 
             <View className="flex-row gap-1 justify-center">
               <Text className="text-sm text-muted">Remember your password?</Text>

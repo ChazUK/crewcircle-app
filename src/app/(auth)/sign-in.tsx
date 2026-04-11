@@ -26,7 +26,7 @@ export default function Page() {
     },
     onSubmit: async ({ value }) => {
       const { error } = await signIn.password({
-        emailAddress: value.emailAddress,
+        identifier: value.emailAddress,
         password: value.password,
       });
 
@@ -68,7 +68,7 @@ export default function Page() {
       } else if (signIn.status === "needs_client_trust") {
         // For other second factor strategies,
         // see https://clerk.com/docs/guides/development/custom-flows/authentication/client-trust
-        const emailCodeFactor = signIn.supportedSecondFactors.find(
+        const emailCodeFactor = signIn.supportedSecondFactors?.find(
           (factor) => factor.strategy === "email_code",
         );
 
@@ -120,13 +120,7 @@ export default function Page() {
           return;
         }
 
-        const url = decorateUrl("/");
-
-        if (url.startsWith("http")) {
-          window.location.href = url;
-        } else {
-          router.push(url as Href);
-        }
+        router.replace(decorateUrl("/") as Href);
       },
     });
   }
@@ -166,7 +160,7 @@ export default function Page() {
                 onBack={() => signIn.reset()}
                 isLoading={!!isSubmitting}
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
-                error={clerkErrors.fields.code?.message}
+                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
                 onResend={handleResendSecondFactor}
               />
             )}
@@ -192,7 +186,7 @@ export default function Page() {
                 onBack={() => signIn.reset()}
                 isLoading={!!isSubmitting}
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
-                error={clerkErrors.fields.code?.message}
+                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
                 onResend={() => signIn.mfa.sendEmailCode()}
               />
             )}
@@ -294,6 +288,12 @@ export default function Page() {
                 </signInForm.Subscribe>
               </Card.Footer>
             </Card>
+
+            {clerkErrors.global?.[0] && (
+              <Text className="text-danger text-sm text-center mx-4">
+                {clerkErrors.global[0].message}
+              </Text>
+            )}
 
             <View className="flex-row gap-1 justify-center">
               <Text className="text-sm text-muted">Don't have an account?</Text>
