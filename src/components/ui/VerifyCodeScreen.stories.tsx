@@ -25,16 +25,6 @@ export const ClientTrust: Story = {
     title: "Verify your account",
     subtitle: "Enter the 6-digit code sent to your email",
     onResend: () => {},
-    resendCountdown: 0,
-  },
-};
-
-export const ClientTrustResendCountdown: Story = {
-  args: {
-    title: "Verify your account",
-    subtitle: "Enter the 6-digit code sent to your email",
-    onResend: () => {},
-    resendCountdown: 24,
   },
 };
 
@@ -51,7 +41,6 @@ export const MfaEmailCode: Story = {
     title: "Two-factor authentication",
     subtitle: "Enter the 6-digit code sent to your email",
     onResend: () => {},
-    resendCountdown: 0,
   },
 };
 
@@ -60,7 +49,6 @@ export const MfaPhoneCode: Story = {
     title: "Two-factor authentication",
     subtitle: "Enter the 6-digit code sent to your phone",
     onResend: () => {},
-    resendCountdown: 0,
   },
 };
 

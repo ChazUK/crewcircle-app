@@ -9,13 +9,11 @@ import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
-import { useCountdown } from "@/hooks/useCountdown";
 
 export default function Page() {
   const { signIn, errors: clerkErrors, fetchStatus } = useSignIn();
   const router = useRouter();
 
-  const [resendCountdown, setResendCountdown] = useCountdown(30);
   const [secondFactorStrategy, setSecondFactorStrategy] = useState<
     "totp" | "email_code" | "phone_code" | null
   >(null);
@@ -63,11 +61,9 @@ export default function Page() {
         } else if (phoneCodeFactor) {
           await signIn.mfa.sendPhoneCode();
           setSecondFactorStrategy("phone_code");
-          setResendCountdown(30);
         } else if (emailCodeFactor) {
           await signIn.mfa.sendEmailCode();
           setSecondFactorStrategy("email_code");
-          setResendCountdown(30);
         }
       } else if (signIn.status === "needs_client_trust") {
         // For other second factor strategies,
@@ -78,7 +74,6 @@ export default function Page() {
 
         if (emailCodeFactor) {
           await signIn.mfa.sendEmailCode();
-          setResendCountdown(30);
         }
       } else {
         console.error("Sign-in attempt not complete:", signIn);
@@ -153,7 +148,6 @@ export default function Page() {
             } else {
               await signIn.mfa.sendEmailCode();
             }
-            setResendCountdown(30);
           }
         : undefined;
 
@@ -174,7 +168,6 @@ export default function Page() {
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
                 error={clerkErrors.fields.code?.message}
                 onResend={handleResendSecondFactor}
-                resendCountdown={resendCountdown}
               />
             )}
           </verifyForm.Subscribe>
@@ -200,11 +193,7 @@ export default function Page() {
                 isLoading={!!isSubmitting}
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
                 error={clerkErrors.fields.code?.message}
-                onResend={async () => {
-                  await signIn.mfa.sendEmailCode();
-                  setResendCountdown(30);
-                }}
-                resendCountdown={resendCountdown}
+                onResend={() => signIn.mfa.sendEmailCode()}
               />
             )}
           </verifyForm.Subscribe>

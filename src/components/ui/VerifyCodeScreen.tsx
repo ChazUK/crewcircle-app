@@ -3,6 +3,8 @@ import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useCountdown } from "@/hooks/useCountdown";
+
 import { BackButton } from "./BackButton";
 
 type Props = {
@@ -17,8 +19,7 @@ type Props = {
   isDisabled: boolean;
   error?: string | null;
   /** Omit for strategies that don't send a code (e.g. TOTP) */
-  onResend?: () => void;
-  resendCountdown?: number;
+  onResend?: () => unknown;
 };
 
 export function VerifyCodeScreen({
@@ -33,8 +34,8 @@ export function VerifyCodeScreen({
   isDisabled,
   error,
   onResend,
-  resendCountdown = 0,
 }: Props) {
+  const [countdown, setCountdown] = useCountdown(onResend ? 30 : 0);
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView className="flex-1">
@@ -90,10 +91,13 @@ export function VerifyCodeScreen({
                 <Button
                   variant="ghost"
                   size="sm"
-                  isDisabled={isDisabled || isLoading || resendCountdown > 0}
-                  onPress={onResend}
+                  isDisabled={isDisabled || isLoading || countdown > 0}
+                  onPress={async () => {
+                    await onResend();
+                    setCountdown(30);
+                  }}
                 >
-                  {resendCountdown > 0 ? `Resend code in ${resendCountdown}s` : "Resend code"}
+                  {countdown > 0 ? `Resend code in ${countdown}s` : "Resend code"}
                 </Button>
               </View>
             )}

@@ -10,7 +10,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
-import { useCountdown } from "@/hooks/useCountdown";
 
 type Step = "email" | "code" | "new-password";
 
@@ -19,7 +18,6 @@ export default function Page() {
   const router = useRouter();
 
   const [step, setStep] = useState<Step>("email");
-  const [resendCountdown, setResendCountdown] = useCountdown();
 
   const emailForm = useForm({
     defaultValues: {
@@ -45,7 +43,6 @@ export default function Page() {
       }
 
       setStep("code");
-      setResendCountdown(30);
     },
   });
 
@@ -123,11 +120,7 @@ export default function Page() {
                 isLoading={!!isSubmitting}
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
                 error={clerkErrors.fields.code?.message}
-                onResend={async () => {
-                  await signIn.resetPasswordEmailCode.sendCode();
-                  setResendCountdown(30);
-                }}
-                resendCountdown={resendCountdown}
+                onResend={() => signIn.resetPasswordEmailCode.sendCode()}
               />
             )}
           </codeForm.Subscribe>
