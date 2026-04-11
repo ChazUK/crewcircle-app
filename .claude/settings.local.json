@@ -1,6 +1,12 @@
 {
   "permissions": {
-    "allow": ["Bash(ls:*)", "Bash(gh issue:*)", "Bash(npx vitest:*)"]
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(gh issue:*)",
+      "Bash(npx vitest:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)"
+    ]
   },
   "hooks": {
     "PostToolUse": [
