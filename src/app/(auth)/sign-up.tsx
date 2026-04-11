@@ -1,218 +1,272 @@
 import { useAuth, useSignUp } from "@clerk/expo";
+import { useForm } from "@tanstack/react-form";
+import { Image } from "expo-image";
 import { type Href, Link, useRouter } from "expo-router";
-import React from "react";
-import { Pressable, StyleSheet, TextInput, View, Text } from "react-native";
+import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
+import { useEffect, useState } from "react";
+import { Text, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 
 export default function Page() {
-  const { signUp, errors, fetchStatus } = useSignUp();
+  const { signUp, errors: clerkErrors, fetchStatus } = useSignUp();
   const { isSignedIn } = useAuth();
   const router = useRouter();
 
-  const [emailAddress, setEmailAddress] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [code, setCode] = React.useState("");
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
 
-  const handleSubmit = async () => {
-    const { error } = await signUp.password({
-      emailAddress,
-      password,
-    });
-    if (error) {
-      console.error(JSON.stringify(error, null, 2));
-      return;
-    }
+  useEffect(() => {
+    if (resendCountdown === 0) return;
 
-    if (!error) await signUp.verifications.sendEmailCode();
-  };
+    const timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
 
-  const handleVerify = async () => {
-    await signUp.verifications.verifyEmailCode({
-      code,
-    });
-    if (signUp.status === "complete") {
-      await signUp.finalize({
-        // Redirect the user to the home page after signing up
-        navigate: ({ session, decorateUrl }) => {
-          if (session?.currentTask) {
-            // Handle pending session tasks
-            // See https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
-            console.log(session?.currentTask);
-            return;
-          }
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
-          const url = decorateUrl("/");
-          if (url.startsWith("http")) {
-            window.location.href = url;
-          } else {
-            router.push(url as Href);
-          }
-        },
+  const signUpForm = useForm({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      emailAddress: "",
+      password: "",
+    },
+    onSubmit: async ({ value }) => {
+      const { error } = await signUp.password({
+        firstName: value.firstName,
+        lastName: value.lastName,
+        emailAddress: value.emailAddress,
+        password: value.password,
       });
-    } else {
-      // Check why the sign-up is not complete
-      console.error("Sign-up attempt not complete:", signUp);
-    }
-  };
+
+      if (error) {
+        console.error(JSON.stringify(error, null, 2));
+
+        return;
+      }
+
+      await signUp.verifications.sendEmailCode();
+      setPendingVerification(true);
+      setResendCountdown(30);
+    },
+  });
+
+  const verifyForm = useForm({
+    defaultValues: {
+      code: "",
+    },
+    onSubmit: async ({ value }) => {
+      await signUp.verifications.verifyEmailCode({ code: value.code });
+
+      if (signUp.status === "complete") {
+        await signUp.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) {
+              console.log(session?.currentTask);
+
+              return;
+            }
+
+            const url = decorateUrl("/");
+
+            if (url.startsWith("http")) {
+              window.location.href = url;
+            } else {
+              router.push(url as Href);
+            }
+          },
+        });
+      } else {
+        console.error("Sign-up attempt not complete:", signUp);
+      }
+    },
+  });
 
   if (signUp.status === "complete" || isSignedIn) {
     return null;
   }
 
-  if (
-    signUp.status === "missing_requirements" &&
-    signUp.unverifiedFields.includes("email_address") &&
-    signUp.missingFields.length === 0
-  ) {
+  if (pendingVerification) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Verify your account</Text>
-        <TextInput
-          style={styles.input}
-          value={code}
-          placeholder="Enter your verification code"
-          placeholderTextColor="#666666"
-          onChangeText={(code) => setCode(code)}
-          keyboardType="numeric"
-        />
-        {errors.fields.code && <Text style={styles.error}>{errors.fields.code.message}</Text>}
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            fetchStatus === "fetching" && styles.buttonDisabled,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleVerify}
-          disabled={fetchStatus === "fetching"}
-        >
-          <Text style={styles.buttonText}>Verify</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}
-          onPress={() => signUp.verifications.sendEmailCode()}
-        >
-          <Text style={styles.secondaryButtonText}>I need a new code</Text>
-        </Pressable>
-      </View>
+      <verifyForm.Field name="code">
+        {(field) => (
+          <verifyForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+            {([canSubmit, isSubmitting]) => (
+              <VerifyCodeScreen
+                title="Verify your email"
+                subtitle="Enter the 6-digit code sent to your email"
+                value={field.state.value}
+                onChange={field.handleChange}
+                onBlur={field.handleBlur}
+                onSubmit={() => verifyForm.handleSubmit()}
+                onBack={() => setPendingVerification(false)}
+                isLoading={!!isSubmitting}
+                isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
+                error={clerkErrors.fields.code?.message}
+                onResend={async () => {
+                  await signUp.verifications.sendEmailCode();
+                  setResendCountdown(30);
+                }}
+                resendCountdown={resendCountdown}
+              />
+            )}
+          </verifyForm.Subscribe>
+        )}
+      </verifyForm.Field>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign up</Text>
+    <View style={{ flex: 1 }}>
+      <SafeAreaView className="flex-1">
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View className="flex-1 gap-6">
+            <View className="items-center gap-4 mx-4 my-8">
+              <Image
+                source={require("@/assets/icons/splash-icon-dark.png")}
+                style={{ width: 96, height: 96 }}
+              />
+              <Text className="text-3xl font-bold">Create an account</Text>
+              <Text className="text-muted">Enter your details to get started</Text>
+            </View>
 
-      <Text style={styles.label}>Email address</Text>
-      <TextInput
-        style={styles.input}
-        autoCapitalize="none"
-        value={emailAddress}
-        placeholder="Enter email"
-        placeholderTextColor="#666666"
-        onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
-        keyboardType="email-address"
-      />
-      {errors.fields.emailAddress && (
-        <Text style={styles.error}>{errors.fields.emailAddress.message}</Text>
-      )}
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        placeholder="Enter password"
-        placeholderTextColor="#666666"
-        secureTextEntry={true}
-        onChangeText={(password) => setPassword(password)}
-      />
-      {errors.fields.password && <Text style={styles.error}>{errors.fields.password.message}</Text>}
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          (!emailAddress || !password || fetchStatus === "fetching") && styles.buttonDisabled,
-          pressed && styles.buttonPressed,
-        ]}
-        onPress={handleSubmit}
-        disabled={!emailAddress || !password || fetchStatus === "fetching"}
-      >
-        <Text style={styles.buttonText}>Sign up</Text>
-      </Pressable>
-      {/* For your debugging purposes. You can just console.log errors, but we put them in the UI for convenience */}
-      {errors && <Text style={styles.debug}>{JSON.stringify(errors, null, 2)}</Text>}
+            <Card className="gap-4 mx-4">
+              <Card.Body className="gap-4">
+                <View className="flex-row gap-3">
+                  <signUpForm.Field name="firstName">
+                    {(field) => (
+                      <TextField
+                        className="flex-1"
+                        isRequired
+                        isInvalid={!!clerkErrors.fields.firstName}
+                      >
+                        <Label>First name</Label>
+                        <Input
+                          autoComplete="given-name"
+                          value={field.state.value}
+                          onChangeText={field.handleChange}
+                          onBlur={field.handleBlur}
+                          returnKeyType="next"
+                        />
+                        {clerkErrors.fields.firstName && (
+                          <FieldError>{clerkErrors.fields.firstName.message}</FieldError>
+                        )}
+                      </TextField>
+                    )}
+                  </signUpForm.Field>
 
-      <View style={styles.linkContainer}>
-        <Text>Already have an account? </Text>
-        <Link href="../">
-          <Text>Sign in</Text>
-        </Link>
-      </View>
+                  <signUpForm.Field name="lastName">
+                    {(field) => (
+                      <TextField
+                        className="flex-1"
+                        isRequired
+                        isInvalid={!!clerkErrors.fields.lastName}
+                      >
+                        <Label>Last name</Label>
+                        <Input
+                          autoComplete="family-name"
+                          value={field.state.value}
+                          onChangeText={field.handleChange}
+                          onBlur={field.handleBlur}
+                          returnKeyType="next"
+                        />
+                        {clerkErrors.fields.lastName && (
+                          <FieldError>{clerkErrors.fields.lastName.message}</FieldError>
+                        )}
+                      </TextField>
+                    )}
+                  </signUpForm.Field>
+                </View>
 
-      <View nativeID="clerk-captcha" />
+                <signUpForm.Field name="emailAddress">
+                  {(field) => (
+                    <TextField isRequired isInvalid={!!clerkErrors.fields.emailAddress}>
+                      <Label>Email address</Label>
+                      <Input
+                        autoCapitalize="none"
+                        autoComplete="email"
+                        autoCorrect={false}
+                        value={field.state.value}
+                        onChangeText={field.handleChange}
+                        onBlur={field.handleBlur}
+                        keyboardType="email-address"
+                        returnKeyType="next"
+                      />
+                      {clerkErrors.fields.emailAddress && (
+                        <FieldError>{clerkErrors.fields.emailAddress.message}</FieldError>
+                      )}
+                    </TextField>
+                  )}
+                </signUpForm.Field>
+
+                <signUpForm.Field name="password">
+                  {(field) => (
+                    <TextField isRequired isInvalid={!!clerkErrors.fields.password}>
+                      <Label>Password</Label>
+                      <Input
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="new-password"
+                        value={field.state.value}
+                        secureTextEntry
+                        onChangeText={field.handleChange}
+                        onBlur={field.handleBlur}
+                        returnKeyType="send"
+                      />
+                      {clerkErrors.fields.password && (
+                        <FieldError>{clerkErrors.fields.password.message}</FieldError>
+                      )}
+                    </TextField>
+                  )}
+                </signUpForm.Field>
+              </Card.Body>
+
+              <Card.Footer className="flex-col gap-4">
+                <signUpForm.Subscribe selector={(state) => [state.isSubmitting, state.values]}>
+                  {([isSubmitting, values]) => {
+                    const { firstName, lastName, emailAddress, password } = values as {
+                      firstName: string;
+                      lastName: string;
+                      emailAddress: string;
+                      password: string;
+                    };
+                    return (
+                      <Button
+                        variant="primary"
+                        onPress={() => signUpForm.handleSubmit()}
+                        isDisabled={
+                          !firstName ||
+                          !lastName ||
+                          !emailAddress ||
+                          !password ||
+                          !!isSubmitting ||
+                          fetchStatus === "fetching"
+                        }
+                        className="w-full"
+                      >
+                        Create account
+                      </Button>
+                    );
+                  }}
+                </signUpForm.Subscribe>
+              </Card.Footer>
+            </Card>
+
+            <View className="flex-row gap-1 justify-center">
+              <Text className="text-sm text-muted">Already have an account?</Text>
+              <Link href="../" asChild>
+                <LinkButton size="sm">
+                  <LinkButton.Label className="text-accent">Sign in</LinkButton.Label>
+                </LinkButton>
+              </Link>
+            </View>
+
+            <View nativeID="clerk-captcha" />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    gap: 12,
-  },
-  title: {
-    marginBottom: 8,
-  },
-  label: {
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: "#fff",
-  },
-  button: {
-    backgroundColor: "#0a7ea4",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonPressed: {
-    opacity: 0.7,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  secondaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  secondaryButtonText: {
-    color: "#0a7ea4",
-    fontWeight: "600",
-  },
-  linkContainer: {
-    flexDirection: "row",
-    gap: 4,
-    marginTop: 12,
-    alignItems: "center",
-  },
-  error: {
-    color: "#d32f2f",
-    fontSize: 12,
-    marginTop: -8,
-  },
-  debug: {
-    fontSize: 10,
-    opacity: 0.5,
-    marginTop: 8,
-  },
-});
