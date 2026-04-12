@@ -399,13 +399,13 @@ run_claude() {
 set -euo pipefail
 # Read prompt into a variable — avoids re-expansion of special chars when passing to -p
 prompt=$(cat .ralph-prompt.txt)
-exec claude --dangerously-skip-permissions --output-format stream-json -p "$prompt"
+exec claude --dangerously-skip-permissions --verbose --output-format stream-json -p "$prompt"
 RUNNER
     chmod +x "$worktree/.ralph-run.sh"
 
     docker sandbox run claude "$worktree" \
       -- bash .ralph-run.sh \
-      2>&1 | tee "$log_file"
+      2>&1 > "$log_file"
 
     rm -f "$worktree/.ralph-prompt.txt" "$worktree/.ralph-run.sh" 2>/dev/null || true
   else
@@ -415,9 +415,9 @@ RUNNER
       # Read prompt into a variable — avoids re-expansion of special chars when passing to -p
       local prompt
       prompt=$(cat "$prompt_file")
-      claude --dangerously-skip-permissions --output-format stream-json \
+      claude --dangerously-skip-permissions --verbose --output-format stream-json \
         -p "$prompt" \
-        2>&1 | tee "$log_file"
+        > "$log_file" 2>&1
     )
   fi
 }
