@@ -102,15 +102,16 @@ export default function Page() {
 
         if (totpFactor) {
           setMfaStrategy("totp");
+          setStep("mfa");
         } else if (phoneFactor) {
           await signIn.mfa.sendPhoneCode();
           setMfaStrategy("phone_code");
+          setStep("mfa");
         } else if (emailFactor) {
           await signIn.mfa.sendEmailCode();
           setMfaStrategy("email_code");
+          setStep("mfa");
         }
-
-        setStep("mfa");
       } else {
         console.error(
           `[forgot-password] Unexpected sign-in status after password reset: "${signIn.status}".`,
@@ -124,12 +125,22 @@ export default function Page() {
       code: "",
     },
     onSubmit: async ({ value }) => {
+      let verifyError;
+
       if (mfaStrategy === "totp") {
-        await signIn.mfa.verifyTOTP({ code: value.code });
+        const { error } = await signIn.mfa.verifyTOTP({ code: value.code });
+        verifyError = error;
       } else if (mfaStrategy === "phone_code") {
-        await signIn.mfa.verifyPhoneCode({ code: value.code });
+        const { error } = await signIn.mfa.verifyPhoneCode({ code: value.code });
+        verifyError = error;
       } else {
-        await signIn.mfa.verifyEmailCode({ code: value.code });
+        const { error } = await signIn.mfa.verifyEmailCode({ code: value.code });
+        verifyError = error;
+      }
+
+      if (verifyError) {
+        console.error(JSON.stringify(verifyError, null, 2));
+        return;
       }
 
       if (signIn.status === "complete") {
