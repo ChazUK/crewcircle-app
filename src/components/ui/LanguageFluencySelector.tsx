@@ -1,4 +1,5 @@
-import { Button } from "heroui-native";
+import { Button, Chip, CloseButton } from "heroui-native";
+import { useState } from "react";
 import { View } from "react-native";
 
 import { LANGUAGES } from "@/data/languages";
@@ -8,12 +9,11 @@ import { Picker } from "./Picker";
 export type FluencyLevel = "Native" | "Fluent" | "Conversational" | "Basic";
 
 export type LanguageEntry = {
-  id: string;
   language: string;
   fluency: FluencyLevel;
 };
 
-const LANGUAGE_OPTIONS = LANGUAGES.map(({ name, nativeName }) => ({
+const ALL_LANGUAGE_OPTIONS = LANGUAGES.map(({ name, nativeName }) => ({
   value: name,
   label: name === nativeName ? name : `${name} (${nativeName})`,
 }));
@@ -25,80 +25,112 @@ const FLUENCY_OPTIONS: { value: FluencyLevel; label: string }[] = [
   { value: "Basic", label: "Basic" },
 ];
 
+const FLUENCY_SHORT: Record<FluencyLevel, string> = {
+  Native: "Native",
+  Fluent: "Fluent",
+  Conversational: "Conv.",
+  Basic: "Basic",
+};
+
 type Props = {
   value: LanguageEntry[];
   onChange: (entries: LanguageEntry[]) => void;
 };
 
 export function LanguageFluencySelector({ value, onChange }: Props) {
-  const addLanguage = () => {
-    onChange([...value, { id: crypto.randomUUID(), language: "", fluency: "Fluent" }]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
+  const [pendingFluency, setPendingFluency] = useState<FluencyLevel>("Fluent");
+
+  const selectedLanguages = new Set(value.map((e) => e.language));
+  const availableOptions = ALL_LANGUAGE_OPTIONS.filter((o) => !selectedLanguages.has(o.value));
+  const canAdd = availableOptions.length > 0 && !isAdding;
+
+  const startAdding = () => {
+    setPendingLanguage(null);
+    setPendingFluency("Fluent");
+    setIsAdding(true);
   };
 
-  const removeLanguage = (id: string) => {
-    onChange(value.filter((entry) => entry.id !== id));
+  const cancelAdding = () => {
+    setIsAdding(false);
+    setPendingLanguage(null);
+    setPendingFluency("Fluent");
   };
 
-  const updateLanguage = (id: string, language: string) => {
-    onChange(value.map((entry) => (entry.id === id ? { ...entry, language } : entry)));
+  const confirmAdd = () => {
+    if (!pendingLanguage) return;
+    onChange([...value, { language: pendingLanguage, fluency: pendingFluency }]);
+    cancelAdding();
   };
 
-  const updateFluency = (id: string, fluency: string) => {
-    if (!FLUENCY_OPTIONS.some((o) => o.value === fluency)) return;
-    onChange(
-      value.map((entry) =>
-        entry.id === id ? { ...entry, fluency: fluency as FluencyLevel } : entry,
-      ),
-    );
+  const removeLanguage = (language: string) => {
+    onChange(value.filter((e) => e.language !== language));
   };
 
   return (
-    <View className="gap-3">
-      {value.map((entry, index) => (
-        <View
-          key={entry.id}
-          className="gap-3 p-3 rounded-xl border border-default-200 bg-default-50"
-          accessibilityLabel={`Language entry ${index + 1}`}
-        >
-          <View className="flex-row gap-2 items-end">
-            <View className="flex-2">
-              <Picker
-                value={entry.language || null}
-                onChange={(language) => updateLanguage(entry.id, language)}
-                options={LANGUAGE_OPTIONS}
-                label="Language"
-                listLabel="Select language"
-                placeholder="Select language"
-                snapPoints={["60%"]}
-                searchable
-                searchPlaceholder="Search languages..."
+    <View className="gap-2">
+      <View className="flex-row flex-wrap gap-2 p-3 rounded-xl border border-default-200 items-center min-h-[52px]">
+        {value.map((entry) => (
+          <Chip key={entry.language} animation="disable-all" color="default" variant="soft">
+            <View className="flex-row items-center gap-1 pl-1">
+              <Chip.Label>
+                {entry.language} ({FLUENCY_SHORT[entry.fluency]})
+              </Chip.Label>
+              <CloseButton
+                onPress={() => removeLanguage(entry.language)}
+                accessibilityLabel={`Remove ${entry.language}`}
               />
             </View>
-            <View className="flex-1">
-              <Picker
-                value={entry.fluency}
-                onChange={(fluency) => updateFluency(entry.id, fluency)}
-                options={FLUENCY_OPTIONS}
-                label="Fluency"
-                listLabel="Select fluency"
-                snapPoints={["40%"]}
-              />
-            </View>
-          </View>
+          </Chip>
+        ))}
+        {canAdd && (
           <Button
-            variant="danger-soft"
+            variant="secondary"
             size="sm"
-            onPress={() => removeLanguage(entry.id)}
-            accessibilityLabel={`Remove ${entry.language || "language"} entry`}
-            className="self-end"
+            onPress={startAdding}
+            accessibilityLabel="Add language"
           >
-            Remove
+            + Add
           </Button>
+        )}
+      </View>
+
+      {isAdding && (
+        <View className="gap-3 p-3 rounded-xl border border-default-200 bg-default-50">
+          <Picker
+            value={pendingLanguage}
+            onChange={setPendingLanguage}
+            options={availableOptions}
+            label="Language"
+            listLabel="Select language"
+            placeholder="Select language"
+            snapPoints={["60%"]}
+            searchable
+            searchPlaceholder="Search languages..."
+          />
+          <Picker
+            value={pendingFluency}
+            onChange={(f) => {
+              if (FLUENCY_OPTIONS.some((o) => o.value === f)) {
+                setPendingFluency(f as FluencyLevel);
+              }
+            }}
+            options={FLUENCY_OPTIONS}
+            label="Fluency"
+            listLabel="Select fluency"
+            snapPoints={["40%"]}
+          />
+          <View className="flex-row gap-2 justify-end">
+            <Button variant="tertiary" size="sm" onPress={cancelAdding}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onPress={confirmAdd} isDisabled={!pendingLanguage}>
+              Add
+            </Button>
+          </View>
         </View>
-      ))}
-      <Button variant="secondary" onPress={addLanguage} className="w-full">
-        Add language
-      </Button>
+      )}
     </View>
   );
 }
