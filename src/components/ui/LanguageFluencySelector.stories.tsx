@@ -42,7 +42,7 @@ export const Empty: Story = {
 
 export const SingleEntry: Story = {
   args: {
-    value: [{ language: "English", fluency: "Native" }],
+    value: [{ id: "1", language: "English", fluency: "Native" }],
   },
   render: InteractiveRender,
 };
@@ -50,9 +50,9 @@ export const SingleEntry: Story = {
 export const MultipleEntries: Story = {
   args: {
     value: [
-      { language: "English", fluency: "Native" },
-      { language: "French", fluency: "Conversational" },
-      { language: "Spanish", fluency: "Basic" },
+      { id: "1", language: "English", fluency: "Native" },
+      { id: "2", language: "French", fluency: "Conversational" },
+      { id: "3", language: "Spanish", fluency: "Basic" },
     ],
   },
   render: InteractiveRender,
@@ -61,10 +61,10 @@ export const MultipleEntries: Story = {
 export const AllFluencyLevels: Story = {
   args: {
     value: [
-      { language: "English", fluency: "Native" },
-      { language: "French", fluency: "Fluent" },
-      { language: "German", fluency: "Conversational" },
-      { language: "Italian", fluency: "Basic" },
+      { id: "1", language: "English", fluency: "Native" },
+      { id: "2", language: "French", fluency: "Fluent" },
+      { id: "3", language: "German", fluency: "Conversational" },
+      { id: "4", language: "Italian", fluency: "Basic" },
     ],
   },
   render: InteractiveRender,
@@ -72,7 +72,7 @@ export const AllFluencyLevels: Story = {
 
 export const EmptyLanguageName: Story = {
   args: {
-    value: [{ language: "", fluency: "Fluent" }],
+    value: [{ id: "1", language: "", fluency: "Fluent" }],
   },
   render: InteractiveRender,
 };

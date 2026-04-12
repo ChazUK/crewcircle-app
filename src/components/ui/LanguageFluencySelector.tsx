@@ -8,6 +8,7 @@ import { Picker } from "./Picker";
 export type FluencyLevel = "Native" | "Fluent" | "Conversational" | "Basic";
 
 export type LanguageEntry = {
+  id: string;
   language: string;
   fluency: FluencyLevel;
 };
@@ -31,21 +32,21 @@ type Props = {
 
 export function LanguageFluencySelector({ value, onChange }: Props) {
   const addLanguage = () => {
-    onChange([...value, { language: "", fluency: "Fluent" }]);
+    onChange([...value, { id: crypto.randomUUID(), language: "", fluency: "Fluent" }]);
   };
 
-  const removeLanguage = (index: number) => {
-    onChange(value.filter((_, i) => i !== index));
+  const removeLanguage = (id: string) => {
+    onChange(value.filter((entry) => entry.id !== id));
   };
 
-  const updateLanguage = (index: number, language: string) => {
-    onChange(value.map((entry, i) => (i === index ? { ...entry, language } : entry)));
+  const updateLanguage = (id: string, language: string) => {
+    onChange(value.map((entry) => (entry.id === id ? { ...entry, language } : entry)));
   };
 
-  const updateFluency = (index: number, fluency: string) => {
+  const updateFluency = (id: string, fluency: string) => {
     onChange(
-      value.map((entry, i) =>
-        i === index ? { ...entry, fluency: fluency as FluencyLevel } : entry,
+      value.map((entry) =>
+        entry.id === id ? { ...entry, fluency: fluency as FluencyLevel } : entry,
       ),
     );
   };
@@ -54,7 +55,7 @@ export function LanguageFluencySelector({ value, onChange }: Props) {
     <View className="gap-3">
       {value.map((entry, index) => (
         <View
-          key={index}
+          key={entry.id}
           className="gap-3 p-3 rounded-xl border border-default-200 bg-default-50"
           accessibilityLabel={`Language entry ${index + 1}`}
         >
@@ -62,7 +63,7 @@ export function LanguageFluencySelector({ value, onChange }: Props) {
             <View className="flex-2">
               <Picker
                 value={entry.language || null}
-                onChange={(language) => updateLanguage(index, language)}
+                onChange={(language) => updateLanguage(entry.id, language)}
                 options={LANGUAGE_OPTIONS}
                 label="Language"
                 listLabel="Select language"
@@ -75,7 +76,7 @@ export function LanguageFluencySelector({ value, onChange }: Props) {
             <View className="flex-1">
               <Picker
                 value={entry.fluency}
-                onChange={(fluency) => updateFluency(index, fluency)}
+                onChange={(fluency) => updateFluency(entry.id, fluency)}
                 options={FLUENCY_OPTIONS}
                 label="Fluency"
                 listLabel="Select fluency"
@@ -86,7 +87,7 @@ export function LanguageFluencySelector({ value, onChange }: Props) {
           <Button
             variant="danger-soft"
             size="sm"
-            onPress={() => removeLanguage(index)}
+            onPress={() => removeLanguage(entry.id)}
             accessibilityLabel={`Remove ${entry.language || "language"} entry`}
             className="self-end"
           >
