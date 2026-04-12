@@ -35,7 +35,7 @@ export function VerifyCodeScreen({
   error,
   onResend,
 }: Props) {
-  const [countdown, setCountdown] = useCountdown(onResend ? 30 : 0);
+  const [countdown, startCountdown] = useCountdown(onResend ? 30 : 0);
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView className="flex-1">
@@ -95,7 +95,7 @@ export function VerifyCodeScreen({
                   onPress={async () => {
                     try {
                       await onResend();
-                      setCountdown(30);
+                      startCountdown(30);
                     } catch (error) {
                       console.error("[VerifyCodeScreen] Resend failed:", error);
                     }
