@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { type LanguageEntry, LanguageFluencySelector } from "./LanguageFluencySelector";
+import { type LanguageEntry, LanguageProficiencySelector } from "./LanguageProficiencySelector";
 
 const meta = {
-  title: "UI/LanguageFluencySelector",
-  component: LanguageFluencySelector,
+  title: "UI/LanguageProficiencySelector",
+  component: LanguageProficiencySelector,
   decorators: [
     (Story) => (
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -25,7 +25,7 @@ const meta = {
     value: [],
     onChange: () => {},
   },
-} satisfies Meta<typeof LanguageFluencySelector>;
+} satisfies Meta<typeof LanguageProficiencySelector>;
 
 export default meta;
 
@@ -38,7 +38,7 @@ const InteractiveRender: Story["render"] = (args) => {
     setValue(args.value);
   }, [args.value]);
 
-  return <LanguageFluencySelector {...args} value={value} onChange={setValue} />;
+  return <LanguageProficiencySelector {...args} value={value} onChange={setValue} />;
 };
 
 export const Empty: Story = {
@@ -47,7 +47,7 @@ export const Empty: Story = {
 
 export const SingleEntry: Story = {
   args: {
-    value: [{ language: "English", fluency: "Native" }],
+    value: [{ language: "English", proficiency: "C2" }],
   },
   render: InteractiveRender,
 };
@@ -55,21 +55,23 @@ export const SingleEntry: Story = {
 export const MultipleEntries: Story = {
   args: {
     value: [
-      { language: "English", fluency: "Native" },
-      { language: "French", fluency: "Conversational" },
-      { language: "Spanish", fluency: "Basic" },
+      { language: "English", proficiency: "C2" },
+      { language: "French", proficiency: "B1" },
+      { language: "Spanish", proficiency: "A2" },
     ],
   },
   render: InteractiveRender,
 };
 
-export const AllFluencyLevels: Story = {
+export const AllCEFRLevels: Story = {
   args: {
     value: [
-      { language: "English", fluency: "Native" },
-      { language: "French", fluency: "Fluent" },
-      { language: "German", fluency: "Conversational" },
-      { language: "Italian", fluency: "Basic" },
+      { language: "English", proficiency: "C2" },
+      { language: "French", proficiency: "C1" },
+      { language: "German", proficiency: "B2" },
+      { language: "Spanish", proficiency: "B1" },
+      { language: "Italian", proficiency: "A2" },
+      { language: "Japanese", proficiency: "A1" },
     ],
   },
   render: InteractiveRender,
@@ -77,7 +79,7 @@ export const AllFluencyLevels: Story = {
 
 export const EmptyLanguageName: Story = {
   args: {
-    value: [{ language: "", fluency: "Fluent" }],
+    value: [{ language: "", proficiency: "B1" }],
   },
   render: InteractiveRender,
 };

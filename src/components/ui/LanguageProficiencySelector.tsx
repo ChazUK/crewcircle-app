@@ -1,16 +1,17 @@
-import { Button, Chip, CloseButton } from "heroui-native";
+import { Button } from "heroui-native";
 import { useState } from "react";
 import { View } from "react-native";
 
 import { LANGUAGES } from "@/data/languages";
 
 import { Picker } from "./Picker";
+import { RemovableChip } from "./RemovableChip";
 
-export type FluencyLevel = "Native" | "Fluent" | "Conversational" | "Basic";
+export type ProficiencyLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
 export type LanguageEntry = {
   language: string;
-  fluency: FluencyLevel;
+  proficiency: ProficiencyLevel;
 };
 
 const ALL_LANGUAGE_OPTIONS = LANGUAGES.map(({ name, nativeName }) => ({
@@ -18,29 +19,24 @@ const ALL_LANGUAGE_OPTIONS = LANGUAGES.map(({ name, nativeName }) => ({
   label: name === nativeName ? name : `${name} (${nativeName})`,
 }));
 
-const FLUENCY_OPTIONS: { value: FluencyLevel; label: string }[] = [
-  { value: "Native", label: "Native" },
-  { value: "Fluent", label: "Fluent" },
-  { value: "Conversational", label: "Conversational" },
-  { value: "Basic", label: "Basic" },
+const PROFICIENCY_OPTIONS: { value: ProficiencyLevel; label: string }[] = [
+  { value: "A1", label: "A1 — Beginner" },
+  { value: "A2", label: "A2 — Elementary" },
+  { value: "B1", label: "B1 — Intermediate" },
+  { value: "B2", label: "B2 — Upper Intermediate" },
+  { value: "C1", label: "C1 — Advanced" },
+  { value: "C2", label: "C2 — Proficient" },
 ];
-
-const FLUENCY_SHORT: Record<FluencyLevel, string> = {
-  Native: "Native",
-  Fluent: "Fluent",
-  Conversational: "Conv.",
-  Basic: "Basic",
-};
 
 type Props = {
   value: LanguageEntry[];
   onChange: (entries: LanguageEntry[]) => void;
 };
 
-export function LanguageFluencySelector({ value, onChange }: Props) {
+export function LanguageProficiencySelector({ value, onChange }: Props) {
   const [isAdding, setIsAdding] = useState(false);
   const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
-  const [pendingFluency, setPendingFluency] = useState<FluencyLevel>("Fluent");
+  const [pendingProficiency, setPendingProficiency] = useState<ProficiencyLevel>("B1");
 
   const selectedLanguages = new Set(value.map((e) => e.language));
   const availableOptions = ALL_LANGUAGE_OPTIONS.filter((o) => !selectedLanguages.has(o.value));
@@ -48,19 +44,19 @@ export function LanguageFluencySelector({ value, onChange }: Props) {
 
   const startAdding = () => {
     setPendingLanguage(null);
-    setPendingFluency("Fluent");
+    setPendingProficiency("B1");
     setIsAdding(true);
   };
 
   const cancelAdding = () => {
     setIsAdding(false);
     setPendingLanguage(null);
-    setPendingFluency("Fluent");
+    setPendingProficiency("B1");
   };
 
   const confirmAdd = () => {
     if (!pendingLanguage) return;
-    onChange([...value, { language: pendingLanguage, fluency: pendingFluency }]);
+    onChange([...value, { language: pendingLanguage, proficiency: pendingProficiency }]);
     cancelAdding();
   };
 
@@ -72,17 +68,11 @@ export function LanguageFluencySelector({ value, onChange }: Props) {
     <View className="gap-2">
       <View className="flex-row flex-wrap gap-2 p-3 rounded-xl border border-default-200 items-center min-h-[52px]">
         {value.map((entry) => (
-          <Chip key={entry.language} animation="disable-all" color="default" variant="soft">
-            <View className="flex-row items-center gap-1 pl-1">
-              <Chip.Label>
-                {entry.language} ({FLUENCY_SHORT[entry.fluency]})
-              </Chip.Label>
-              <CloseButton
-                onPress={() => removeLanguage(entry.language)}
-                accessibilityLabel={`Remove ${entry.language}`}
-              />
-            </View>
-          </Chip>
+          <RemovableChip
+            key={entry.language}
+            label={`${entry.language} (${entry.proficiency})`}
+            onRemove={() => removeLanguage(entry.language)}
+          />
         ))}
         {canAdd && (
           <Button
@@ -110,15 +100,15 @@ export function LanguageFluencySelector({ value, onChange }: Props) {
             searchPlaceholder="Search languages..."
           />
           <Picker
-            value={pendingFluency}
-            onChange={(f) => {
-              if (FLUENCY_OPTIONS.some((o) => o.value === f)) {
-                setPendingFluency(f as FluencyLevel);
+            value={pendingProficiency}
+            onChange={(p) => {
+              if (PROFICIENCY_OPTIONS.some((o) => o.value === p)) {
+                setPendingProficiency(p as ProficiencyLevel);
               }
             }}
-            options={FLUENCY_OPTIONS}
-            label="Fluency"
-            listLabel="Select fluency"
+            options={PROFICIENCY_OPTIONS}
+            label="Proficiency"
+            listLabel="Select proficiency"
             snapPoints={["40%"]}
           />
           <View className="flex-row gap-2 justify-end">
