@@ -3,6 +3,10 @@ import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useCountdown } from "@/hooks/useCountdown";
+
+import { BackButton } from "./BackButton";
+
 type Props = {
   title: string;
   subtitle: string;
@@ -15,8 +19,7 @@ type Props = {
   isDisabled: boolean;
   error?: string | null;
   /** Omit for strategies that don't send a code (e.g. TOTP) */
-  onResend?: () => void;
-  resendCountdown?: number;
+  onResend?: () => unknown;
 };
 
 export function VerifyCodeScreen({
@@ -31,16 +34,12 @@ export function VerifyCodeScreen({
   isDisabled,
   error,
   onResend,
-  resendCountdown = 0,
 }: Props) {
+  const [countdown, startCountdown] = useCountdown(onResend ? 30 : 0);
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView className="flex-1">
-        <View className="self-start">
-          <Button variant="ghost" onPress={onBack} className="-ml-2">
-            ← Back
-          </Button>
-        </View>
+        <BackButton onPress={onBack} />
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View className="flex-1 gap-6 p-5">
             <View className="items-center gap-4 mx-4 mb-2">
@@ -92,10 +91,17 @@ export function VerifyCodeScreen({
                 <Button
                   variant="ghost"
                   size="sm"
-                  isDisabled={isDisabled || isLoading || resendCountdown > 0}
-                  onPress={onResend}
+                  isDisabled={isDisabled || isLoading || countdown > 0}
+                  onPress={async () => {
+                    try {
+                      await onResend();
+                      startCountdown(30);
+                    } catch (error) {
+                      console.error("[VerifyCodeScreen] Resend failed:", error);
+                    }
+                  }}
                 >
-                  {resendCountdown > 0 ? `Resend code in ${resendCountdown}s` : "Resend code"}
+                  {countdown > 0 ? `Resend code in ${countdown}s` : "Resend code"}
                 </Button>
               </View>
             )}

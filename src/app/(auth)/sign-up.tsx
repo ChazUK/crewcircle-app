@@ -16,21 +16,12 @@ export default function Page() {
   const router = useRouter();
 
   const [pendingVerification, setPendingVerification] = useState(false);
-  const [resendCountdown, setResendCountdown] = useState(0);
 
   useEffect(() => {
     return () => {
       signUp.reset();
     };
   }, []);
-
-  useEffect(() => {
-    if (resendCountdown === 0) return;
-
-    const timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
-
-    return () => clearTimeout(timer);
-  }, [resendCountdown]);
 
   const signUpForm = useForm({
     defaultValues: {
@@ -53,9 +44,14 @@ export default function Page() {
         return;
       }
 
-      await signUp.verifications.sendEmailCode();
+      const { error: sendError } = await signUp.verifications.sendEmailCode();
+
+      if (sendError) {
+        console.error(JSON.stringify(sendError, null, 2));
+        return;
+      }
+
       setPendingVerification(true);
-      setResendCountdown(30);
     },
   });
 
@@ -75,13 +71,7 @@ export default function Page() {
               return;
             }
 
-            const url = decorateUrl("/");
-
-            if (url.startsWith("http")) {
-              window.location.href = url;
-            } else {
-              router.push(url as Href);
-            }
+            router.replace(decorateUrl("/") as Href);
           },
         });
       } else {
@@ -110,12 +100,8 @@ export default function Page() {
                 onBack={() => setPendingVerification(false)}
                 isLoading={!!isSubmitting}
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
-                error={clerkErrors.fields.code?.message}
-                onResend={async () => {
-                  await signUp.verifications.sendEmailCode();
-                  setResendCountdown(30);
-                }}
-                resendCountdown={resendCountdown}
+                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
+                onResend={() => signUp.verifications.sendEmailCode()}
               />
             )}
           </verifyForm.Subscribe>
@@ -259,6 +245,12 @@ export default function Page() {
                 </signUpForm.Subscribe>
               </Card.Footer>
             </Card>
+
+            {clerkErrors.global?.[0] && (
+              <Text className="text-danger text-sm text-center mx-4">
+                {clerkErrors.global[0].message}
+              </Text>
+            )}
 
             <View className="flex-row gap-1 justify-center">
               <Text className="text-sm text-muted">Already have an account?</Text>

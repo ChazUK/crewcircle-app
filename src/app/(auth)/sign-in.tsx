@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { Image } from "expo-image";
 import { type Href, Link, useRouter } from "expo-router";
 import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,17 +14,10 @@ export default function Page() {
   const { signIn, errors: clerkErrors, fetchStatus } = useSignIn();
   const router = useRouter();
 
-  const [resendCountdown, setResendCountdown] = useState(30);
   const [secondFactorStrategy, setSecondFactorStrategy] = useState<
     "totp" | "email_code" | "phone_code" | null
   >(null);
   const [isNavigating, setIsNavigating] = useState(false);
-
-  useEffect(() => {
-    if (resendCountdown === 0) return;
-    const timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [resendCountdown]);
 
   const signInForm = useForm({
     defaultValues: {
@@ -33,7 +26,7 @@ export default function Page() {
     },
     onSubmit: async ({ value }) => {
       const { error } = await signIn.password({
-        emailAddress: value.emailAddress,
+        identifier: value.emailAddress,
         password: value.password,
       });
 
@@ -68,22 +61,19 @@ export default function Page() {
         } else if (phoneCodeFactor) {
           await signIn.mfa.sendPhoneCode();
           setSecondFactorStrategy("phone_code");
-          setResendCountdown(30);
         } else if (emailCodeFactor) {
           await signIn.mfa.sendEmailCode();
           setSecondFactorStrategy("email_code");
-          setResendCountdown(30);
         }
       } else if (signIn.status === "needs_client_trust") {
         // For other second factor strategies,
         // see https://clerk.com/docs/guides/development/custom-flows/authentication/client-trust
-        const emailCodeFactor = signIn.supportedSecondFactors.find(
+        const emailCodeFactor = signIn.supportedSecondFactors?.find(
           (factor) => factor.strategy === "email_code",
         );
 
         if (emailCodeFactor) {
           await signIn.mfa.sendEmailCode();
-          setResendCountdown(30);
         }
       } else {
         console.error("Sign-in attempt not complete:", signIn);
@@ -130,13 +120,7 @@ export default function Page() {
           return;
         }
 
-        const url = decorateUrl("/");
-
-        if (url.startsWith("http")) {
-          window.location.href = url;
-        } else {
-          router.push(url as Href);
-        }
+        router.replace(decorateUrl("/") as Href);
       },
     });
   }
@@ -158,7 +142,6 @@ export default function Page() {
             } else {
               await signIn.mfa.sendEmailCode();
             }
-            setResendCountdown(30);
           }
         : undefined;
 
@@ -177,9 +160,8 @@ export default function Page() {
                 onBack={() => signIn.reset()}
                 isLoading={!!isSubmitting}
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
-                error={clerkErrors.fields.code?.message}
+                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
                 onResend={handleResendSecondFactor}
-                resendCountdown={resendCountdown}
               />
             )}
           </verifyForm.Subscribe>
@@ -204,12 +186,8 @@ export default function Page() {
                 onBack={() => signIn.reset()}
                 isLoading={!!isSubmitting}
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
-                error={clerkErrors.fields.code?.message}
-                onResend={async () => {
-                  await signIn.mfa.sendEmailCode();
-                  setResendCountdown(30);
-                }}
-                resendCountdown={resendCountdown}
+                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
+                onResend={() => signIn.mfa.sendEmailCode()}
               />
             )}
           </verifyForm.Subscribe>
@@ -310,6 +288,12 @@ export default function Page() {
                 </signInForm.Subscribe>
               </Card.Footer>
             </Card>
+
+            {clerkErrors.global?.[0] && (
+              <Text className="text-danger text-sm text-center mx-4">
+                {clerkErrors.global[0].message}
+              </Text>
+            )}
 
             <View className="flex-row gap-1 justify-center">
               <Text className="text-sm text-muted">Don't have an account?</Text>
