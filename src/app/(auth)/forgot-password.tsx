@@ -339,7 +339,7 @@ export default function Page() {
   return (
     <View style={{ flex: 1 }}>
       <SafeAreaView className="flex-1">
-        <BackButton href="/sign-in" />
+        <BackButton onPress={() => router.back()} />
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View className="flex-1 gap-6">
             <View className="items-center gap-4 mx-4 my-8">
