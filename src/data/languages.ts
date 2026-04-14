@@ -27,4 +27,6 @@ export const LANGUAGES = [
   { name: "Turkish", nativeName: "Türkçe" },
   { name: "Ukrainian", nativeName: "Українська" },
   { name: "Vietnamese", nativeName: "Tiếng Việt" },
-];
+] as const;
+
+export type Language = (typeof LANGUAGES)[number]["name"];

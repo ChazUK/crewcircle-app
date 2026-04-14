@@ -4,11 +4,14 @@ import { useState } from "react";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { type LanguageEntry, LanguageProficiencySelector } from "./LanguageProficiencySelector";
+import {
+  type LanguageProficiencyEntry,
+  LanguageProficiencyLevelSelector,
+} from "./LanguageProficiencyLevelSelector";
 
 const meta = {
   title: "UI/LanguageProficiencySelector",
-  component: LanguageProficiencySelector,
+  component: LanguageProficiencyLevelSelector,
   decorators: [
     (Story) => (
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -25,47 +28,41 @@ const meta = {
     value: [],
     onChange: () => {},
   },
-} satisfies Meta<typeof LanguageProficiencySelector>;
+} satisfies Meta<typeof LanguageProficiencyLevelSelector>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
 const InteractiveRender: Story["render"] = (args) => {
-  const [value, setValue] = useState<LanguageEntry[]>(args.value);
+  const [value, setValue] = useState<LanguageProficiencyEntry[]>(args.value);
 
-  return <LanguageProficiencySelector {...args} value={value} onChange={setValue} />;
+  const handleChange = (entries: LanguageProficiencyEntry[] | undefined) => {
+    console.log({ entries });
+    console.log("setting value", { entries });
+    setValue(entries || []);
+  };
+
+  return <LanguageProficiencyLevelSelector {...args} value={value} onChange={handleChange} />;
 };
 
 export const Empty: Story = {
   render: InteractiveRender,
 };
 
-export const SingleEntry: Story = {
+export const SingleSelected: Story = {
   args: {
     value: [{ language: "English", proficiency: "Native" }],
   },
   render: InteractiveRender,
 };
 
-export const MultipleEntries: Story = {
+export const MultipleSelected: Story = {
   args: {
     value: [
       { language: "English", proficiency: "Native" },
       { language: "French", proficiency: "Conversational" },
       { language: "Spanish", proficiency: "Basic" },
-    ],
-  },
-  render: InteractiveRender,
-};
-
-export const AllProficiencyLevels: Story = {
-  args: {
-    value: [
-      { language: "English", proficiency: "Native" },
-      { language: "French", proficiency: "Fluent" },
-      { language: "German", proficiency: "Conversational" },
-      { language: "Italian", proficiency: "Basic" },
     ],
   },
   render: InteractiveRender,
