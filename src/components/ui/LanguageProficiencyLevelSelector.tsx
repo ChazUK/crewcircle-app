@@ -111,10 +111,10 @@ export function LanguageProficiencyLevelSelector({ value, onChange }: Props) {
       )}
       <LanguageSelectSheet
         isOpen={step === "select_language"}
-        options={LANGUAGE_OPTIONS}
+        options={availableOptions}
         onValueChange={handleLanguageChange}
       />
-      <LangaugeProficiencyLevelSelectSheet
+      <LanguageProficiencyLevelSelectSheet
         isOpen={step === "select_proficiency"}
         options={LANGUAGE_PROFICIENCY_LEVEL_OPTIONS}
         onValueChange={handleProficiencyChange}
@@ -138,7 +138,7 @@ const LanguageSelectSheet = ({
   const [searchValue, setSearchValue] = useState("");
 
   const filteredOptions = useMemo(() => {
-    const q = searchValue.trim();
+    const q = searchValue.trim().toLocaleLowerCase();
 
     if (!q) return options;
 
@@ -186,7 +186,7 @@ const LanguageSelectSheet = ({
   );
 };
 
-const LangaugeProficiencyLevelSelectSheet = ({
+const LanguageProficiencyLevelSelectSheet = ({
   isOpen,
   options,
   onOpenChange,

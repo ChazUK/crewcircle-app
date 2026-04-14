@@ -32,16 +32,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const InteractiveRender: Story["render"] = (args) => {
-  const [selectedValue, setSelectedValue] = useState<
-    { value: string; label: string } | undefined
-  >();
-
-  const handleValueChange = (value: { value: string; label: string } | undefined) => {
-    console.log("Country selected:", value);
-    setSelectedValue(value);
-  };
-
-  return <CountrySelect {...args} onValueChange={handleValueChange} />;
+  return <CountrySelect {...args} />;
 };
 
 export const Default: Story = {

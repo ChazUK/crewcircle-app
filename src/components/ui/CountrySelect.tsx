@@ -29,7 +29,7 @@ export const CountrySelect = ({
   const options = COUNTRY_OPTIONS;
 
   const filteredOptions = useMemo(() => {
-    const q = searchValue.trim();
+    const q = searchValue.trim().toLocaleLowerCase();
 
     if (!q) return options;
 
