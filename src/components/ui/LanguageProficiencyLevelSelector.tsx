@@ -142,7 +142,7 @@ const LanguageSelectSheet = ({
 
     if (!q) return options;
 
-    return options.filter((option: SelectOption) => option.label.toLowerCase().includes(q));
+    return options.filter((option: SelectOption) => option.label.toLocaleLowerCase().includes(q));
   }, [searchValue, options]);
 
   return (
