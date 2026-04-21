@@ -15,7 +15,7 @@ export default function Page() {
           />
         </View>
         <Text className="text-5xl mb-4 font-bold leading-none">Build the{"\n"}crew you need.</Text>
-        <Text className="text-lg leading-snug">
+        <Text className="text-lg">
           Schedule shifts, fill gaps, and hire trusted pros - all in one place.
         </Text>
       </View>
@@ -26,7 +26,7 @@ export default function Page() {
             Get started
           </Button>
         </Link>
-        <Text className="text-center text-md">
+        <Text className="text-base text-center">
           Already have an account?{" "}
           <Link href="/sign-in" className="text-primary font-semibold">
             Sign in

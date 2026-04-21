@@ -1,13 +1,14 @@
 import { useSignIn } from "@clerk/expo";
 import { useForm } from "@tanstack/react-form";
-import { Image } from "expo-image";
 import { type Href, Link, useRouter } from "expo-router";
 import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { SignInWithAppleButton } from "@/components/auth/SignInWithAppleButton";
+import { SignInWithGoogleButton } from "@/components/auth/SignInWithGoogleButton";
+import { LogoMark } from "@/components/ui/LogoMark";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 
 export default function Page() {
@@ -31,7 +32,8 @@ export default function Page() {
       });
 
       if (error) {
-        console.error(JSON.stringify(error, null, 2));
+        console.log(JSON.stringify(error, null, 2));
+
         return;
       }
 
@@ -59,11 +61,11 @@ export default function Page() {
         if (totpFactor) {
           setSecondFactorStrategy("totp");
         } else if (phoneCodeFactor) {
-          await signIn.mfa.sendPhoneCode();
           setSecondFactorStrategy("phone_code");
+          await signIn.mfa.sendPhoneCode();
         } else if (emailCodeFactor) {
-          await signIn.mfa.sendEmailCode();
           setSecondFactorStrategy("email_code");
+          await signIn.mfa.sendEmailCode();
         }
       } else if (signIn.status === "needs_client_trust") {
         // For other second factor strategies,
@@ -73,6 +75,7 @@ export default function Page() {
         );
 
         if (emailCodeFactor) {
+          setSecondFactorStrategy("email_code");
           await signIn.mfa.sendEmailCode();
         }
       } else {
@@ -197,115 +200,130 @@ export default function Page() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <SafeAreaView className="flex-1">
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-          <View className="flex-1 gap-6">
-            <View className="items-center gap-4 mx-4 my-8">
-              <Image
-                source={require("@/assets/icons/splash-icon-dark.png")}
-                style={{ width: 96, height: 96 }}
-              />
-              <Text className="text-3xl font-bold">Sign in to your account</Text>
-              <Text className="text-muted">Enter your email and password to log in</Text>
-            </View>
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* <ScrollView contentContainerStyle={{ flexGrow: 1 }}> */}
+      <View className="flex-1 justify-center gap-6">
+        <View className="mx-4">
+          <LogoMark className="mb-6" />
+          <Text className="text-4xl mb-2 font-bold leading-none">Welcome back</Text>
+          <Text className="text-base">
+            Sign in to pick up your next shift, find a replacement, or manage your crew.
+          </Text>
+        </View>
 
-            <Card className="gap-4 mx-4">
-              <Card.Body className="gap-4">
-                <signInForm.Field name="emailAddress">
-                  {(field) => (
-                    <TextField isInvalid={!!clerkErrors.fields.identifier}>
-                      <Label>Email</Label>
-                      <Input
-                        autoCapitalize="none"
-                        autoComplete="email"
-                        autoCorrect={false}
-                        value={field.state.value}
-                        onChangeText={field.handleChange}
-                        onBlur={field.handleBlur}
-                        keyboardType="email-address"
-                        returnKeyType="next"
-                        submitBehavior="submit"
-                      />
-                      {clerkErrors.fields.identifier && (
-                        <FieldError>{clerkErrors.fields.identifier.message}</FieldError>
-                      )}
-                    </TextField>
-                  )}
-                </signInForm.Field>
+        <View className="gap-4 mx-4">
+          <Card className="gap-4">
+            <Card.Body className="gap-4">
+              <signInForm.Field name="emailAddress">
+                {(field) => (
+                  <TextField isInvalid={!!clerkErrors.fields.identifier}>
+                    <Label>Email</Label>
+                    <Input
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      autoCorrect={false}
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      keyboardType="email-address"
+                      returnKeyType="next"
+                      submitBehavior="submit"
+                    />
 
-                <signInForm.Field name="password">
-                  {(field) => (
-                    <TextField isInvalid={!!clerkErrors.fields.password}>
-                      <View className="flex-row justify-between items-center">
-                        <Label>Password</Label>
-                        <Link href="/forgot-password" asChild>
-                          <LinkButton size="sm">
-                            <LinkButton.Label className="text-accent">
-                              Forgot password?
-                            </LinkButton.Label>
-                          </LinkButton>
-                        </Link>
-                      </View>
-                      <Input
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                        autoComplete="password"
-                        value={field.state.value}
-                        secureTextEntry
-                        onChangeText={field.handleChange}
-                        onBlur={field.handleBlur}
-                        returnKeyType="send"
-                      />
-                      {clerkErrors.fields.password && (
-                        <FieldError>{clerkErrors.fields.password.message}</FieldError>
-                      )}
-                    </TextField>
-                  )}
-                </signInForm.Field>
-              </Card.Body>
+                    <FieldError isInvalid={!!clerkErrors.fields.identifier}>
+                      {clerkErrors.fields.identifier?.message}
+                    </FieldError>
+                  </TextField>
+                )}
+              </signInForm.Field>
 
-              <Card.Footer className="flex-col gap-4">
-                <signInForm.Subscribe selector={(state) => [state.isSubmitting, state.values]}>
-                  {([isSubmitting, values]) => {
-                    const { emailAddress, password } = values as {
-                      emailAddress: string;
-                      password: string;
-                    };
-                    return (
-                      <Button
-                        variant="primary"
-                        onPress={() => signInForm.handleSubmit()}
-                        isDisabled={
-                          !emailAddress || !password || !!isSubmitting || fetchStatus === "fetching"
-                        }
-                        className="w-full"
-                      >
-                        Sign In
-                      </Button>
-                    );
-                  }}
-                </signInForm.Subscribe>
-              </Card.Footer>
-            </Card>
+              <signInForm.Field name="password">
+                {(field) => (
+                  <TextField isInvalid={!!clerkErrors.fields.password}>
+                    <View className="flex-row justify-between items-center">
+                      <Label>Password</Label>
+                      <Link href="/forgot-password" asChild>
+                        <LinkButton size="sm">
+                          <LinkButton.Label className="text-accent">
+                            Forgot password?
+                          </LinkButton.Label>
+                        </LinkButton>
+                      </Link>
+                    </View>
+                    <Input
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="password"
+                      value={field.state.value}
+                      secureTextEntry
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      returnKeyType="send"
+                    />
 
-            {clerkErrors.global?.[0] && (
-              <Text className="text-danger text-sm text-center mx-4">
-                {clerkErrors.global[0].message}
-              </Text>
-            )}
+                    <FieldError isInvalid={!!clerkErrors.fields.password}>
+                      {clerkErrors.fields.password?.message}
+                    </FieldError>
+                  </TextField>
+                )}
+              </signInForm.Field>
+            </Card.Body>
 
-            <View className="flex-row gap-1 justify-center">
-              <Text className="text-sm text-muted">Don't have an account?</Text>
-              <Link href="/sign-up" asChild>
-                <LinkButton size="sm">
-                  <LinkButton.Label className="text-accent">Sign up</LinkButton.Label>
-                </LinkButton>
-              </Link>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+            <Card.Footer className="flex-col gap-4">
+              {clerkErrors.global?.[0] && (
+                <Text className="text-danger text-sm text-left">
+                  {clerkErrors.global[0].message}
+                </Text>
+              )}
+
+              <signInForm.Subscribe selector={(state) => [state.isSubmitting, state.values]}>
+                {([isSubmitting, values]) => {
+                  const { emailAddress, password } = values as {
+                    emailAddress: string;
+                    password: string;
+                  };
+                  return (
+                    <Button
+                      variant="primary"
+                      onPress={() => signInForm.handleSubmit()}
+                      isDisabled={
+                        !emailAddress || !password || !!isSubmitting || fetchStatus === "fetching"
+                      }
+                      className="w-full"
+                    >
+                      Sign In
+                    </Button>
+                  );
+                }}
+              </signInForm.Subscribe>
+            </Card.Footer>
+          </Card>
+
+          <OrDivider />
+          <SignInWithGoogleButton />
+          <SignInWithAppleButton />
+        </View>
+      </View>
+
+      <View className="items-end flex-row gap-1 justify-center">
+        <Text className="text-base text-muted">Don't have an account?</Text>
+        <Link href="/sign-up" asChild>
+          <LinkButton>
+            <LinkButton.Label className="text-accent">Sign up</LinkButton.Label>
+          </LinkButton>
+        </Link>
+      </View>
+      {/* </ScrollView> */}
+    </SafeAreaView>
+  );
+}
+
+function OrDivider() {
+  return (
+    <View className="flex-row items-center">
+      <View className="flex-1 h-px bg-border" />
+      <Text className="mx-2 text-muted">OR</Text>
+      <View className="flex-1 h-px bg-border" />
     </View>
   );
 }
