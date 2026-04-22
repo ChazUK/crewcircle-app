@@ -34,7 +34,6 @@ export default function Page() {
 
   useEffect(() => {
     return () => {
-      console.log("reset");
       signIn.reset();
       signInForm.reset();
       verifyForm.reset();
@@ -53,7 +52,7 @@ export default function Page() {
       });
 
       if (error) {
-        console.log(JSON.stringify(error, null, 2));
+        console.error(JSON.stringify(error, null, 2));
 
         return;
       }
