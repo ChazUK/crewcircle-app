@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as files_mutations from "../files/mutations.js";
 import type * as http from "../http.js";
 import type * as users_db_getUser from "../users/db/getUser.js";
 import type * as users_db_upsertUser from "../users/db/upsertUser.js";
@@ -25,6 +26,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "files/mutations": typeof files_mutations;
   http: typeof http;
   "users/db/getUser": typeof users_db_getUser;
   "users/db/upsertUser": typeof users_db_upsertUser;
