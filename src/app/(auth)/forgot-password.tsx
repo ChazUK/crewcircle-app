@@ -287,12 +287,11 @@ export default function Page() {
                 <passwordForm.Field
                   name="confirmPassword"
                   validators={{
+                    onChangeListenTo: ["password"],
                     onChange: ({ value, fieldApi }) => {
                       const password = fieldApi.form.getFieldValue("password");
-
                       if (!value) return "Required";
                       if (value !== password) return "Passwords do not match";
-
                       return undefined;
                     },
                   }}
