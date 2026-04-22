@@ -34,14 +34,14 @@ export function ImageGalleryPicker({ images, onChange, generateUploadUrl, maxIma
   const remaining = maxImages !== undefined ? maxImages - images.length : undefined;
 
   const handleCamera = async () => {
-    const storageId = await pickFromCamera();
-    if (storageId) onChange([...images, { uri: storageId, storageId }]);
+    const picked = await pickFromCamera();
+    if (picked) onChange([...images, { uri: picked.uri, storageId: picked.storageId }]);
   };
 
   const handleLibrary = async () => {
-    const storageIds = await pickMultipleFromLibrary(remaining);
-    if (storageIds.length) {
-      onChange([...images, ...storageIds.map((id) => ({ uri: id, storageId: id }))]);
+    const picked = await pickMultipleFromLibrary(remaining);
+    if (picked.length) {
+      onChange([...images, ...picked.map((p) => ({ uri: p.uri, storageId: p.storageId }))]);
     }
   };
 

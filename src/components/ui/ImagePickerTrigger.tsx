@@ -30,13 +30,13 @@ export function ImagePickerTrigger({
   if (error && onError) onError(error);
 
   const handleCamera = async () => {
-    const storageId = await pickFromCamera();
-    if (storageId) onUpload(storageId);
+    const picked = await pickFromCamera();
+    if (picked) onUpload(picked.storageId);
   };
 
   const handleLibrary = async () => {
-    const storageId = await pickFromLibrary();
-    if (storageId) onUpload(storageId);
+    const picked = await pickFromLibrary();
+    if (picked) onUpload(picked.storageId);
   };
 
   const showOptions = () => {

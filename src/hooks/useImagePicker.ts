@@ -10,6 +10,8 @@ type Options = {
   allowsEditing?: boolean;
 };
 
+export type PickedImage = { uri: string; storageId: string };
+
 export function useImagePicker({
   generateUploadUrl,
   aspect = [1, 1],
@@ -19,11 +21,12 @@ export function useImagePicker({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const uploadUri = async (uri: string): Promise<string | null> => {
+  const uploadUri = async (uri: string): Promise<PickedImage | null> => {
     setUploading(true);
     setError(null);
     try {
-      return await uploadImageToConvex(uri, generateUploadUrl);
+      const storageId = await uploadImageToConvex(uri, generateUploadUrl);
+      return { uri, storageId };
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)));
       return null;
@@ -32,7 +35,7 @@ export function useImagePicker({
     }
   };
 
-  const pickFromCamera = async (): Promise<string | null> => {
+  const pickFromCamera = async (): Promise<PickedImage | null> => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") return null;
 
@@ -47,7 +50,7 @@ export function useImagePicker({
     return uploadUri(result.assets[0].uri);
   };
 
-  const pickFromLibrary = async (): Promise<string | null> => {
+  const pickFromLibrary = async (): Promise<PickedImage | null> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") return null;
 
@@ -62,7 +65,7 @@ export function useImagePicker({
     return uploadUri(result.assets[0].uri);
   };
 
-  const pickMultipleFromLibrary = async (limit?: number): Promise<string[]> => {
+  const pickMultipleFromLibrary = async (limit?: number): Promise<PickedImage[]> => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") return [];
 
@@ -79,9 +82,10 @@ export function useImagePicker({
     setError(null);
     try {
       return await Promise.all(
-        result.assets.map((a: ImagePicker.ImagePickerAsset) =>
-          uploadImageToConvex(a.uri, generateUploadUrl),
-        ),
+        result.assets.map(async (a: ImagePicker.ImagePickerAsset) => ({
+          uri: a.uri,
+          storageId: await uploadImageToConvex(a.uri, generateUploadUrl),
+        })),
       );
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)));
