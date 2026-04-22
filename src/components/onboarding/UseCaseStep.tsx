@@ -1,5 +1,4 @@
 import { Description, Label, Radio, RadioGroup, cn } from "heroui-native";
-import { useState } from "react";
 import { View } from "react-native";
 
 import { StepLayout } from "./StepLayout";
@@ -42,16 +41,14 @@ export function UseCaseStep({ value, onChange }: Props) {
         className="gap-4"
         variant="secondary"
       >
-        {OPTIONS.map((option) => {
-          return (
-            <UseCaseOptionItem
-              key={option.value}
-              value={option.value}
-              label={option.title}
-              description={option.description}
-            />
-          );
-        })}
+        {OPTIONS.map((option) => (
+          <UseCaseOptionItem
+            key={option.value}
+            value={option.value}
+            label={option.title}
+            description={option.description}
+          />
+        ))}
       </RadioGroup>
     </StepLayout>
   );
@@ -63,7 +60,7 @@ type UseCaseOptionItemProps = {
   description: string;
 };
 
-const UseCaseOptionItem = ({ value, label, description }: UseCaseOptionItemProps) => {
+function UseCaseOptionItem({ value, label, description }: UseCaseOptionItemProps) {
   return (
     <RadioGroup.Item value={value}>
       {({ isSelected }) => (
@@ -86,4 +83,4 @@ const UseCaseOptionItem = ({ value, label, description }: UseCaseOptionItemProps
       )}
     </RadioGroup.Item>
   );
-};
+}

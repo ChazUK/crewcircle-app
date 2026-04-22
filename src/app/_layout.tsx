@@ -3,7 +3,7 @@ import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { api } from "@convex/_generated/api";
 import { ConvexReactClient, useConvexAuth } from "convex/react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -37,11 +37,20 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { isLoading, isAuthenticated } = useConvexAuth();
+  const { isSignedIn, signOut } = useAuth();
   const upsertUser = useMutation(api.users.mutations.upsertUser);
+  const currentUser = useQuery(api.users.queries.getCurrentUser, isAuthenticated ? {} : "skip");
 
-  // True once the user record has been created/confirmed in the database.
-  // Prevents routing to protected screens before the user doc exists.
   const [isUserReady, setIsUserReady] = useState(false);
+
+  // Clerk persists its token in SecureStore across relaunches. If Clerk has a
+  // session but Convex doesn't recognise it (e.g. the backend was reset), sign
+  // out to re-sync both systems before the user interacts with anything.
+  useEffect(() => {
+    if (!isLoading && isSignedIn && !isAuthenticated) {
+      signOut();
+    }
+  }, [isLoading, isSignedIn, isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -55,21 +64,25 @@ function RootNavigator() {
   }, [isAuthenticated]);
 
   // Keep the splash visible until auth has resolved AND (if authenticated)
-  // the user record is confirmed to exist.
+  // both the user record exists and the onboarding status is known.
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || isUserReady)) {
+    const ready = !isAuthenticated || (isUserReady && currentUser !== undefined);
+    if (!isLoading && ready) {
       SplashScreen.hide();
     }
-  }, [isLoading, isAuthenticated, isUserReady]);
+  }, [isLoading, isAuthenticated, isUserReady, currentUser]);
 
-  // Render nothing while loading or while the user record is being created,
-  // so the splash screen remains visible rather than flashing a blank screen.
-  if (isLoading || (isAuthenticated && !isUserReady)) return null;
+  if (isLoading || (isAuthenticated && (!isUserReady || currentUser === undefined))) return null;
+
+  const hasCompletedOnboarding = currentUser?.hasCompletedOnboarding === true;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={isAuthenticated && isUserReady}>
+      <Stack.Protected guard={isAuthenticated && isUserReady && hasCompletedOnboarding}>
         <Stack.Screen name="(home)" />
+      </Stack.Protected>
+      <Stack.Protected guard={isAuthenticated && isUserReady && !hasCompletedOnboarding}>
+        <Stack.Screen name="(onboarding)" />
       </Stack.Protected>
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="(auth)" />

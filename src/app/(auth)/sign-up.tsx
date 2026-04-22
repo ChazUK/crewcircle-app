@@ -1,163 +1,259 @@
-import { useSignUp } from "@clerk/expo";
-import { type Href, useRouter } from "expo-router";
-import { Button } from "heroui-native";
-import { useState } from "react";
-import { View } from "react-native";
+import { useAuth, useSignUp } from "@clerk/expo";
+import { useForm } from "@tanstack/react-form";
+import { Image } from "expo-image";
+import { type Href, Link, useRouter } from "expo-router";
+import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
+import { useEffect, useState } from "react";
+import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { withUniwind } from "uniwind";
 
-import { CreateAccountStep } from "@/components/auth/sign-up/CreateAccountStep";
-import { DepartmentStep } from "@/components/auth/sign-up/DepartmentStep";
-import { ProfileStep, type ProfileData } from "@/components/auth/sign-up/ProfileStep";
-import { UseCaseStep, type UseCase } from "@/components/auth/sign-up/UseCaseStep";
-import { VerifyEmailStep } from "@/components/auth/sign-up/VerifyEmailStep";
 import { BackButton } from "@/components/ui/BackButton";
-import { ProgressIndicator } from "@/components/ui/ProgressIndicator";
+import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 
 const StyledSafeAreaView = withUniwind(SafeAreaView);
 
 export default function Page() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [useCase, setUseCase] = useState<UseCase | null>(null);
-  const [signUpEmail, setSignUpEmail] = useState("");
-  const [departments, setDepartments] = useState<string[]>([]);
-
   const { signUp, errors: clerkErrors, fetchStatus } = useSignUp();
+  const { isSignedIn } = useAuth();
   const router = useRouter();
 
-  const totalSteps = 5;
-  const isFetching = fetchStatus === "fetching";
+  const [pendingVerification, setPendingVerification] = useState(false);
 
-  function goBack() {
-    if (currentStep === 1) {
-      router.back();
-    } else {
-      setCurrentStep((prev) => prev - 1);
-    }
-  }
+  useEffect(() => {
+    return () => {
+      signUp.reset();
+    };
+  }, []);
 
-  async function handleCreateAccount({ email, password }: { email: string; password: string }) {
-    setSignUpEmail(email);
-    const { error } = await signUp.password({ emailAddress: email, password });
-    console.log({ error });
-    if (error) return;
-    const { error: sendError } = await signUp.verifications.sendEmailCode();
-    if (sendError) return;
-    setCurrentStep(3);
-  }
+  const signUpForm = useForm({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      emailAddress: "",
+      password: "",
+    },
+    onSubmit: async ({ value }) => {
+      const { error } = await signUp.password({
+        firstName: value.firstName,
+        lastName: value.lastName,
+        emailAddress: value.emailAddress,
+        password: value.password,
+      });
 
-  async function handleVerifyEmail(code: string) {
-    const { error } = await signUp.verifications.verifyEmailCode({ code });
-    if (error) return;
-    setCurrentStep(4);
-  }
+      if (error) return;
 
-  async function handleResendVerification() {
-    await signUp.verifications.sendEmailCode();
-  }
+      const { error: sendError } = await signUp.verifications.sendEmailCode();
+      if (sendError) return;
 
-  async function handleProfile(data: ProfileData) {
-    // TODO: save profile to Convex
-    console.log("profile data", data);
-    if (useCase === "crew") {
-      setCurrentStep(5);
-    } else {
-      await finalizeSignUp();
-    }
-  }
+      setPendingVerification(true);
+    },
+  });
 
-  async function handleDepartments() {
-    // TODO: save departments to Convex
-    console.log("departments", departments);
-    await finalizeSignUp();
-  }
+  const verifyForm = useForm({
+    defaultValues: { code: "" },
+    onSubmit: async ({ value }) => {
+      await signUp.verifications.verifyEmailCode({ code: value.code });
 
-  async function finalizeSignUp() {
-    await signUp.finalize({
-      navigate: ({ decorateUrl }) => {
-        router.replace(decorateUrl("/") as Href);
-      },
-    });
-  }
+      if (signUp.status === "complete") {
+        await signUp.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) return;
+            router.replace(decorateUrl("/") as Href);
+          },
+        });
+      }
+    },
+  });
 
-  const showBottomContinue = currentStep === 1 || currentStep === 5;
-  const continueDisabled =
-    (currentStep === 1 && useCase === null) ||
-    (currentStep === 5 && departments.length === 0) ||
-    isFetching;
+  if (signUp.status === "complete" || isSignedIn) return null;
 
-  function handleContinue() {
-    if (currentStep === 5) {
-      handleDepartments();
-    } else {
-      setCurrentStep((prev) => Math.min(totalSteps, prev + 1));
-    }
-  }
-
-  function renderStep() {
-    switch (currentStep) {
-      case 1:
-        return <UseCaseStep value={useCase} onChange={setUseCase} />;
-      case 2:
-        return (
-          <CreateAccountStep
-            onSubmit={handleCreateAccount}
-            emailError={clerkErrors.fields.emailAddress?.longMessage}
-            passwordError={clerkErrors.fields.password?.longMessage}
-            globalError={(clerkErrors.global?.[0] as any)?.errors?.[0]?.longMessage}
-            isFetching={isFetching}
-          />
-        );
-      case 3:
-        return (
-          <VerifyEmailStep
-            email={signUpEmail}
-            onVerify={handleVerifyEmail}
-            onResend={handleResendVerification}
-            error={
-              clerkErrors.fields.code?.longMessage ??
-              (clerkErrors.global?.[0] as any)?.errors?.[0]?.longMessage
-            }
-            isFetching={isFetching}
-          />
-        );
-      case 4:
-        return (
-          <ProfileStep
-            onSubmit={handleProfile}
-            globalError={(clerkErrors.global?.[0] as any)?.errors?.[0]?.longMessage}
-            isFetching={isFetching}
-          />
-        );
-      case 5:
-        return <DepartmentStep value={departments} onChange={setDepartments} />;
-      default:
-        return null;
-    }
+  if (pendingVerification) {
+    return (
+      <StyledSafeAreaView className="flex-1">
+        <View className="mx-4 my-4">
+          <BackButton onPress={() => setPendingVerification(false)} />
+        </View>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          <View className="flex-1 gap-6 py-2">
+            <verifyForm.Field name="code">
+              {(field) => (
+                <verifyForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                  {([canSubmit, isSubmitting]) => (
+                    <VerifyCodeScreen
+                      title="Verify your email"
+                      subtitle="Enter the 6-digit code sent to your email"
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                      onBlur={field.handleBlur}
+                      onSubmit={() => verifyForm.handleSubmit()}
+                      isLoading={!!isSubmitting}
+                      isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
+                      error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
+                      onResend={() => signUp.verifications.sendEmailCode()}
+                    />
+                  )}
+                </verifyForm.Subscribe>
+              )}
+            </verifyForm.Field>
+          </View>
+        </ScrollView>
+      </StyledSafeAreaView>
+    );
   }
 
   return (
     <StyledSafeAreaView className="flex-1">
-      <View className="flex-row items-center gap-4 mx-4 my-4">
-        <BackButton onPress={goBack} />
-        <ProgressIndicator className="flex-1" currentStep={currentStep} totalSteps={totalSteps} />
-      </View>
-
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View className="flex-1 gap-6 py-2">{renderStep()}</View>
-      </ScrollView>
+        <View className="flex-1 gap-6">
+          <View className="items-center gap-4 mx-4 my-8">
+            <Image
+              source={require("@/assets/icons/splash-icon-dark.png")}
+              style={{ width: 96, height: 96 }}
+            />
+            <Text className="text-3xl font-bold">Create an account</Text>
+            <Text className="text-muted">Enter your details to get started</Text>
+          </View>
 
-      {showBottomContinue && (
-        <Button
-          variant="primary"
-          className="mx-4 mb-2"
-          isDisabled={continueDisabled}
-          onPress={handleContinue}
-        >
-          Continue
-        </Button>
-      )}
+          <Card className="gap-4 mx-4">
+            <Card.Body className="gap-4">
+              <View className="flex-row gap-3">
+                <signUpForm.Field name="firstName">
+                  {(field) => (
+                    <TextField
+                      className="flex-1"
+                      isRequired
+                      isInvalid={!!clerkErrors.fields.firstName}
+                    >
+                      <Label>First name</Label>
+                      <Input
+                        autoComplete="given-name"
+                        value={field.state.value}
+                        onChangeText={field.handleChange}
+                        onBlur={field.handleBlur}
+                        returnKeyType="next"
+                      />
+                      {clerkErrors.fields.firstName && (
+                        <FieldError>{clerkErrors.fields.firstName.message}</FieldError>
+                      )}
+                    </TextField>
+                  )}
+                </signUpForm.Field>
+
+                <signUpForm.Field name="lastName">
+                  {(field) => (
+                    <TextField
+                      className="flex-1"
+                      isRequired
+                      isInvalid={!!clerkErrors.fields.lastName}
+                    >
+                      <Label>Last name</Label>
+                      <Input
+                        autoComplete="family-name"
+                        value={field.state.value}
+                        onChangeText={field.handleChange}
+                        onBlur={field.handleBlur}
+                        returnKeyType="next"
+                      />
+                      {clerkErrors.fields.lastName && (
+                        <FieldError>{clerkErrors.fields.lastName.message}</FieldError>
+                      )}
+                    </TextField>
+                  )}
+                </signUpForm.Field>
+              </View>
+
+              <signUpForm.Field name="emailAddress">
+                {(field) => (
+                  <TextField isRequired isInvalid={!!clerkErrors.fields.emailAddress}>
+                    <Label>Email address</Label>
+                    <Input
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      autoCorrect={false}
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      keyboardType="email-address"
+                      returnKeyType="next"
+                    />
+                    {clerkErrors.fields.emailAddress && (
+                      <FieldError>{clerkErrors.fields.emailAddress.message}</FieldError>
+                    )}
+                  </TextField>
+                )}
+              </signUpForm.Field>
+
+              <signUpForm.Field name="password">
+                {(field) => (
+                  <TextField isRequired isInvalid={!!clerkErrors.fields.password}>
+                    <Label>Password</Label>
+                    <Input
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="new-password"
+                      value={field.state.value}
+                      secureTextEntry
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      returnKeyType="send"
+                    />
+                    {clerkErrors.fields.password && (
+                      <FieldError>{clerkErrors.fields.password.message}</FieldError>
+                    )}
+                  </TextField>
+                )}
+              </signUpForm.Field>
+            </Card.Body>
+
+            <Card.Footer className="flex-col gap-4">
+              {clerkErrors.global?.[0] && (
+                <Text className="text-danger text-sm">{clerkErrors.global[0].message}</Text>
+              )}
+
+              <signUpForm.Subscribe selector={(state) => [state.isSubmitting, state.values]}>
+                {([isSubmitting, values]) => {
+                  const { firstName, lastName, emailAddress, password } = values as {
+                    firstName: string;
+                    lastName: string;
+                    emailAddress: string;
+                    password: string;
+                  };
+                  return (
+                    <Button
+                      variant="primary"
+                      onPress={() => signUpForm.handleSubmit()}
+                      isDisabled={
+                        !firstName ||
+                        !lastName ||
+                        !emailAddress ||
+                        !password ||
+                        !!isSubmitting ||
+                        fetchStatus === "fetching"
+                      }
+                      className="w-full"
+                    >
+                      Create account
+                    </Button>
+                  );
+                }}
+              </signUpForm.Subscribe>
+            </Card.Footer>
+          </Card>
+
+          <View className="flex-row gap-1 justify-center">
+            <Text className="text-sm text-muted">Already have an account?</Text>
+            <Link href="../" asChild>
+              <LinkButton size="sm">
+                <LinkButton.Label className="text-accent">Sign in</LinkButton.Label>
+              </LinkButton>
+            </Link>
+          </View>
+
+          <View nativeID="clerk-captcha" />
+        </View>
+      </ScrollView>
     </StyledSafeAreaView>
   );
 }
