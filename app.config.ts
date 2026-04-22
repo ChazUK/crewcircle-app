@@ -16,6 +16,11 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.crewcircle.crewcircle",
       usesAppleSignIn: true,
+      infoPlist: {
+        NSPhotoLibraryUsageDescription:
+          "CrewCircle needs access to your photo library to upload a profile photo.",
+        NSCameraUsageDescription: "CrewCircle needs access to your camera to take a profile photo.",
+      },
     },
     android: {
       adaptiveIcon: {
