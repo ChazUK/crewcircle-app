@@ -1,3 +1,18 @@
+const EXTENSION_MIME_TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  heic: "image/heic",
+  heif: "image/heif",
+  gif: "image/gif",
+};
+
+function mimeTypeFromUri(uri: string): string {
+  const ext = uri.split("?")[0].split(".").pop()?.toLowerCase() ?? "";
+  return EXTENSION_MIME_TYPES[ext] ?? "image/jpeg";
+}
+
 /**
  * Uploads a local image URI to Convex file storage.
  *
@@ -17,11 +32,12 @@ export async function uploadImageToConvex(
   }
 
   const blob = await response.blob();
+  const contentType = blob.type || mimeTypeFromUri(uri);
 
   const uploadResponse = await fetch(uploadUrl, {
     method: "POST",
     headers: {
-      "Content-Type": blob.type || "image/jpeg",
+      "Content-Type": contentType,
     },
     body: blob,
   });
