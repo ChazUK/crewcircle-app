@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { ActionSheetIOS, Alert, Platform, Pressable } from "react-native";
 
 import { useImagePicker } from "../../hooks/useImagePicker";
@@ -27,7 +28,9 @@ export function ImagePickerTrigger({
     allowsEditing,
   });
 
-  if (error && onError) onError(error);
+  useEffect(() => {
+    if (error && onError) onError(error);
+  }, [error, onError]);
 
   const handleCamera = async () => {
     const picked = await pickFromCamera();
