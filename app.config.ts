@@ -32,6 +32,7 @@ export default {
     },
     plugins: [
       "@clerk/expo",
+      "@react-native-community/datetimepicker",
       "expo-apple-authentication",
       "expo-image",
       "expo-router",
