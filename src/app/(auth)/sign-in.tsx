@@ -2,18 +2,26 @@ import { useSignIn } from "@clerk/expo";
 import { useForm } from "@tanstack/react-form";
 import { type Href, Link, useRouter } from "expo-router";
 import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { SignInWithAppleButton } from "@/components/auth/SignInWithAppleButton";
 import { SignInWithGoogleButton } from "@/components/auth/SignInWithGoogleButton";
-import { LogoMark } from "@/components/ui/LogoMark";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 
 export default function Page() {
   const { signIn, errors: clerkErrors, fetchStatus } = useSignIn();
   const router = useRouter();
+
+  useEffect(() => {
+    return () => {
+      console.log("reset");
+      signIn.reset();
+      signInForm.reset();
+      verifyForm.reset();
+    };
+  }, []);
 
   const [secondFactorStrategy, setSecondFactorStrategy] = useState<
     "totp" | "email_code" | "phone_code" | null
@@ -204,7 +212,6 @@ export default function Page() {
       {/* <ScrollView contentContainerStyle={{ flexGrow: 1 }}> */}
       <View className="flex-1 justify-center gap-6">
         <View className="mx-4">
-          <LogoMark className="mb-6" />
           <Text className="text-4xl mb-2 font-bold leading-none">Welcome back</Text>
           <Text className="text-base">
             Sign in to pick up your next shift, find a replacement, or manage your crew.
@@ -239,7 +246,7 @@ export default function Page() {
 
               <signInForm.Field name="password">
                 {(field) => (
-                  <TextField isInvalid={!!clerkErrors.fields.password}>
+                  <TextField isRequired isInvalid={!!clerkErrors.fields.password}>
                     <View className="flex-row justify-between items-center">
                       <Label>Password</Label>
                       <Link href="/forgot-password" asChild>
