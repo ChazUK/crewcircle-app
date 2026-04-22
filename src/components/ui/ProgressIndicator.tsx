@@ -4,9 +4,10 @@ import { StyleSheet, View } from "react-native";
 type Props = {
   currentStep: number;
   totalSteps: number;
+  className?: string;
 };
 
-export function ProgressIndicator({ currentStep, totalSteps }: Props) {
+export function ProgressIndicator({ currentStep, totalSteps, className }: Props) {
   const safeTotalSteps = Math.min(5, Math.max(1, Math.trunc(totalSteps)));
   const safeCurrentStep = Math.min(safeTotalSteps, Math.max(1, Math.trunc(currentStep)));
 
@@ -16,7 +17,8 @@ export function ProgressIndicator({ currentStep, totalSteps }: Props) {
       accessibilityRole="progressbar"
       accessibilityLabel={`Step ${safeCurrentStep} of ${safeTotalSteps}`}
       accessibilityValue={{ min: 1, max: safeTotalSteps, now: safeCurrentStep }}
-      style={styles.container}
+      style={[styles.container]}
+      className={className}
     >
       {Array.from({ length: safeTotalSteps }, (_, i) => {
         const step = i + 1;
@@ -27,10 +29,10 @@ export function ProgressIndicator({ currentStep, totalSteps }: Props) {
           <View
             key={step}
             style={[
-              styles.dot,
-              isCompleted && styles.dotCompleted,
-              isActive && styles.dotActive,
-              !isCompleted && !isActive && styles.dotUpcoming,
+              styles.line,
+              isCompleted && styles.lineCompleted,
+              isActive && styles.lineActive,
+              !isCompleted && !isActive && styles.lineUpcoming,
             ]}
           />
         );
@@ -42,26 +44,24 @@ export function ProgressIndicator({ currentStep, totalSteps }: Props) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
     justifyContent: "center",
     alignItems: "center",
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  line: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
   },
-  dotCompleted: {
+  lineCompleted: {
     backgroundColor: "#0a7ea4",
   },
-  dotActive: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  lineActive: {
+    height: 4,
+    borderRadius: 2,
     backgroundColor: "#0a7ea4",
-    opacity: 1,
   },
-  dotUpcoming: {
+  lineUpcoming: {
     backgroundColor: "#ccc",
   },
 });

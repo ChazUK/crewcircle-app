@@ -1,21 +1,30 @@
 import { useSignIn } from "@clerk/expo";
 import { useForm } from "@tanstack/react-form";
-import { Image } from "expo-image";
 import { type Href, Link, useRouter } from "expo-router";
 import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { withUniwind } from "uniwind";
 
 import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 
 type Step = "email" | "code" | "new-password" | "mfa";
 
+const StyledSafeAreaView = withUniwind(SafeAreaView);
+
 export default function Page() {
   const { signIn, errors: clerkErrors, fetchStatus } = useSignIn();
   const router = useRouter();
+
+  useEffect(() => {
+    return () => {
+      console.log("reset, forgot password");
+      signIn.reset();
+    };
+  }, []);
 
   const [step, setStep] = useState<Step>("email");
   const [mfaStrategy, setMfaStrategy] = useState<"totp" | "phone_code" | "email_code" | null>(null);
@@ -103,13 +112,13 @@ export default function Page() {
         if (totpFactor) {
           setMfaStrategy("totp");
           setStep("mfa");
-        } else if (phoneFactor) {
-          await signIn.mfa.sendPhoneCode();
-          setMfaStrategy("phone_code");
-          setStep("mfa");
         } else if (emailFactor) {
           await signIn.mfa.sendEmailCode();
           setMfaStrategy("email_code");
+          setStep("mfa");
+        } else if (phoneFactor) {
+          await signIn.mfa.sendPhoneCode();
+          setMfaStrategy("phone_code");
           setStep("mfa");
         }
       } else {
@@ -191,7 +200,6 @@ export default function Page() {
                 onChange={field.handleChange}
                 onBlur={field.handleBlur}
                 onSubmit={() => mfaForm.handleSubmit()}
-                onBack={() => setStep("new-password")}
                 isLoading={!!isSubmitting}
                 isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
                 error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
@@ -206,155 +214,163 @@ export default function Page() {
 
   if (step === "code") {
     return (
-      <codeForm.Field name="code">
-        {(field) => (
-          <codeForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-            {([canSubmit, isSubmitting]) => (
-              <VerifyCodeScreen
-                title="Check your email"
-                subtitle="Enter the 6-digit code sent to your email"
-                value={field.state.value}
-                onChange={field.handleChange}
-                onBlur={field.handleBlur}
-                onSubmit={() => codeForm.handleSubmit()}
-                onBack={() => setStep("email")}
-                isLoading={!!isSubmitting}
-                isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
-                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
-                onResend={() => signIn.resetPasswordEmailCode.sendCode()}
-              />
-            )}
-          </codeForm.Subscribe>
-        )}
-      </codeForm.Field>
+      <StyledSafeAreaView className="flex-1">
+        <BackButton className="mb-2" onPress={() => setStep("email")} />
+        <ScrollView contentContainerStyle={{ flex: 1 }}>
+          <View className="flex-1 gap-6">
+            <codeForm.Field name="code">
+              {(field) => (
+                <codeForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                  {([canSubmit, isSubmitting]) => (
+                    <VerifyCodeScreen
+                      title="Check your email"
+                      subtitle="Enter the 6-digit code sent to your email"
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                      onBlur={field.handleBlur}
+                      onSubmit={() => codeForm.handleSubmit()}
+                      isLoading={!!isSubmitting}
+                      isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
+                      error={
+                        clerkErrors.fields.code?.longMessage ??
+                        (clerkErrors.global?.[0] as any)?.errors?.[0]?.longMessage
+                      }
+                      onResend={() => {
+                        codeForm.reset();
+                        signIn.resetPasswordEmailCode.sendCode();
+                      }}
+                    />
+                  )}
+                </codeForm.Subscribe>
+              )}
+            </codeForm.Field>
+          </View>
+        </ScrollView>
+      </StyledSafeAreaView>
     );
   }
 
   if (step === "new-password") {
     return (
-      <View style={{ flex: 1 }}>
-        <SafeAreaView className="flex-1">
-          <BackButton onPress={() => setStep("code")} />
-          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-            <View className="flex-1 gap-6">
-              <View className="items-center gap-4 mx-4 my-8">
-                <Image
-                  source={require("@/assets/icons/splash-icon-dark.png")}
-                  style={{ width: 96, height: 96 }}
-                />
-                <Text className="text-3xl font-bold">Set new password</Text>
-                <Text className="text-muted">Choose a strong password for your account</Text>
-              </View>
-
-              <Card className="gap-4 mx-4">
-                <Card.Body className="gap-4">
-                  <passwordForm.Field name="password">
-                    {(field) => (
-                      <TextField isRequired isInvalid={!!clerkErrors.fields.password}>
-                        <Label>New password</Label>
-                        <Input
-                          autoCapitalize="none"
-                          autoCorrect={false}
-                          autoComplete="new-password"
-                          secureTextEntry
-                          value={field.state.value}
-                          onChangeText={field.handleChange}
-                          onBlur={field.handleBlur}
-                          returnKeyType="next"
-                        />
-                        {clerkErrors.fields.password && (
-                          <FieldError>{clerkErrors.fields.password.message}</FieldError>
-                        )}
-                      </TextField>
-                    )}
-                  </passwordForm.Field>
-
-                  <passwordForm.Field name="confirmPassword">
-                    {(field) => (
-                      <passwordForm.Subscribe selector={(state) => state.values.password}>
-                        {(password) => {
-                          const mismatch = !!field.state.value && field.state.value !== password;
-                          return (
-                            <TextField isRequired isInvalid={mismatch}>
-                              <Label>Confirm password</Label>
-                              <Input
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                autoComplete="new-password"
-                                secureTextEntry
-                                value={field.state.value}
-                                onChangeText={field.handleChange}
-                                onBlur={field.handleBlur}
-                                returnKeyType="send"
-                              />
-                              {mismatch && <FieldError>Passwords do not match</FieldError>}
-                            </TextField>
-                          );
-                        }}
-                      </passwordForm.Subscribe>
-                    )}
-                  </passwordForm.Field>
-                </Card.Body>
-
-                <Card.Footer>
-                  <passwordForm.Subscribe selector={(state) => [state.isSubmitting, state.values]}>
-                    {([isSubmitting, values]) => {
-                      const { password, confirmPassword } = values as {
-                        password: string;
-                        confirmPassword: string;
-                      };
-                      return (
-                        <Button
-                          variant="primary"
-                          onPress={() => passwordForm.handleSubmit()}
-                          isDisabled={
-                            !password ||
-                            !confirmPassword ||
-                            password !== confirmPassword ||
-                            !!isSubmitting ||
-                            fetchStatus === "fetching"
-                          }
-                          className="w-full"
-                        >
-                          {isSubmitting ? "Saving..." : "Reset password"}
-                        </Button>
-                      );
-                    }}
-                  </passwordForm.Subscribe>
-                </Card.Footer>
-              </Card>
-
-              {clerkErrors.global?.[0] && (
-                <Text className="text-danger text-sm text-center mx-4">
-                  {clerkErrors.global[0].message}
-                </Text>
-              )}
+      <StyledSafeAreaView className="flex-1">
+        <BackButton className="mb-2" onPress={() => setStep("email")} />
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View className="flex-1 gap-6">
+            <View className="mx-4">
+              <Text className="text-4xl mb-2 font-bold leading-none">Set new password</Text>
+              <Text className="text-base">Choose a strong password for your account</Text>
             </View>
-          </ScrollView>
-        </SafeAreaView>
-      </View>
+
+            <Card className="gap-4 mx-4">
+              <Card.Body className="gap-4">
+                <passwordForm.Field name="password">
+                  {(field) => (
+                    <TextField isRequired isInvalid={!!clerkErrors.fields.password}>
+                      <Label>New password</Label>
+                      <Input
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="new-password"
+                        secureTextEntry
+                        value={field.state.value}
+                        onChangeText={field.handleChange}
+                        onBlur={field.handleBlur}
+                        returnKeyType="next"
+                      />
+                      <FieldError isInvalid={!!clerkErrors.fields.password}>
+                        {clerkErrors.fields.password?.message}
+                      </FieldError>
+                    </TextField>
+                  )}
+                </passwordForm.Field>
+
+                <passwordForm.Field
+                  name="confirmPassword"
+                  validators={{
+                    onChangeListenTo: ["password"],
+                    onChange: ({ value, fieldApi }) => {
+                      const password = fieldApi.form.getFieldValue("password");
+                      if (!value) return "Required";
+                      if (value !== password) return "Passwords do not match";
+                      return undefined;
+                    },
+                  }}
+                >
+                  {(field) => (
+                    <TextField isRequired isInvalid={!!field.state.meta.errors.length}>
+                      <Label>Confirm password</Label>
+                      <Input
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="new-password"
+                        secureTextEntry
+                        value={field.state.value}
+                        onChangeText={field.handleChange}
+                        onBlur={field.handleBlur}
+                        returnKeyType="send"
+                      />
+                      <FieldError isInvalid={!!field.state.meta.errors.length}>
+                        {field.state.meta.errors[0]}
+                      </FieldError>
+                    </TextField>
+                  )}
+                </passwordForm.Field>
+              </Card.Body>
+
+              <Card.Footer>
+                <passwordForm.Subscribe selector={(state) => [state.isSubmitting, state.values]}>
+                  {([isSubmitting, values]) => {
+                    const { password, confirmPassword } = values as {
+                      password: string;
+                      confirmPassword: string;
+                    };
+                    const isDisabled =
+                      !password ||
+                      !confirmPassword ||
+                      password !== confirmPassword ||
+                      !!isSubmitting ||
+                      fetchStatus === "fetching";
+
+                    return (
+                      <Button
+                        variant="primary"
+                        onPress={() => passwordForm.handleSubmit()}
+                        isDisabled={isDisabled}
+                        className="w-full"
+                      >
+                        {isSubmitting ? "Saving..." : "Reset password"}
+                      </Button>
+                    );
+                  }}
+                </passwordForm.Subscribe>
+              </Card.Footer>
+            </Card>
+
+            {clerkErrors.global?.[0] && (
+              <Text className="text-danger text-sm text-center mx-4">
+                {clerkErrors.global[0].message}
+              </Text>
+            )}
+          </View>
+        </ScrollView>
+      </StyledSafeAreaView>
     );
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <SafeAreaView className="flex-1">
-        <BackButton onPress={() => router.back()} />
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-          <View className="flex-1 gap-6">
-            <View className="items-center gap-4 mx-4 my-8">
-              <Image
-                source={require("@/assets/icons/splash-icon-dark.png")}
-                style={{ width: 96, height: 96 }}
-              />
-              <Text className="text-3xl font-bold">Forgot password?</Text>
-              <Text className="text-muted text-center">
-                Enter your email and we'll send you a reset code
-              </Text>
-            </View>
+    <StyledSafeAreaView className="flex-1">
+      <ScrollView contentContainerStyle={{ flex: 1 }}>
+        <View className="flex-1 mt-12 gap-6">
+          <View className="mx-4">
+            <Text className="text-4xl mb-2 font-bold leading-none">Reset your password</Text>
+            <Text className="text-base">
+              Enter the email you signed up with and we'll send a code to reset your password.
+            </Text>
+          </View>
 
-            <Card className="gap-4 mx-4">
-              <Card.Body>
+          <View className="gap-4 mx-4">
+            <Card className="gap-4">
+              <Card.Body className="gap-4">
                 <emailForm.Field name="emailAddress">
                   {(field) => (
                     <TextField isRequired isInvalid={!!clerkErrors.fields.identifier}>
@@ -369,15 +385,22 @@ export default function Page() {
                         keyboardType="email-address"
                         returnKeyType="send"
                       />
-                      {clerkErrors.fields.identifier && (
-                        <FieldError>{clerkErrors.fields.identifier.message}</FieldError>
-                      )}
+
+                      <FieldError isInvalid={!!clerkErrors.fields.identifier}>
+                        {clerkErrors.fields.identifier?.message}
+                      </FieldError>
                     </TextField>
                   )}
                 </emailForm.Field>
               </Card.Body>
 
-              <Card.Footer>
+              <Card.Footer className="flex-col gap-4">
+                {clerkErrors.global?.[0] && (
+                  <Text className="text-danger text-sm text-left">
+                    {clerkErrors.global[0].message}
+                  </Text>
+                )}
+
                 <emailForm.Subscribe selector={(state) => [state.isSubmitting, state.values]}>
                   {([isSubmitting, values]) => {
                     const { emailAddress } = values as { emailAddress: string };
@@ -395,24 +418,18 @@ export default function Page() {
                 </emailForm.Subscribe>
               </Card.Footer>
             </Card>
-
-            {clerkErrors.global?.[0] && (
-              <Text className="text-danger text-sm text-center mx-4">
-                {clerkErrors.global[0].message}
-              </Text>
-            )}
-
-            <View className="flex-row gap-1 justify-center">
-              <Text className="text-sm text-muted">Remember your password?</Text>
-              <Link href="../" asChild>
-                <LinkButton size="sm">
-                  <LinkButton.Label className="text-accent">Sign in</LinkButton.Label>
-                </LinkButton>
-              </Link>
-            </View>
           </View>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+        </View>
+
+        <View className="items-end flex-row gap-1 justify-center">
+          <Text className="text-base text-muted">Remember your password?</Text>
+          <Link href="../" asChild>
+            <LinkButton>
+              <LinkButton.Label className="text-accent">Sign in</LinkButton.Label>
+            </LinkButton>
+          </Link>
+        </View>
+      </ScrollView>
+    </StyledSafeAreaView>
   );
 }

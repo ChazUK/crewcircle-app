@@ -1,5 +1,4 @@
 import { useClerk, useUser } from "@clerk/expo";
-import { Link } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 
 import { layout } from "@/styles/layout";
@@ -15,7 +14,6 @@ export default function Home() {
       <Pressable onPress={() => signOut()}>
         <Text>Sign out</Text>
       </Pressable>
-      {__DEV__ && <Link href="/storybook">Open Storybook</Link>}
     </View>
   );
 }

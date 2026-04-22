@@ -1,0 +1,47 @@
+import { useSignInWithApple } from "@clerk/expo/apple";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { useRouter } from "expo-router";
+import { Alert, Platform } from "react-native";
+
+type Props = {
+  onSignInComplete?: () => void;
+};
+
+export function SignInWithAppleButton({ onSignInComplete }: Props) {
+  const { startAppleAuthenticationFlow } = useSignInWithApple();
+  const router = useRouter();
+
+  // Only show on iOS
+  if (Platform.OS !== "ios") return null;
+
+  const handleAppleSignIn = async () => {
+    try {
+      const { createdSessionId, setActive } = await startAppleAuthenticationFlow();
+
+      if (createdSessionId && setActive) {
+        await setActive({ session: createdSessionId });
+
+        if (onSignInComplete) {
+          onSignInComplete();
+        } else {
+          router.replace("/");
+        }
+      }
+    } catch (err: any) {
+      if (err.code === "ERR_REQUEST_CANCELED") return;
+
+      Alert.alert("Error", err.message || "An error occurred during Apple sign-in");
+      console.error("Sign in with Apple error:", JSON.stringify(err, null, 2));
+    }
+  };
+
+  return (
+    <AppleAuthentication.AppleAuthenticationButton
+      buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE}
+      cornerRadius={22}
+      style={{ height: 44, width: "100%" }}
+      onPress={handleAppleSignIn}
+    />
+  );
+}

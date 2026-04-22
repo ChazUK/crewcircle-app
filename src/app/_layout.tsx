@@ -3,12 +3,12 @@ import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { api } from "@convex/_generated/api";
 import { ConvexReactClient, useConvexAuth } from "convex/react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -37,11 +37,27 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { isLoading, isAuthenticated } = useConvexAuth();
+  const { isSignedIn, signOut } = useAuth();
   const upsertUser = useMutation(api.users.mutations.upsertUser);
+  const currentUser = useQuery(api.users.queries.getCurrentUser, isAuthenticated ? {} : "skip");
 
-  // True once the user record has been created/confirmed in the database.
-  // Prevents routing to protected screens before the user doc exists.
   const [isUserReady, setIsUserReady] = useState(false);
+
+  // Clerk persists its token in SecureStore across relaunches. If Clerk has a
+  // session but Convex doesn't recognise it (e.g. the backend was reset), sign
+  // out to re-sync both systems before the user interacts with anything.
+  // Only check once — when isLoading first settles to false. Checking on every
+  // change would incorrectly sign out a user mid-sign-up because isSignedIn
+  // (Clerk) flips true before isAuthenticated (Convex) catches up.
+  const initialDesyncCheckDone = useRef(false);
+  useEffect(() => {
+    if (!isLoading && !initialDesyncCheckDone.current) {
+      initialDesyncCheckDone.current = true;
+
+      if (isSignedIn && !isAuthenticated)
+        signOut().catch((err) => console.error("Failed to sign out stale Clerk session:", err));
+    }
+  }, [isLoading, isSignedIn, isAuthenticated, signOut]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -55,21 +71,25 @@ function RootNavigator() {
   }, [isAuthenticated]);
 
   // Keep the splash visible until auth has resolved AND (if authenticated)
-  // the user record is confirmed to exist.
+  // both the user record exists and the onboarding status is known.
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || isUserReady)) {
+    const ready = !isAuthenticated || (isUserReady && currentUser != null);
+    if (!isLoading && ready) {
       SplashScreen.hide();
     }
-  }, [isLoading, isAuthenticated, isUserReady]);
+  }, [isLoading, isAuthenticated, isUserReady, currentUser]);
 
-  // Render nothing while loading or while the user record is being created,
-  // so the splash screen remains visible rather than flashing a blank screen.
-  if (isLoading || (isAuthenticated && !isUserReady)) return null;
+  if (isLoading || (isAuthenticated && (!isUserReady || currentUser == null))) return null;
+
+  const hasCompletedOnboarding = currentUser?.hasCompletedOnboarding === true;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={isAuthenticated && isUserReady}>
+      <Stack.Protected guard={isAuthenticated && isUserReady && hasCompletedOnboarding}>
         <Stack.Screen name="(home)" />
+      </Stack.Protected>
+      <Stack.Protected guard={isAuthenticated && isUserReady && !hasCompletedOnboarding}>
+        <Stack.Screen name="(onboarding)" />
       </Stack.Protected>
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="(auth)" />
