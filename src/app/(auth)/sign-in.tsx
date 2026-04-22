@@ -4,13 +4,22 @@ import { type Href, Link, useRouter } from "expo-router";
 import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { withUniwind } from "uniwind";
 
 import { SignInWithAppleButton } from "@/components/auth/SignInWithAppleButton";
 import { SignInWithGoogleButton } from "@/components/auth/SignInWithGoogleButton";
+import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 
+const StyledSafeAreaView = withUniwind(SafeAreaView);
+
 export default function Page() {
+  const [secondFactorStrategy, setSecondFactorStrategy] = useState<
+    "totp" | "email_code" | "phone_code" | null
+  >(null);
+  const [isNavigating, setIsNavigating] = useState(false);
   const { signIn, errors: clerkErrors, fetchStatus } = useSignIn();
   const router = useRouter();
 
@@ -22,11 +31,6 @@ export default function Page() {
       verifyForm.reset();
     };
   }, []);
-
-  const [secondFactorStrategy, setSecondFactorStrategy] = useState<
-    "totp" | "email_code" | "phone_code" | null
-  >(null);
-  const [isNavigating, setIsNavigating] = useState(false);
 
   const signInForm = useForm({
     defaultValues: {
@@ -157,58 +161,96 @@ export default function Page() {
         : undefined;
 
     return (
-      <verifyForm.Field name="code">
-        {(field) => (
-          <verifyForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-            {([canSubmit, isSubmitting]) => (
-              <VerifyCodeScreen
-                title="Two-factor authentication"
-                subtitle={subtitleByStrategy[secondFactorStrategy]}
-                value={field.state.value}
-                onChange={field.handleChange}
-                onBlur={field.handleBlur}
-                onSubmit={() => verifyForm.handleSubmit()}
-                onBack={() => signIn.reset()}
-                isLoading={!!isSubmitting}
-                isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
-                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
-                onResend={handleResendSecondFactor}
-              />
-            )}
-          </verifyForm.Subscribe>
-        )}
-      </verifyForm.Field>
+      <StyledSafeAreaView className="flex-1">
+        <BackButton
+          className="mb-2"
+          onPress={() => {
+            verifyForm.reset();
+            signInForm.reset();
+            signIn.reset();
+          }}
+        />
+        <ScrollView contentContainerStyle={{ flex: 1 }}>
+          <View className="flex-1 gap-6">
+            <verifyForm.Field name="code">
+              {(field) => (
+                <verifyForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                  {([canSubmit, isSubmitting]) => (
+                    <VerifyCodeScreen
+                      title="Two-factor authentication"
+                      subtitle={subtitleByStrategy[secondFactorStrategy]}
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                      onBlur={field.handleBlur}
+                      onSubmit={() => verifyForm.handleSubmit()}
+                      isLoading={!!isSubmitting}
+                      isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
+                      error={
+                        clerkErrors.fields.code?.longMessage ??
+                        (clerkErrors.global?.[0] as any)?.errors?.[0]?.longMessage
+                      }
+                      onResend={() => {
+                        verifyForm.reset();
+                        handleResendSecondFactor?.();
+                      }}
+                    />
+                  )}
+                </verifyForm.Subscribe>
+              )}
+            </verifyForm.Field>
+          </View>
+        </ScrollView>
+      </StyledSafeAreaView>
     );
   }
 
   if (signIn.status === "needs_client_trust") {
     return (
-      <verifyForm.Field name="code">
-        {(field) => (
-          <verifyForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-            {([canSubmit, isSubmitting]) => (
-              <VerifyCodeScreen
-                title="Verify your account"
-                subtitle="Enter the 6-digit code sent to your email"
-                value={field.state.value}
-                onChange={field.handleChange}
-                onBlur={field.handleBlur}
-                onSubmit={() => verifyForm.handleSubmit()}
-                onBack={() => signIn.reset()}
-                isLoading={!!isSubmitting}
-                isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
-                error={clerkErrors.fields.code?.message ?? clerkErrors.global?.[0]?.message}
-                onResend={() => signIn.mfa.sendEmailCode()}
-              />
-            )}
-          </verifyForm.Subscribe>
-        )}
-      </verifyForm.Field>
+      <StyledSafeAreaView className="flex-1">
+        <BackButton
+          className="mb-2"
+          onPress={() => {
+            verifyForm.reset();
+            signInForm.reset();
+            signIn.reset();
+          }}
+        />
+        <ScrollView contentContainerStyle={{ flex: 1 }}>
+          <View className="flex-1 gap-6">
+            <verifyForm.Field name="code">
+              {(field) => (
+                <verifyForm.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                  {([canSubmit, isSubmitting]) => (
+                    <VerifyCodeScreen
+                      title="Verify your account"
+                      subtitle="Enter the 6-digit code sent to your email"
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                      onBlur={field.handleBlur}
+                      onSubmit={() => verifyForm.handleSubmit()}
+                      isLoading={!!isSubmitting}
+                      isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
+                      error={
+                        clerkErrors.fields.code?.longMessage ??
+                        (clerkErrors.global?.[0] as any)?.errors?.[0]?.longMessage
+                      }
+                      onResend={() => {
+                        verifyForm.reset();
+                        signIn.mfa.sendEmailCode();
+                      }}
+                    />
+                  )}
+                </verifyForm.Subscribe>
+              )}
+            </verifyForm.Field>
+          </View>
+        </ScrollView>
+      </StyledSafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <StyledSafeAreaView className="flex-1">
       {/* <ScrollView contentContainerStyle={{ flexGrow: 1 }}> */}
       <View className="flex-1 justify-center gap-6">
         <View className="mx-4">
@@ -321,7 +363,7 @@ export default function Page() {
         </Link>
       </View>
       {/* </ScrollView> */}
-    </SafeAreaView>
+    </StyledSafeAreaView>
   );
 }
 
