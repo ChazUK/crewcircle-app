@@ -1,7 +1,16 @@
 import { useSignIn } from "@clerk/expo";
 import { useForm } from "@tanstack/react-form";
 import { type Href, Link, useRouter } from "expo-router";
-import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
+import {
+  Button,
+  Card,
+  FieldError,
+  Input,
+  Label,
+  LinkButton,
+  Separator,
+  TextField,
+} from "heroui-native";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
@@ -370,9 +379,9 @@ export default function Page() {
 function OrDivider() {
   return (
     <View className="flex-row items-center">
-      <View className="flex-1 h-px bg-border" />
+      <Separator />
       <Text className="mx-2 text-muted">OR</Text>
-      <View className="flex-1 h-px bg-border" />
+      <Separator />
     </View>
   );
 }
