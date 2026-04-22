@@ -32,7 +32,8 @@ export default function OnboardingPage() {
         firstName: clerkUser?.firstName ?? "",
         lastName: clerkUser?.lastName ?? "",
         userType: value.useCase === "crew" ? "crew" : "production-manager",
-        departments: value.departments.length > 0 ? value.departments : undefined,
+        departments:
+          value.useCase === "crew" && value.departments.length > 0 ? value.departments : undefined,
       });
     },
   });

@@ -3,7 +3,7 @@ import { View } from "react-native";
 
 import { StepLayout } from "./StepLayout";
 
-export type UseCase = "crew" | "scheduling";
+export type UseCase = "crew" | "production-manager";
 
 type Option = {
   value: UseCase;
@@ -18,8 +18,8 @@ const OPTIONS: Option[] = [
     description: "Find work, get hired, or arrange a replacement on a production.",
   },
   {
-    value: "scheduling",
-    title: "I'm scheduling",
+    value: "production-manager",
+    title: "I'm a production manager",
     description: "Hire crew, manage rosters, and keep productions running smoothly.",
   },
 ];
