@@ -8,7 +8,7 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeProvider } from "heroui-native";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -46,9 +46,15 @@ function RootNavigator() {
   // Clerk persists its token in SecureStore across relaunches. If Clerk has a
   // session but Convex doesn't recognise it (e.g. the backend was reset), sign
   // out to re-sync both systems before the user interacts with anything.
+  // Only check once — when isLoading first settles to false. Checking on every
+  // change would incorrectly sign out a user mid-sign-up because isSignedIn
+  // (Clerk) flips true before isAuthenticated (Convex) catches up.
+  const initialDesyncCheckDone = useRef(false);
   useEffect(() => {
-    if (!isLoading && isSignedIn && !isAuthenticated) {
-      signOut();
+    if (!isLoading && !initialDesyncCheckDone.current) {
+      initialDesyncCheckDone.current = true;
+
+      if (isSignedIn && !isAuthenticated) signOut();
     }
   }, [isLoading, isSignedIn, isAuthenticated]);
 

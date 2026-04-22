@@ -1,7 +1,7 @@
-import { useAuth, useSignUp } from "@clerk/expo";
+import { useAuth, useClerk, useSignUp } from "@clerk/expo";
 import { useForm } from "@tanstack/react-form";
 import { Image } from "expo-image";
-import { type Href, Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
@@ -17,7 +17,7 @@ const StyledSafeAreaView = withUniwind(SafeAreaView);
 export default function Page() {
   const { signUp, errors: clerkErrors, fetchStatus } = useSignUp();
   const { isSignedIn } = useAuth();
-  const router = useRouter();
+  const { setActive } = useClerk();
 
   const [pendingVerification, setPendingVerification] = useState(false);
 
@@ -57,12 +57,10 @@ export default function Page() {
       await signUp.verifications.verifyEmailCode({ code: value.code });
 
       if (signUp.status === "complete") {
-        await signUp.finalize({
-          navigate: ({ session, decorateUrl }) => {
-            if (session?.currentTask) return;
-            router.replace(decorateUrl("/") as Href);
-          },
-        });
+        // Use setActive directly instead of finalize() — finalize triggers Clerk's
+        // setup-mfa session task gate which resets state and blocks navigation when
+        // MFA is required in the dashboard but the app has no MFA setup flow.
+        await setActive({ session: signUp.createdSessionId });
       }
     },
   });
@@ -244,7 +242,7 @@ export default function Page() {
 
           <View className="flex-row gap-1 justify-center">
             <Text className="text-sm text-muted">Already have an account?</Text>
-            <Link href="../" asChild>
+            <Link href="../sign-in" asChild>
               <LinkButton size="sm">
                 <LinkButton.Label className="text-accent">Sign in</LinkButton.Label>
               </LinkButton>
