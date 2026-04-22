@@ -54,10 +54,12 @@ describe("handleClerkWebhook", () => {
     ctx = { runMutation: vi.fn() };
     mockVerifyWebhook.mockReset();
     vi.stubEnv("CLERK_WEBHOOK_SECRET", "whsec_test");
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   describe("error cases", () => {
