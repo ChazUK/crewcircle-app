@@ -54,9 +54,10 @@ function RootNavigator() {
     if (!isLoading && !initialDesyncCheckDone.current) {
       initialDesyncCheckDone.current = true;
 
-      if (isSignedIn && !isAuthenticated) signOut();
+      if (isSignedIn && !isAuthenticated)
+        signOut().catch((err) => console.error("Failed to sign out stale Clerk session:", err));
     }
-  }, [isLoading, isSignedIn, isAuthenticated]);
+  }, [isLoading, isSignedIn, isAuthenticated, signOut]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -72,13 +73,13 @@ function RootNavigator() {
   // Keep the splash visible until auth has resolved AND (if authenticated)
   // both the user record exists and the onboarding status is known.
   useEffect(() => {
-    const ready = !isAuthenticated || (isUserReady && currentUser !== undefined);
+    const ready = !isAuthenticated || (isUserReady && currentUser != null);
     if (!isLoading && ready) {
       SplashScreen.hide();
     }
   }, [isLoading, isAuthenticated, isUserReady, currentUser]);
 
-  if (isLoading || (isAuthenticated && (!isUserReady || currentUser === undefined))) return null;
+  if (isLoading || (isAuthenticated && (!isUserReady || currentUser == null))) return null;
 
   const hasCompletedOnboarding = currentUser?.hasCompletedOnboarding === true;
 
