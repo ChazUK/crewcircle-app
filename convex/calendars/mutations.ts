@@ -1,8 +1,11 @@
 import { v } from "convex/values";
 
+import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { deleteConnectionEvents, replaceConnectionEvents } from "./db/writeEvents";
 import { CalendarProvider } from "./schema";
+
+const PRUNE_BATCH_SIZE = 200;
 
 const ParsedEventValidator = v.object({
   externalId: v.string(),
@@ -57,19 +60,42 @@ export const setEnabledSubCalendars = internalMutation({
       enabledSubCalendarIds: args.enabledSubCalendarIds,
     });
 
-    // Atomic prune: remove any cached events tied to a sub-calendar the user
-    // just turned off. Keeps the DB tight so neither the cron nor the client
-    // has to process events for disabled sub-calendars, and spares a later
-    // re-sync the union-replace delete pass.
-    const enabled = new Set(args.enabledSubCalendarIds);
-    const existing = await ctx.db
+    // Fan the prune out to a scheduled mutation so accounts with many cached
+    // events don't blow this transaction's read/write limits. The prune pass
+    // re-reads the current selection from the connection doc each iteration.
+    await ctx.scheduler.runAfter(0, internal.calendars.mutations.pruneDisabledSubCalendarEvents, {
+      connectionId: args.connectionId,
+      cursor: null,
+    });
+  },
+});
+
+export const pruneDisabledSubCalendarEvents = internalMutation({
+  args: {
+    connectionId: v.id("calendarConnections"),
+    cursor: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const connection = await ctx.db.get(args.connectionId);
+    if (!connection) return;
+    const enabled = new Set(connection.enabledSubCalendarIds ?? []);
+
+    const result = await ctx.db
       .query("calendarEvents")
       .withIndex("byConnection", (q) => q.eq("connectionId", args.connectionId))
-      .collect();
-    for (const event of existing) {
+      .paginate({ cursor: args.cursor, numItems: PRUNE_BATCH_SIZE });
+
+    for (const event of result.page) {
       if (event.subCalendarId && !enabled.has(event.subCalendarId)) {
         await ctx.db.delete(event._id);
       }
+    }
+
+    if (!result.isDone) {
+      await ctx.scheduler.runAfter(0, internal.calendars.mutations.pruneDisabledSubCalendarEvents, {
+        connectionId: args.connectionId,
+        cursor: result.continueCursor,
+      });
     }
   },
 });
