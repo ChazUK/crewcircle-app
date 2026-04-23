@@ -24,17 +24,86 @@ async function requireUser(ctx: ActionCtx): Promise<Doc<"users">> {
 
 function safeHostname(raw: string) {
   try {
-    return new URL(raw).hostname;
+    return new URL(normalizeIcalUrl(raw)).hostname;
   } catch {
     return "Calendar";
   }
+}
+
+// Many iCal subscription links use the `webcal://` scheme, which is just an
+// http(s) URL in disguise. Rewrite it so URL parsing and fetch both accept it.
+function normalizeIcalUrl(raw: string): string {
+  const trimmed = raw.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith("webcal://")) return `https://${trimmed.slice("webcal://".length)}`;
+  if (lower.startsWith("webcals://")) return `https://${trimmed.slice("webcals://".length)}`;
+  return trimmed;
+}
+
+// Reject URLs that would let a user point our server at internal infrastructure
+// (SSRF). This is a defence-in-depth hostname check — it does not resolve DNS,
+// so a DNS-rebinding host could still slip through; Convex's fetch sandbox is
+// the last line of defence there.
+function assertSafeIcalUrl(raw: string): string {
+  const normalized = normalizeIcalUrl(raw);
+  let url: URL;
+  try {
+    url = new URL(normalized);
+  } catch {
+    throw new Error("Invalid iCal URL");
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error("iCal URL must use http(s) or webcal");
+  }
+  if (url.username || url.password) {
+    throw new Error("iCal URL must not contain credentials");
+  }
+  const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (!hostname) throw new Error("iCal URL is missing a hostname");
+  if (hostname === "localhost" || hostname.endsWith(".localhost") || hostname === "broadcasthost") {
+    throw new Error("iCal URL points at a local host");
+  }
+  const ipv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const m = hostname.match(ipv4);
+  if (m) {
+    const octets = m.slice(1).map(Number);
+    if (octets.some((o) => o < 0 || o > 255 || Number.isNaN(o))) {
+      throw new Error("iCal URL has an invalid IP address");
+    }
+    const [a, b] = octets;
+    if (
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      a >= 224
+    ) {
+      throw new Error("iCal URL points at a private or reserved network");
+    }
+  }
+  if (hostname.includes(":")) {
+    // Very simplified IPv6 private/loopback/link-local check
+    if (
+      hostname === "::1" ||
+      hostname.startsWith("fc") ||
+      hostname.startsWith("fd") ||
+      hostname.startsWith("fe80")
+    ) {
+      throw new Error("iCal URL points at a private or reserved network");
+    }
+  }
+  return normalized;
 }
 
 async function fetchAndStoreIcal(
   ctx: ActionCtx,
   args: { connectionId: Id<"calendarConnections">; userId: Id<"users">; url: string },
 ) {
-  const res = await fetch(args.url, { redirect: "follow" });
+  const safeUrl = assertSafeIcalUrl(args.url);
+  const res = await fetch(safeUrl, { redirect: "follow" });
   if (!res.ok) throw new Error(`Failed to fetch iCal feed (status ${res.status})`);
   const body = await res.text();
   const events = parseIcs(body);
@@ -54,19 +123,20 @@ export const connectIcal = action({
   handler: async (ctx, args): Promise<Id<"calendarConnections">> => {
     const user = await requireUser(ctx);
     const trimmedLabel = args.label?.trim();
+    const safeUrl = assertSafeIcalUrl(args.url);
 
     const connectionId: Id<"calendarConnections"> = await ctx.runMutation(
       internal.calendars.mutations.insertConnection,
       {
         userId: user._id,
         provider: "ical",
-        label: trimmedLabel || safeHostname(args.url),
-        icalUrl: args.url,
+        label: trimmedLabel || safeHostname(safeUrl),
+        icalUrl: safeUrl,
       },
     );
 
     try {
-      await fetchAndStoreIcal(ctx, { connectionId, userId: user._id, url: args.url });
+      await fetchAndStoreIcal(ctx, { connectionId, userId: user._id, url: safeUrl });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown sync error";
       await ctx.runMutation(internal.calendars.mutations.markSynced, {
