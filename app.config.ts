@@ -20,6 +20,8 @@ export default {
         NSPhotoLibraryUsageDescription:
           "CrewCircle needs access to your photo library to upload a profile photo.",
         NSCameraUsageDescription: "CrewCircle needs access to your camera to take a profile photo.",
+        NSCalendarsUsageDescription:
+          "CrewCircle needs access to your calendar to view when you're busy and add events to your schedule.",
       },
     },
     android: {
@@ -58,8 +60,6 @@ export default {
     },
     extra: {
       EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME: process.env.EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME,
-      // EXPO_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID_{IOS,ANDROID,WEB} are inlined automatically —
-      // they are read directly in CalendarConnectionsSheet.tsx. No `extra` entry required.
     },
   },
 };

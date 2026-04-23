@@ -93,9 +93,11 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
   const disconnect = useAction(api.calendars.actions.disconnect);
   const uploadAppleEvents = useAction(api.calendars.actions.uploadAppleEvents);
 
-  const googleIosClientId = readEnv("EXPO_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID_IOS");
-  const googleAndroidClientId = readEnv("EXPO_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID_ANDROID");
-  const googleWebClientId = readEnv("EXPO_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID_WEB");
+  // Reuses the Google OAuth clients configured for Clerk sign-in; requesting the
+  // calendar scope here triggers a second consent only for the calendar permission.
+  const googleIosClientId = readEnv("EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID");
+  const googleAndroidClientId = readEnv("EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID");
+  const googleWebClientId = readEnv("EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID");
 
   const [googleRequest, googleResponse, promptGoogle] = Google.useAuthRequest({
     iosClientId: googleIosClientId,
@@ -174,7 +176,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
           : googleWebClientId;
     if (!resolvedClientId) {
       setError(
-        "Google Calendar OAuth is not configured. Add EXPO_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID_IOS / _ANDROID / _WEB to your env.",
+        "Google OAuth client IDs are missing. Set EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID / _ANDROID_CLIENT_ID / _WEB_CLIENT_ID in your env.",
       );
       return;
     }
