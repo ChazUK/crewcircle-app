@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CalendarConnectionsSheet } from "@/components/ui/CalendarConnectionsSheet";
 import { GearIcon } from "@/components/ui/icons/GearIcon";
 
-const today = new Date().toISOString().split("T")[0];
 const ACCENT = "#6366f1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -35,7 +34,8 @@ function formatTimeRange(startsAt: number, endsAt: number, isAllDay: boolean): s
 }
 
 export default function Diary() {
-  const [selectedDate, setSelectedDate] = useState<string>(today);
+  const todayIso = toIsoDate(Date.now());
+  const [selectedDate, setSelectedDate] = useState<string>(todayIso);
   // The first-of-month being viewed on the calendar grid. Updated when the
   // user navigates months so we only pull events for the visible window.
   const [visibleMonth, setVisibleMonth] = useState<string>(() => {
@@ -111,7 +111,7 @@ export default function Diary() {
         </View>
 
         <Calendar
-          current={today}
+          current={todayIso}
           onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
           onMonthChange={(m: DateData) => setVisibleMonth(m.dateString)}
           markedDates={markedDates}
@@ -136,10 +136,10 @@ export default function Diary() {
 
         <View className="px-4 mt-4">
           <Text className="text-sm text-foreground/60">
-            {format(new Date(selectedDate), "EEEE")}
+            {format(parseIsoDateLocal(selectedDate), "EEEE")}
           </Text>
           <Text className="text-sm text-foreground/60">
-            {format(new Date(selectedDate), "d MMMM")}
+            {format(parseIsoDateLocal(selectedDate), "d MMMM")}
           </Text>
         </View>
 
