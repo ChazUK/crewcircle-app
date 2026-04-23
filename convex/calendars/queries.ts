@@ -13,6 +13,7 @@ type SafeConnection = {
   externalAccountId?: string;
   icalUrl?: string;
   localCalendarId?: string;
+  enabledSubCalendarIds?: string[];
   lastSyncedAt?: number;
   lastSyncError?: string;
   createdAt: number;
@@ -27,6 +28,7 @@ function toSafe(doc: Doc<"calendarConnections">): SafeConnection {
     externalAccountId: doc.externalAccountId,
     icalUrl: doc.icalUrl,
     localCalendarId: doc.localCalendarId,
+    enabledSubCalendarIds: doc.enabledSubCalendarIds,
     lastSyncedAt: doc.lastSyncedAt,
     lastSyncError: doc.lastSyncError,
     createdAt: doc.createdAt,
@@ -66,6 +68,7 @@ export const listEventsInRange = query({
     return events.map((event) => ({
       _id: event._id,
       connectionId: event.connectionId,
+      subCalendarId: event.subCalendarId,
       title: event.title,
       description: event.description,
       location: event.location,

@@ -1,14 +1,23 @@
 import { Doc, Id } from "@convex/_generated/dataModel";
 import { MutationCtx } from "@convex/_generated/server";
 
-import { ParsedEvent } from "../domain/parseIcs";
+export type IncomingEvent = {
+  externalId: string;
+  subCalendarId?: string;
+  title: string;
+  description?: string;
+  location?: string;
+  startsAt: number;
+  endsAt: number;
+  isAllDay: boolean;
+};
 
 export async function replaceConnectionEvents(
   ctx: MutationCtx,
   args: {
     connectionId: Id<"calendarConnections">;
     userId: Id<"users">;
-    events: ParsedEvent[];
+    events: IncomingEvent[];
   },
 ) {
   const existing = await ctx.db
@@ -28,6 +37,7 @@ export async function replaceConnectionEvents(
     const payload = {
       userId: args.userId,
       connectionId: args.connectionId,
+      subCalendarId: event.subCalendarId,
       externalId: event.externalId,
       title: event.title,
       description: event.description,

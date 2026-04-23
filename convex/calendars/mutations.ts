@@ -6,6 +6,7 @@ import { CalendarProvider } from "./schema";
 
 const ParsedEventValidator = v.object({
   externalId: v.string(),
+  subCalendarId: v.optional(v.string()),
   title: v.string(),
   description: v.optional(v.string()),
   location: v.optional(v.string()),
@@ -26,6 +27,7 @@ export const insertConnection = internalMutation({
     oauthClientId: v.optional(v.string()),
     encryptedTokens: v.optional(v.bytes()),
     tokenExpiresAt: v.optional(v.number()),
+    enabledSubCalendarIds: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     return ctx.db.insert("calendarConnections", {
@@ -39,8 +41,36 @@ export const insertConnection = internalMutation({
       oauthClientId: args.oauthClientId,
       encryptedTokens: args.encryptedTokens,
       tokenExpiresAt: args.tokenExpiresAt,
+      enabledSubCalendarIds: args.enabledSubCalendarIds,
       createdAt: Date.now(),
     });
+  },
+});
+
+export const setEnabledSubCalendars = internalMutation({
+  args: {
+    connectionId: v.id("calendarConnections"),
+    enabledSubCalendarIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.connectionId, {
+      enabledSubCalendarIds: args.enabledSubCalendarIds,
+    });
+
+    // Atomic prune: remove any cached events tied to a sub-calendar the user
+    // just turned off. Keeps the DB tight so neither the cron nor the client
+    // has to process events for disabled sub-calendars, and spares a later
+    // re-sync the union-replace delete pass.
+    const enabled = new Set(args.enabledSubCalendarIds);
+    const existing = await ctx.db
+      .query("calendarEvents")
+      .withIndex("byConnection", (q) => q.eq("connectionId", args.connectionId))
+      .collect();
+    for (const event of existing) {
+      if (event.subCalendarId && !enabled.has(event.subCalendarId)) {
+        await ctx.db.delete(event._id);
+      }
+    }
   },
 });
 

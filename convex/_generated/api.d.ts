@@ -17,6 +17,8 @@ import type * as calendars_domain_parseIcs from "../calendars/domain/parseIcs.js
 import type * as calendars_google from "../calendars/google.js";
 import type * as calendars_mutations from "../calendars/mutations.js";
 import type * as calendars_queries from "../calendars/queries.js";
+import type * as calendars_scheduler from "../calendars/scheduler.js";
+import type * as crons from "../crons.js";
 import type * as files_mutations from "../files/mutations.js";
 import type * as http from "../http.js";
 import type * as users_db_getUser from "../users/db/getUser.js";
@@ -44,6 +46,8 @@ declare const fullApi: ApiFromModules<{
   "calendars/google": typeof calendars_google;
   "calendars/mutations": typeof calendars_mutations;
   "calendars/queries": typeof calendars_queries;
+  "calendars/scheduler": typeof calendars_scheduler;
+  crons: typeof crons;
   "files/mutations": typeof files_mutations;
   http: typeof http;
   "users/db/getUser": typeof users_db_getUser;

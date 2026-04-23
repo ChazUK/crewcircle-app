@@ -2,11 +2,12 @@ import { v } from "convex/values";
 
 import { api, internal } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
-import { ActionCtx, action } from "../_generated/server";
+import { ActionCtx, action, internalAction } from "../_generated/server";
 import { parseIcs } from "./domain/parseIcs";
 
 const EventInputValidator = v.object({
   externalId: v.string(),
+  subCalendarId: v.optional(v.string()),
   title: v.string(),
   description: v.optional(v.string()),
   location: v.optional(v.string()),
@@ -81,7 +82,7 @@ export const connectIcal = action({
 export const connectApple = action({
   args: {
     label: v.string(),
-    localCalendarId: v.string(),
+    enabledSubCalendarIds: v.array(v.string()),
     events: v.array(EventInputValidator),
   },
   handler: async (ctx, args): Promise<Id<"calendarConnections">> => {
@@ -92,7 +93,7 @@ export const connectApple = action({
         userId: user._id,
         provider: "apple",
         label: args.label,
-        localCalendarId: args.localCalendarId,
+        enabledSubCalendarIds: args.enabledSubCalendarIds,
       },
     );
     await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
@@ -179,6 +180,85 @@ export const syncConnection = action({
     }
 
     throw new Error(`Sync not supported for provider "${connection.provider}"`);
+  },
+});
+
+export const syncIcalConnectionInternal = internalAction({
+  args: {
+    connectionId: v.id("calendarConnections"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args): Promise<null> => {
+    const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
+      internal.calendars.actionHelpers.getConnectionInternal,
+      { connectionId: args.connectionId },
+    );
+    if (!connection || connection.userId !== args.userId) {
+      throw new Error("Calendar connection not found");
+    }
+    if (connection.provider !== "ical" || !connection.icalUrl) {
+      throw new Error("syncIcalConnectionInternal requires an iCal connection");
+    }
+    try {
+      await fetchAndStoreIcal(ctx, {
+        connectionId: args.connectionId,
+        userId: args.userId,
+        url: connection.icalUrl,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown sync error";
+      await ctx.runMutation(internal.calendars.mutations.markSynced, {
+        connectionId: args.connectionId,
+        error: message,
+      });
+      // Don't rethrow — the cron scheduler fans out per-connection, we let
+      // one failure record its error without poisoning siblings.
+    }
+    return null;
+  },
+});
+
+export const setEnabledSubCalendars = action({
+  args: {
+    connectionId: v.id("calendarConnections"),
+    enabledSubCalendarIds: v.array(v.string()),
+  },
+  handler: async (ctx, args): Promise<null> => {
+    const user = await requireUser(ctx);
+    const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
+      internal.calendars.actionHelpers.getConnectionForOwner,
+      { connectionId: args.connectionId, userId: user._id },
+    );
+    if (!connection) throw new Error("Calendar connection not found");
+    await ctx.runMutation(internal.calendars.mutations.setEnabledSubCalendars, {
+      connectionId: args.connectionId,
+      enabledSubCalendarIds: args.enabledSubCalendarIds,
+    });
+
+    // Trigger a fresh sync so the events cache reflects the new selection.
+    // Apple events are pushed from the device — the client will call
+    // uploadAppleEvents itself after changing its selection.
+    if (connection.provider === "google") {
+      await ctx.runAction(internal.calendars.google.syncGoogleConnectionInternal, {
+        connectionId: args.connectionId,
+        userId: user._id,
+      });
+    } else if (connection.provider === "ical" && connection.icalUrl) {
+      try {
+        await fetchAndStoreIcal(ctx, {
+          connectionId: args.connectionId,
+          userId: user._id,
+          url: connection.icalUrl,
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown sync error";
+        await ctx.runMutation(internal.calendars.mutations.markSynced, {
+          connectionId: args.connectionId,
+          error: message,
+        });
+      }
+    }
+    return null;
   },
 });
 

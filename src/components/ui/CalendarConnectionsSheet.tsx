@@ -26,6 +26,7 @@ import {
   LinkCalendarIcon,
   OutlookCalendarIcon,
 } from "./icons/CalendarProviderIcons";
+import { SubCalendarPickerSheet, type SubCalendarOption } from "./SubCalendarPickerSheet";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -33,18 +34,26 @@ const GOOGLE_SCOPES = ["openid", "email", "https://www.googleapis.com/auth/calen
 const APPLE_WINDOW_PAST_DAYS = 30;
 const APPLE_WINDOW_FUTURE_DAYS = 180;
 
+// Reuses Clerk's Google OAuth clients; must be literal property access so
+// babel-preset-expo can inline the values at build time.
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID;
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID;
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID;
+
 type Provider = Doc<"calendarConnections">["provider"];
 
 type SafeConnection = {
   _id: Id<"calendarConnections">;
   provider: Provider;
   label: string;
+  enabledSubCalendarIds?: string[];
   lastSyncedAt?: number;
   lastSyncError?: string;
 };
 
 type EventInput = {
   externalId: string;
+  subCalendarId?: string;
   title: string;
   description?: string;
   location?: string;
@@ -53,7 +62,7 @@ type EventInput = {
   isAllDay: boolean;
 };
 
-type AddProvider = "ical" | "apple";
+type AddProvider = "ical";
 
 type Props = {
   isOpen: boolean;
@@ -70,13 +79,6 @@ const PROVIDER_META: Record<
   ical: { title: "iCal URL", Icon: LinkCalendarIcon },
 };
 
-// Reuses Clerk's Google OAuth clients; must be literal property access so
-// babel-preset-expo can inline the values at build time. Dynamic keys
-// (`process.env[variable]`) are NOT inlined and would resolve to undefined.
-const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID;
-const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID;
-const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID;
-
 function formatLastSync(ts?: number): string | undefined {
   if (!ts) return undefined;
   const delta = Date.now() - ts;
@@ -86,12 +88,36 @@ function formatLastSync(ts?: number): string | undefined {
   return `Synced ${new Date(ts).toLocaleDateString()}`;
 }
 
+async function readAppleEvents(subCalendarIds: string[]): Promise<EventInput[]> {
+  const start = new Date(Date.now() - APPLE_WINDOW_PAST_DAYS * 86_400_000);
+  const end = new Date(Date.now() + APPLE_WINDOW_FUTURE_DAYS * 86_400_000);
+  const events: EventInput[] = [];
+  for (const calId of subCalendarIds) {
+    const native = await Calendar.getEventsAsync([calId], start, end);
+    for (const event of native) {
+      events.push({
+        externalId: `${calId}::${event.id}`,
+        subCalendarId: calId,
+        title: event.title || "(No title)",
+        description: event.notes || undefined,
+        location: event.location || undefined,
+        startsAt: new Date(event.startDate).getTime(),
+        endsAt: new Date(event.endDate).getTime(),
+        isAllDay: Boolean(event.allDay),
+      });
+    }
+  }
+  return events;
+}
+
 export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
   const connections = useQuery(api.calendars.queries.listConnections) ?? [];
   const connectIcal = useAction(api.calendars.actions.connectIcal);
   const connectApple = useAction(api.calendars.actions.connectApple);
   const connectGoogleAction = useAction(api.calendars.google.connectGoogle);
+  const listGoogleCalendars = useAction(api.calendars.google.listGoogleCalendars);
   const syncConnection = useAction(api.calendars.actions.syncConnection);
+  const setEnabledSubCalendars = useAction(api.calendars.actions.setEnabledSubCalendars);
   const disconnect = useAction(api.calendars.actions.disconnect);
   const uploadAppleEvents = useAction(api.calendars.actions.uploadAppleEvents);
 
@@ -101,9 +127,6 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
     webClientId: GOOGLE_WEB_CLIENT_ID,
     scopes: GOOGLE_SCOPES,
     responseType: "code",
-    // Don't let the hook exchange the code itself — the code is single-use
-    // and we need Convex (server-side) to do the exchange so it can encrypt
-    // and persist the refresh token.
     shouldAutoExchangeCode: false,
   });
 
@@ -112,15 +135,19 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
   const [icalLabel, setIcalLabel] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [appleCalendars, setAppleCalendars] = useState<Calendar.Calendar[]>([]);
+  const [appleDeviceCalendars, setAppleDeviceCalendars] = useState<Calendar.Calendar[]>([]);
   const [applePickerOpen, setApplePickerOpen] = useState(false);
-  // Authorization codes from Google are single-use. Track the last code we
-  // handled so a re-render or StrictMode double-invoke doesn't retry it.
+  const [expandedId, setExpandedId] = useState<Id<"calendarConnections"> | null>(null);
+  // State backing the "Manage calendars" picker — reused for Google + Apple.
+  const [managePickerOpen, setManagePickerOpen] = useState(false);
+  const [managePickerConnection, setManagePickerConnection] = useState<{
+    connectionId: Id<"calendarConnections">;
+    provider: Provider;
+  } | null>(null);
+  const [managePickerOptions, setManagePickerOptions] = useState<SubCalendarOption[]>([]);
+  const [managePickerInitial, setManagePickerInitial] = useState<string[]>([]);
+
   const consumedGoogleCodeRef = useRef<string | null>(null);
-  // Snapshot of the PKCE verifier + redirect URI taken when we launched the
-  // auth flow. `googleRequest` can be regenerated across renders; reading from
-  // it in the response effect risks picking up a fresh verifier that doesn't
-  // match the challenge Google received.
   const googleAuthSnapshotRef = useRef<{
     codeVerifier: string;
     redirectUri: string;
@@ -131,8 +158,8 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
     setAdding(null);
     setIcalUrl("");
     setIcalLabel("");
+    setAppleDeviceCalendars([]);
     setApplePickerOpen(false);
-    setAppleCalendars([]);
   }, []);
 
   const handleOpenChange = useCallback(
@@ -141,9 +168,71 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
       if (!value) {
         resetAddState();
         setError(null);
+        setExpandedId(null);
       }
     },
     [onOpenChange, resetAddState],
+  );
+
+  const openManagePicker = useCallback(
+    async (args: {
+      connectionId: Id<"calendarConnections">;
+      provider: Provider;
+      currentIds: string[];
+    }) => {
+      if (args.provider === "ical" || args.provider === "outlook") return;
+      setError(null);
+      setBusy(args.connectionId);
+      try {
+        let options: SubCalendarOption[] = [];
+        if (args.provider === "google") {
+          const items = await listGoogleCalendars({ connectionId: args.connectionId });
+          options = items.map((item) => ({
+            id: item.id,
+            label: item.label,
+            hint: item.primary ? "Primary" : item.accessRole,
+          }));
+        } else if (args.provider === "apple") {
+          const permission = await Calendar.requestCalendarPermissionsAsync();
+          if (permission.status !== "granted") {
+            throw new Error("Calendar permission is required");
+          }
+          const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+          options = calendars.map((c) => ({
+            id: c.id,
+            label: c.title,
+            hint: c.source?.name,
+          }));
+        }
+        setManagePickerOptions(options);
+        setManagePickerInitial(args.currentIds);
+        setManagePickerConnection({ connectionId: args.connectionId, provider: args.provider });
+        setManagePickerOpen(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load calendars");
+      } finally {
+        setBusy(null);
+      }
+    },
+    [listGoogleCalendars],
+  );
+
+  const handleConfirmManage = useCallback(
+    async (pickedIds: string[]) => {
+      const target = managePickerConnection;
+      if (!target) return;
+      await setEnabledSubCalendars({
+        connectionId: target.connectionId,
+        enabledSubCalendarIds: pickedIds,
+      });
+      if (target.provider === "apple") {
+        // For Apple the server can't sync on its own; push events from the device.
+        const events = await readAppleEvents(pickedIds);
+        await uploadAppleEvents({ connectionId: target.connectionId, events });
+      }
+      setManagePickerOpen(false);
+    },
+    [managePickerConnection, setEnabledSubCalendars, uploadAppleEvents],
   );
 
   useEffect(() => {
@@ -154,20 +243,32 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
     if (consumedGoogleCodeRef.current === code) return;
     consumedGoogleCodeRef.current = code;
 
-    setBusy("google");
-    setError(null);
-    connectGoogleAction({
-      code,
-      codeVerifier: snapshot.codeVerifier,
-      clientId: snapshot.clientId,
-      redirectUri: snapshot.redirectUri,
-    })
-      .catch((err: Error) => {
-        const detail = `${err.message} — redirect_uri=${snapshot.redirectUri}`;
-        setError(detail);
-      })
-      .finally(() => setBusy(null));
-  }, [googleResponse, connectGoogleAction]);
+    (async () => {
+      setBusy("google");
+      setError(null);
+      try {
+        const connectionId = await connectGoogleAction({
+          code,
+          codeVerifier: snapshot.codeVerifier,
+          clientId: snapshot.clientId,
+          redirectUri: snapshot.redirectUri,
+        });
+        // After Google returns tokens, surface its sub-calendars so the user
+        // can pick which ones to actually sync. Defaults to "primary" (what
+        // connectGoogle enabled during its initial sync).
+        await openManagePicker({
+          connectionId,
+          provider: "google",
+          currentIds: ["primary"],
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Google connection failed";
+        setError(`${message} — redirect_uri=${snapshot.redirectUri}`);
+      } finally {
+        setBusy(null);
+      }
+    })();
+  }, [googleResponse, connectGoogleAction, openManagePicker]);
 
   const handleConnectGoogle = useCallback(async () => {
     setError(null);
@@ -187,9 +288,6 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
       setError("Google OAuth request not ready yet — try again in a moment.");
       return;
     }
-    // Snapshot the verifier + redirect URI NOW so the response handler uses
-    // values that match the challenge sent to Google, even if the hook later
-    // regenerates its internal request object.
     googleAuthSnapshotRef.current = {
       codeVerifier: googleRequest.codeVerifier,
       redirectUri: googleRequest.redirectUri,
@@ -229,43 +327,27 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
       setError("No calendars found on this device.");
       return;
     }
-    setAppleCalendars(calendars);
-    setAdding("apple");
+    setAppleDeviceCalendars(calendars);
     setApplePickerOpen(true);
   }, []);
 
-  const handlePickAppleCalendar = useCallback(
-    async (calendar: Calendar.Calendar) => {
-      setBusy("apple");
-      setError(null);
-      try {
-        const now = Date.now();
-        const start = new Date(now - APPLE_WINDOW_PAST_DAYS * 86400_000);
-        const end = new Date(now + APPLE_WINDOW_FUTURE_DAYS * 86400_000);
-        const nativeEvents = await Calendar.getEventsAsync([calendar.id], start, end);
-        const events: EventInput[] = nativeEvents.map((event) => ({
-          externalId: event.id,
-          title: event.title || "(No title)",
-          description: event.notes || undefined,
-          location: event.location || undefined,
-          startsAt: new Date(event.startDate).getTime(),
-          endsAt: new Date(event.endDate).getTime(),
-          isAllDay: Boolean(event.allDay),
-        }));
-        await connectApple({
-          label: calendar.title,
-          localCalendarId: calendar.id,
-          events,
-        });
-        resetAddState();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to connect Apple Calendar");
-      } finally {
-        setBusy(null);
-      }
+  const handleConfirmApple = useCallback(
+    async (pickedIds: string[]) => {
+      const events = await readAppleEvents(pickedIds);
+      await connectApple({
+        label: "Apple Calendar",
+        enabledSubCalendarIds: pickedIds,
+        events,
+      });
+      setApplePickerOpen(false);
+      setAppleDeviceCalendars([]);
     },
-    [connectApple, resetAddState],
+    [connectApple],
   );
+
+  const handleToggleExpand = useCallback((connection: SafeConnection) => {
+    setExpandedId((current) => (current === connection._id ? null : connection._id));
+  }, []);
 
   const handleDisconnect = useCallback(
     (connection: SafeConnection) => {
@@ -281,6 +363,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
               setBusy(connection._id);
               try {
                 await disconnect({ connectionId: connection._id });
+                if (expandedId === connection._id) setExpandedId(null);
               } catch (err) {
                 setError(err instanceof Error ? err.message : "Failed to disconnect");
               } finally {
@@ -291,7 +374,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
         ],
       );
     },
-    [disconnect],
+    [disconnect, expandedId],
   );
 
   const handleRefresh = useCallback(
@@ -299,31 +382,12 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
       setBusy(connection._id);
       setError(null);
       try {
-        if (connection.provider === "apple" && connection.lastSyncedAt != null) {
-          // Re-read from the device and push to Convex
-          const permission = await Calendar.requestCalendarPermissionsAsync();
-          if (permission.status !== "granted") {
-            throw new Error("Calendar permission is required");
+        if (connection.provider === "apple") {
+          const ids = connection.enabledSubCalendarIds ?? [];
+          if (ids.length === 0) {
+            throw new Error("No calendars selected for this Apple connection");
           }
-          const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
-          const pick = calendars.find((c) => {
-            // We don't know localCalendarId here without re-querying; fall back to label match
-            return c.title === connection.label;
-          });
-          if (!pick) throw new Error("Original calendar no longer exists on this device");
-          const now = Date.now();
-          const start = new Date(now - APPLE_WINDOW_PAST_DAYS * 86400_000);
-          const end = new Date(now + APPLE_WINDOW_FUTURE_DAYS * 86400_000);
-          const nativeEvents = await Calendar.getEventsAsync([pick.id], start, end);
-          const events: EventInput[] = nativeEvents.map((event) => ({
-            externalId: event.id,
-            title: event.title || "(No title)",
-            description: event.notes || undefined,
-            location: event.location || undefined,
-            startsAt: new Date(event.startDate).getTime(),
-            endsAt: new Date(event.endDate).getTime(),
-            isAllDay: Boolean(event.allDay),
-          }));
+          const events = await readAppleEvents(ids);
           await uploadAppleEvents({ connectionId: connection._id, events });
         } else {
           await syncConnection({ connectionId: connection._id });
@@ -343,6 +407,16 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
       "Microsoft calendar support isn't wired up yet. Use an iCal subscription URL in the meantime.",
     );
   }, []);
+
+  const applePickerOptions = useMemo<SubCalendarOption[]>(
+    () =>
+      appleDeviceCalendars.map((cal) => ({
+        id: cal.id,
+        label: cal.title,
+        hint: cal.source?.name,
+      })),
+    [appleDeviceCalendars],
+  );
 
   const addTiles = useMemo(
     () => [
@@ -383,7 +457,8 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
             <View className="mb-4 gap-1.5 px-1">
               <BottomSheet.Title>Calendars</BottomSheet.Title>
               <BottomSheet.Description>
-                Connect as many calendars as you like — including multiple of the same type.
+                Connect as many calendars as you like. Tap any connection to toggle its
+                sub-calendars.
               </BottomSheet.Description>
             </View>
 
@@ -405,11 +480,15 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
                       connection.lastSyncError ??
                       formatLastSync(connection.lastSyncedAt) ??
                       "Not synced yet";
-                    const isBusy = busy === connection._id;
+                    const isBusyRow = busy === connection._id;
+                    const isExpanded = expandedId === connection._id;
+                    const hasSubCalendars =
+                      connection.provider === "google" || connection.provider === "apple";
+
                     return (
                       <Fragment key={connection._id}>
                         {index > 0 && <Separator className="mx-4" />}
-                        <ListGroup.Item onPress={() => handleRefresh(connection)}>
+                        <ListGroup.Item onPress={() => handleToggleExpand(connection)}>
                           <ListGroup.ItemPrefix>
                             <meta.Icon size={32} />
                           </ListGroup.ItemPrefix>
@@ -418,13 +497,65 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
                               {connection.label}
                             </ListGroup.ItemTitle>
                             <ListGroup.ItemDescription numberOfLines={1}>
-                              {isBusy ? "Syncing…" : subtitle}
+                              {isBusyRow ? "Working…" : subtitle}
                             </ListGroup.ItemDescription>
                           </ListGroup.ItemContent>
                           <ListGroup.ItemSuffix>
-                            {isBusy ? (
+                            {isBusyRow ? (
                               <Spinner size="sm" />
                             ) : (
+                              <Text className="text-lg text-foreground/60">
+                                {isExpanded ? "▾" : "▸"}
+                              </Text>
+                            )}
+                          </ListGroup.ItemSuffix>
+                        </ListGroup.Item>
+
+                        {isExpanded && (
+                          <View className="gap-2 bg-default-100/40 px-4 py-3">
+                            {connection.provider === "ical" ? (
+                              <Text className="text-sm text-muted-foreground">
+                                iCal feeds are a single subscription — no sub-calendars to pick.
+                              </Text>
+                            ) : connection.provider === "outlook" ? (
+                              <Text className="text-sm text-muted-foreground">
+                                Outlook support isn't wired up yet.
+                              </Text>
+                            ) : (
+                              <Text className="text-sm text-muted-foreground">
+                                {(connection.enabledSubCalendarIds?.length ?? 0) === 0
+                                  ? "No sub-calendars selected yet."
+                                  : `${connection.enabledSubCalendarIds?.length} sub-calendar${
+                                      connection.enabledSubCalendarIds?.length === 1 ? "" : "s"
+                                    } syncing.`}
+                              </Text>
+                            )}
+
+                            <View className="mt-2 flex-row justify-end gap-2">
+                              <Chip
+                                variant="soft"
+                                color="default"
+                                size="sm"
+                                onPress={() => handleRefresh(connection)}
+                              >
+                                Refresh
+                              </Chip>
+                              {hasSubCalendars && (
+                                <Chip
+                                  variant="soft"
+                                  color="accent"
+                                  size="sm"
+                                  onPress={() =>
+                                    openManagePicker({
+                                      connectionId: connection._id,
+                                      provider: connection.provider,
+                                      currentIds: connection.enabledSubCalendarIds ?? [],
+                                    })
+                                  }
+                                >
+                                  Manage
+                                </Chip>
+                              )}
                               <Chip
                                 variant="soft"
                                 color="danger"
@@ -433,9 +564,9 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
                               >
                                 Remove
                               </Chip>
-                            )}
-                          </ListGroup.ItemSuffix>
-                        </ListGroup.Item>
+                            </View>
+                          </View>
+                        )}
                       </Fragment>
                     );
                   })}
@@ -449,11 +580,11 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
               </Text>
               <ListGroup>
                 {addTiles.map((tile, index) => {
-                  const isBusy = busy === tile.key;
+                  const isBusyTile = busy === tile.key;
                   return (
                     <Fragment key={tile.key}>
                       {index > 0 && <Separator className="mx-4" />}
-                      <ListGroup.Item onPress={tile.onPress} disabled={isBusy}>
+                      <ListGroup.Item onPress={tile.onPress} disabled={isBusyTile}>
                         <ListGroup.ItemPrefix>
                           <tile.Icon size={32} />
                         </ListGroup.ItemPrefix>
@@ -461,7 +592,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
                           <ListGroup.ItemTitle>{tile.title}</ListGroup.ItemTitle>
                         </ListGroup.ItemContent>
                         <ListGroup.ItemSuffix>
-                          {isBusy ? <Spinner size="sm" /> : null}
+                          {isBusyTile ? <Spinner size="sm" /> : null}
                         </ListGroup.ItemSuffix>
                       </ListGroup.Item>
                     </Fragment>
@@ -515,47 +646,6 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
               </View>
             )}
 
-            {adding === "apple" && applePickerOpen && (
-              <View className="mt-2 gap-2 px-1">
-                <Text className="text-xs font-semibold uppercase text-muted-foreground">
-                  Choose a calendar
-                </Text>
-                <ListGroup>
-                  {appleCalendars.map((cal, index) => (
-                    <Fragment key={cal.id}>
-                      {index > 0 && <Separator className="mx-4" />}
-                      <ListGroup.Item
-                        onPress={() => handlePickAppleCalendar(cal)}
-                        disabled={busy === "apple"}
-                      >
-                        <ListGroup.ItemContent>
-                          <ListGroup.ItemTitle>{cal.title}</ListGroup.ItemTitle>
-                          {cal.source?.name ? (
-                            <ListGroup.ItemDescription numberOfLines={1}>
-                              {cal.source.name}
-                            </ListGroup.ItemDescription>
-                          ) : null}
-                        </ListGroup.ItemContent>
-                        <ListGroup.ItemSuffix>
-                          {busy === "apple" ? <Spinner size="sm" /> : null}
-                        </ListGroup.ItemSuffix>
-                      </ListGroup.Item>
-                    </Fragment>
-                  ))}
-                </ListGroup>
-                <View className="flex-row justify-end">
-                  <Button
-                    variant="tertiary"
-                    size="sm"
-                    onPress={resetAddState}
-                    isDisabled={busy === "apple"}
-                  >
-                    Cancel
-                  </Button>
-                </View>
-              </View>
-            )}
-
             <Text className="mt-4 text-sm text-muted-foreground">
               We never share event details with your circles — only whether you're free or busy.
             </Text>
@@ -568,6 +658,39 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
           </BottomSheetScrollView>
         </BottomSheet.Content>
       </BottomSheet.Portal>
+
+      <SubCalendarPickerSheet
+        isOpen={applePickerOpen}
+        onOpenChange={(open) => {
+          setApplePickerOpen(open);
+          if (!open) setAppleDeviceCalendars([]);
+        }}
+        title="Pick calendars to sync"
+        description="Choose which Apple calendars from this device to pull into your diary. You can change this any time."
+        calendars={applePickerOptions}
+        confirmLabel="Connect"
+        busyLabel="Connecting…"
+        onConfirm={handleConfirmApple}
+      />
+
+      <SubCalendarPickerSheet
+        isOpen={managePickerOpen}
+        onOpenChange={(open) => {
+          setManagePickerOpen(open);
+          if (!open) {
+            setManagePickerConnection(null);
+            setManagePickerOptions([]);
+            setManagePickerInitial([]);
+          }
+        }}
+        title="Manage calendars"
+        description="Tick the sub-calendars you want to appear in your diary."
+        calendars={managePickerOptions}
+        initialSelection={managePickerInitial}
+        confirmLabel="Save"
+        busyLabel="Saving…"
+        onConfirm={handleConfirmManage}
+      />
     </BottomSheet>
   );
 }

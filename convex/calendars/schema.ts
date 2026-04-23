@@ -30,6 +30,11 @@ export const CalendarConnection = {
   encryptedTokens: v.optional(v.bytes()),
   // Unix ms — when the access token expires
   tokenExpiresAt: v.optional(v.number()),
+  // IDs of sub-calendars within this account to actively sync.
+  // - Google: calendar ids from /calendarList (e.g. "primary", "xxx@group.calendar.google.com")
+  // - Apple: device localCalendarIds from expo-calendar
+  // - iCal: not applicable (the feed URL is opaque)
+  enabledSubCalendarIds: v.optional(v.array(v.string())),
   // Sync metadata
   lastSyncedAt: v.optional(v.number()),
   lastSyncError: v.optional(v.string()),
@@ -39,7 +44,11 @@ export const CalendarConnection = {
 export const CalendarEvent = {
   userId: v.id("users"),
   connectionId: v.id("calendarConnections"),
-  // Provider's stable event identifier (Google eventId, ICS UID, Apple event id)
+  // Which sub-calendar this event came from. Empty/undefined for iCal feeds.
+  subCalendarId: v.optional(v.string()),
+  // Composite stable identifier: `${subCalendarId}::${providerEventId}` when a
+  // sub-calendar applies, else the raw provider event id. Ensures uniqueness
+  // across sub-calendars of the same connection.
   externalId: v.string(),
   title: v.string(),
   description: v.optional(v.string()),

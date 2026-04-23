@@ -5,8 +5,8 @@ import { v } from "convex/values";
 import { api, internal } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
 import { ActionCtx, action, internalAction } from "../_generated/server";
+import type { IncomingEvent } from "./db/writeEvents";
 import { decryptJson, encryptJson, type EncryptedOAuthTokens } from "./domain/crypto";
-import type { ParsedEvent } from "./domain/parseIcs";
 
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo";
@@ -35,6 +35,22 @@ type GoogleEvent = {
 
 type EventsListResponse = {
   items?: GoogleEvent[];
+  nextPageToken?: string;
+};
+
+type GoogleCalendarListEntry = {
+  id: string;
+  summary?: string;
+  summaryOverride?: string;
+  description?: string;
+  primary?: boolean;
+  accessRole?: string;
+  backgroundColor?: string;
+  selected?: boolean;
+};
+
+type CalendarListResponse = {
+  items?: GoogleCalendarListEntry[];
   nextPageToken?: string;
 };
 
@@ -101,13 +117,38 @@ async function fetchUserInfo(accessToken: string): Promise<{ sub: string; email?
   return (await res.json()) as { sub: string; email?: string };
 }
 
-async function fetchPrimaryCalendarEvents(accessToken: string): Promise<ParsedEvent[]> {
-  const timeMin = new Date(Date.now() - SYNC_WINDOW_PAST_MS).toISOString();
-  const timeMax = new Date(Date.now() + SYNC_WINDOW_FUTURE_MS).toISOString();
-  const events: ParsedEvent[] = [];
+async function fetchCalendarList(accessToken: string): Promise<GoogleCalendarListEntry[]> {
+  const items: GoogleCalendarListEntry[] = [];
   let pageToken: string | undefined;
   do {
-    const url = new URL(`${CALENDAR_BASE}/calendars/primary/events`);
+    const url = new URL(`${CALENDAR_BASE}/users/me/calendarList`);
+    url.searchParams.set("maxResults", "250");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Google calendarList failed (${res.status}): ${text}`);
+    }
+    const data = (await res.json()) as CalendarListResponse;
+    items.push(...(data.items ?? []));
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  return items;
+}
+
+async function fetchEventsForCalendar(
+  accessToken: string,
+  calendarId: string,
+): Promise<IncomingEvent[]> {
+  const timeMin = new Date(Date.now() - SYNC_WINDOW_PAST_MS).toISOString();
+  const timeMax = new Date(Date.now() + SYNC_WINDOW_FUTURE_MS).toISOString();
+  const events: IncomingEvent[] = [];
+  let pageToken: string | undefined;
+  do {
+    const url = new URL(`${CALENDAR_BASE}/calendars/${encodeURIComponent(calendarId)}/events`);
     url.searchParams.set("singleEvents", "true");
     url.searchParams.set("orderBy", "startTime");
     url.searchParams.set("timeMin", timeMin);
@@ -125,7 +166,7 @@ async function fetchPrimaryCalendarEvents(accessToken: string): Promise<ParsedEv
     const data = (await res.json()) as EventsListResponse;
     for (const item of data.items ?? []) {
       if (item.status === "cancelled") continue;
-      const parsed = googleEventToParsed(item);
+      const parsed = googleEventToIncoming(item, calendarId);
       if (parsed) events.push(parsed);
     }
     pageToken = data.nextPageToken;
@@ -133,14 +174,25 @@ async function fetchPrimaryCalendarEvents(accessToken: string): Promise<ParsedEv
   return events;
 }
 
-function googleEventToParsed(event: GoogleEvent): ParsedEvent | null {
+async function fetchEventsForCalendars(
+  accessToken: string,
+  calendarIds: string[],
+): Promise<IncomingEvent[]> {
+  const results = await Promise.all(
+    calendarIds.map((id) => fetchEventsForCalendar(accessToken, id)),
+  );
+  return results.flat();
+}
+
+function googleEventToIncoming(event: GoogleEvent, subCalendarId: string): IncomingEvent | null {
   const startsAt = parseGoogleDate(event.start);
   const endsAt = parseGoogleDate(event.end);
   if (startsAt == null) return null;
   const isAllDay = Boolean(event.start?.date && !event.start?.dateTime);
   const resolvedEnd = endsAt ?? startsAt + (isAllDay ? 24 * 60 * 60 * 1000 : 60 * 60 * 1000);
   return {
-    externalId: event.id,
+    externalId: `${subCalendarId}::${event.id}`,
+    subCalendarId,
     title: event.summary ?? "(No title)",
     description: event.description,
     location: event.location,
@@ -164,7 +216,7 @@ function parseGoogleDate(field?: { dateTime?: string; date?: string }): number |
   return null;
 }
 
-async function syncGoogleTokens(
+async function ensureAccessToken(
   ctx: ActionCtx,
   connection: Doc<"calendarConnections">,
   clientId: string,
@@ -236,11 +288,12 @@ export const connectGoogle = action({
         oauthClientId: args.clientId,
         encryptedTokens,
         tokenExpiresAt: Date.now() + token.expires_in * 1000,
+        enabledSubCalendarIds: ["primary"],
       },
     );
 
     try {
-      const events = await fetchPrimaryCalendarEvents(token.access_token);
+      const events = await fetchEventsForCalendars(token.access_token, ["primary"]);
       await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
         connectionId,
         userId: user._id,
@@ -258,6 +311,46 @@ export const connectGoogle = action({
       });
     }
     return connectionId;
+  },
+});
+
+export const listGoogleCalendars = action({
+  args: { connectionId: v.id("calendarConnections") },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<
+    Array<{
+      id: string;
+      label: string;
+      primary: boolean;
+      accessRole?: string;
+      backgroundColor?: string;
+    }>
+  > => {
+    const user = await ctx.runQuery(api.users.queries.getCurrentUser, {});
+    if (!user) throw new Error("Not authenticated");
+    const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
+      internal.calendars.actionHelpers.getConnectionForOwner,
+      { connectionId: args.connectionId, userId: user._id },
+    );
+    if (!connection) throw new Error("Calendar connection not found");
+    if (connection.provider !== "google") {
+      throw new Error("listGoogleCalendars only supports Google connections");
+    }
+    const clientId = connection.oauthClientId;
+    if (!clientId) {
+      throw new Error("Google connection is missing its OAuth client id; please reconnect.");
+    }
+    const accessToken = await ensureAccessToken(ctx, connection, clientId);
+    const items = await fetchCalendarList(accessToken);
+    return items.map((item) => ({
+      id: item.id,
+      label: item.summaryOverride ?? item.summary ?? item.id,
+      primary: Boolean(item.primary),
+      accessRole: item.accessRole,
+      backgroundColor: item.backgroundColor,
+    }));
   },
 });
 
@@ -283,9 +376,13 @@ export const syncGoogleConnectionInternal = internalAction({
         "Google connection is missing its original OAuth client id; please reconnect.",
       );
     }
+    const enabledIds =
+      connection.enabledSubCalendarIds && connection.enabledSubCalendarIds.length > 0
+        ? connection.enabledSubCalendarIds
+        : ["primary"];
     try {
-      const accessToken = await syncGoogleTokens(ctx, connection, clientId);
-      const events = await fetchPrimaryCalendarEvents(accessToken);
+      const accessToken = await ensureAccessToken(ctx, connection, clientId);
+      const events = await fetchEventsForCalendars(accessToken, enabledIds);
       await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
         connectionId: args.connectionId,
         userId: args.userId,
