@@ -1,0 +1,308 @@
+"use node";
+
+import { v } from "convex/values";
+
+import { api, internal } from "../_generated/api";
+import { Doc, Id } from "../_generated/dataModel";
+import { ActionCtx, action, internalAction } from "../_generated/server";
+import { decryptJson, encryptJson, type EncryptedOAuthTokens } from "./domain/crypto";
+import type { ParsedEvent } from "./domain/parseIcs";
+
+const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
+const USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo";
+const CALENDAR_BASE = "https://www.googleapis.com/calendar/v3";
+const DEFAULT_SCOPE = "https://www.googleapis.com/auth/calendar.readonly openid email";
+const SYNC_WINDOW_PAST_MS = 30 * 24 * 60 * 60 * 1000;
+const SYNC_WINDOW_FUTURE_MS = 180 * 24 * 60 * 60 * 1000;
+
+type TokenResponse = {
+  access_token: string;
+  expires_in: number;
+  refresh_token?: string;
+  scope?: string;
+  token_type?: string;
+};
+
+type GoogleEvent = {
+  id: string;
+  summary?: string;
+  description?: string;
+  location?: string;
+  start?: { dateTime?: string; date?: string };
+  end?: { dateTime?: string; date?: string };
+  status?: string;
+};
+
+type EventsListResponse = {
+  items?: GoogleEvent[];
+  nextPageToken?: string;
+};
+
+async function exchangeAuthorizationCode(params: {
+  code: string;
+  codeVerifier: string;
+  clientId: string;
+  redirectUri: string;
+}): Promise<TokenResponse> {
+  const body = new URLSearchParams({
+    code: params.code,
+    client_id: params.clientId,
+    code_verifier: params.codeVerifier,
+    redirect_uri: params.redirectUri,
+    grant_type: "authorization_code",
+  });
+  const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET;
+  if (clientSecret) body.set("client_secret", clientSecret);
+
+  const res = await fetch(TOKEN_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Google token exchange failed (${res.status}): ${text}`);
+  }
+  return (await res.json()) as TokenResponse;
+}
+
+async function refreshAccessToken(params: {
+  refreshToken: string;
+  clientId: string;
+}): Promise<TokenResponse> {
+  const body = new URLSearchParams({
+    refresh_token: params.refreshToken,
+    client_id: params.clientId,
+    grant_type: "refresh_token",
+  });
+  const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET;
+  if (clientSecret) body.set("client_secret", clientSecret);
+
+  const res = await fetch(TOKEN_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Google token refresh failed (${res.status}): ${text}`);
+  }
+  return (await res.json()) as TokenResponse;
+}
+
+async function fetchUserInfo(accessToken: string): Promise<{ sub: string; email?: string }> {
+  const res = await fetch(USERINFO_ENDPOINT, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Google userinfo failed (${res.status}): ${text}`);
+  }
+  return (await res.json()) as { sub: string; email?: string };
+}
+
+async function fetchPrimaryCalendarEvents(accessToken: string): Promise<ParsedEvent[]> {
+  const timeMin = new Date(Date.now() - SYNC_WINDOW_PAST_MS).toISOString();
+  const timeMax = new Date(Date.now() + SYNC_WINDOW_FUTURE_MS).toISOString();
+  const events: ParsedEvent[] = [];
+  let pageToken: string | undefined;
+  do {
+    const url = new URL(`${CALENDAR_BASE}/calendars/primary/events`);
+    url.searchParams.set("singleEvents", "true");
+    url.searchParams.set("orderBy", "startTime");
+    url.searchParams.set("timeMin", timeMin);
+    url.searchParams.set("timeMax", timeMax);
+    url.searchParams.set("maxResults", "250");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Google events fetch failed (${res.status}): ${text}`);
+    }
+    const data = (await res.json()) as EventsListResponse;
+    for (const item of data.items ?? []) {
+      if (item.status === "cancelled") continue;
+      const parsed = googleEventToParsed(item);
+      if (parsed) events.push(parsed);
+    }
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  return events;
+}
+
+function googleEventToParsed(event: GoogleEvent): ParsedEvent | null {
+  const startsAt = parseGoogleDate(event.start);
+  const endsAt = parseGoogleDate(event.end);
+  if (startsAt == null) return null;
+  const isAllDay = Boolean(event.start?.date && !event.start?.dateTime);
+  const resolvedEnd = endsAt ?? startsAt + (isAllDay ? 24 * 60 * 60 * 1000 : 60 * 60 * 1000);
+  return {
+    externalId: event.id,
+    title: event.summary ?? "(No title)",
+    description: event.description,
+    location: event.location,
+    startsAt,
+    endsAt: resolvedEnd,
+    isAllDay,
+  };
+}
+
+function parseGoogleDate(field?: { dateTime?: string; date?: string }): number | null {
+  if (!field) return null;
+  if (field.dateTime) {
+    const ms = Date.parse(field.dateTime);
+    return Number.isFinite(ms) ? ms : null;
+  }
+  if (field.date) {
+    const [y, m, d] = field.date.split("-").map(Number);
+    if (!y || !m || !d) return null;
+    return Date.UTC(y, m - 1, d);
+  }
+  return null;
+}
+
+async function syncGoogleTokens(
+  ctx: ActionCtx,
+  connection: Doc<"calendarConnections">,
+  clientId: string,
+): Promise<string> {
+  if (!connection.encryptedTokens) {
+    throw new Error("Google connection is missing stored credentials");
+  }
+  const tokens = decryptJson<EncryptedOAuthTokens>(connection.encryptedTokens);
+  const expiresAt = connection.tokenExpiresAt ?? 0;
+  // Refresh if expired or within 60s of expiring
+  if (tokens.accessToken && expiresAt - Date.now() > 60 * 1000) {
+    return tokens.accessToken;
+  }
+  if (!tokens.refreshToken) {
+    throw new Error("Access token expired and no refresh token available; reconnect required");
+  }
+  const refreshed = await refreshAccessToken({
+    refreshToken: tokens.refreshToken,
+    clientId,
+  });
+  const nextTokens: EncryptedOAuthTokens = {
+    accessToken: refreshed.access_token,
+    refreshToken: refreshed.refresh_token ?? tokens.refreshToken,
+    tokenType: refreshed.token_type ?? tokens.tokenType,
+  };
+  const encrypted = encryptJson(nextTokens);
+  await ctx.runMutation(internal.calendars.mutations.updateConnectionTokens, {
+    connectionId: connection._id,
+    encryptedTokens: encrypted,
+    tokenExpiresAt: Date.now() + refreshed.expires_in * 1000,
+  });
+  return refreshed.access_token;
+}
+
+export const connectGoogle = action({
+  args: {
+    code: v.string(),
+    codeVerifier: v.string(),
+    clientId: v.string(),
+    redirectUri: v.string(),
+  },
+  handler: async (ctx, args): Promise<Id<"calendarConnections">> => {
+    const user = await ctx.runQuery(api.users.queries.getCurrentUser, {});
+    if (!user) throw new Error("Not authenticated");
+
+    const token = await exchangeAuthorizationCode({
+      code: args.code,
+      codeVerifier: args.codeVerifier,
+      clientId: args.clientId,
+      redirectUri: args.redirectUri,
+    });
+
+    const userInfo = await fetchUserInfo(token.access_token);
+    const tokensToStore: EncryptedOAuthTokens = {
+      accessToken: token.access_token,
+      refreshToken: token.refresh_token,
+      tokenType: token.token_type,
+    };
+    const encryptedTokens = encryptJson(tokensToStore);
+
+    const connectionId: Id<"calendarConnections"> = await ctx.runMutation(
+      internal.calendars.mutations.insertConnection,
+      {
+        userId: user._id,
+        provider: "google",
+        label: userInfo.email ?? "Google Calendar",
+        externalAccountId: userInfo.sub,
+        scope: token.scope ?? DEFAULT_SCOPE,
+        oauthClientId: args.clientId,
+        encryptedTokens,
+        tokenExpiresAt: Date.now() + token.expires_in * 1000,
+      },
+    );
+
+    try {
+      const events = await fetchPrimaryCalendarEvents(token.access_token);
+      await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
+        connectionId,
+        userId: user._id,
+        events,
+      });
+      await ctx.runMutation(internal.calendars.mutations.markSynced, {
+        connectionId,
+        error: undefined,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown sync error";
+      await ctx.runMutation(internal.calendars.mutations.markSynced, {
+        connectionId,
+        error: message,
+      });
+    }
+    return connectionId;
+  },
+});
+
+export const syncGoogleConnectionInternal = internalAction({
+  args: {
+    connectionId: v.id("calendarConnections"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args): Promise<null> => {
+    const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
+      internal.calendars.actionHelpers.getConnectionInternal,
+      { connectionId: args.connectionId },
+    );
+    if (!connection || connection.userId !== args.userId) {
+      throw new Error("Calendar connection not found");
+    }
+    if (connection.provider !== "google") {
+      throw new Error("syncGoogleConnectionInternal only supports Google connections");
+    }
+    const clientId = connection.oauthClientId;
+    if (!clientId) {
+      throw new Error(
+        "Google connection is missing its original OAuth client id; please reconnect.",
+      );
+    }
+    try {
+      const accessToken = await syncGoogleTokens(ctx, connection, clientId);
+      const events = await fetchPrimaryCalendarEvents(accessToken);
+      await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
+        connectionId: args.connectionId,
+        userId: args.userId,
+        events,
+      });
+      await ctx.runMutation(internal.calendars.mutations.markSynced, {
+        connectionId: args.connectionId,
+        error: undefined,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown sync error";
+      await ctx.runMutation(internal.calendars.mutations.markSynced, {
+        connectionId: args.connectionId,
+        error: message,
+      });
+      throw err;
+    }
+    return null;
+  },
+});
