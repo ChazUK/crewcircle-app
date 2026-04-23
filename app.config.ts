@@ -34,9 +34,11 @@ export default {
       "@clerk/expo",
       "@react-native-community/datetimepicker",
       "expo-apple-authentication",
+      "expo-calendar",
       "expo-image",
       "expo-router",
       "expo-secure-store",
+      "expo-web-browser",
       [
         "expo-splash-screen",
         {
@@ -56,6 +58,8 @@ export default {
     },
     extra: {
       EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME: process.env.EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME,
+      // EXPO_PUBLIC_GOOGLE_CALENDAR_CLIENT_ID_{IOS,ANDROID,WEB} are inlined automatically —
+      // they are read directly in CalendarConnectionsSheet.tsx. No `extra` entry required.
     },
   },
 };
