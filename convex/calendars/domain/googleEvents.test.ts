@@ -22,6 +22,16 @@ describe("parseGoogleDate", () => {
     );
   });
 
+  test("parses ISO date-time strings with numeric offsets", () => {
+    expect(parseGoogleDate({ dateTime: "2026-05-01T09:00:00-04:00" })).toBe(
+      Date.UTC(2026, 4, 1, 13, 0, 0),
+    );
+  });
+
+  test("rejects dateTime strings with no offset (would otherwise parse as local time)", () => {
+    expect(parseGoogleDate({ dateTime: "2026-05-01T09:00:00" })).toBeNull();
+  });
+
   test("returns null for an unparseable dateTime", () => {
     expect(parseGoogleDate({ dateTime: "not-a-date" })).toBeNull();
   });

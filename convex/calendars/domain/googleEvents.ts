@@ -28,9 +28,17 @@ export function shouldSkipGoogleEvent(event: GoogleEvent): boolean {
   return false;
 }
 
+// Matches a trailing `Z` or `±hh:mm` offset per ISO 8601. Google Calendar v3
+// always emits one on `dateTime`, but Date.parse silently falls back to local
+// time when it's missing — which would shift events depending on which host
+// runs the action. Reject offset-less strings so a malformed response becomes
+// a clear null rather than a mysterious time shift.
+const ISO_OFFSET_RE = /(?:Z|[+-]\d{2}:?\d{2})$/;
+
 export function parseGoogleDate(field?: { dateTime?: string; date?: string }): number | null {
   if (!field) return null;
   if (field.dateTime) {
+    if (!ISO_OFFSET_RE.test(field.dateTime)) return null;
     const ms = Date.parse(field.dateTime);
     return Number.isFinite(ms) ? ms : null;
   }
