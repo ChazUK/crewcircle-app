@@ -88,6 +88,27 @@ describe("assertSafeIcalUrl", () => {
     },
   );
 
+  test.each([
+    "http://[::]/", // unspecified
+    "http://[::ffff:127.0.0.1]/", // IPv4-mapped loopback
+    "http://[::ffff:10.0.0.1]/", // IPv4-mapped RFC1918
+    "http://[::ffff:169.254.169.254]/", // IPv4-mapped AWS metadata
+    "http://[::ffff:192.168.1.1]/",
+    "http://[::7f00:1]/", // IPv4-compatible loopback (::127.0.0.1)
+    "http://[fec0::1]/", // deprecated site-local
+    "http://[ff02::1]/", // multicast
+    "http://[64:ff9b::7f00:1]/", // NAT64-wrapped loopback
+    "http://[FE90::1]/", // full fe80::/10 coverage (fe80-febf)
+  ])("rejects IPv6 SSRF bypass attempts %s", (url) => {
+    expect(() => assertSafeIcalUrl(url)).toThrow(/private or reserved/);
+  });
+
+  test("rejects a malformed IPv6 literal", () => {
+    // WHATWG URL refuses to parse an illegal literal before our check sees it,
+    // which is fine — either rejection closes the SSRF door.
+    expect(() => assertSafeIcalUrl("http://[zzzz::1]/")).toThrow(/Invalid iCal URL|IPv6/);
+  });
+
   test("accepts public IPv4 addresses", () => {
     expect(assertSafeIcalUrl("https://8.8.8.8/feed.ics")).toBe("https://8.8.8.8/feed.ics");
   });
@@ -95,6 +116,12 @@ describe("assertSafeIcalUrl", () => {
   test("accepts public IPv6 addresses", () => {
     expect(assertSafeIcalUrl("https://[2001:4860:4860::8888]/feed.ics")).toBe(
       "https://[2001:4860:4860::8888]/feed.ics",
+    );
+  });
+
+  test("accepts an IPv4-mapped public address", () => {
+    expect(assertSafeIcalUrl("https://[::ffff:8.8.8.8]/feed.ics")).toBe(
+      "https://[::ffff:8.8.8.8]/feed.ics",
     );
   });
 });
