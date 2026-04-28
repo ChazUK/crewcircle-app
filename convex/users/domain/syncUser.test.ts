@@ -87,4 +87,62 @@ describe("deleteUser", () => {
     const result = await t.run((ctx) => deleteUser(ctx, { externalAuthId: "nonexistent" }));
     expect(result).toBeNull();
   });
+
+  test("cascades to the user's calendar connections and cached events", async () => {
+    const t = convexTest(schema, modules);
+    const externalAuthId = "clerk_del_cascade";
+    const userId = await t.run((ctx) =>
+      createUser(ctx, { externalAuthId, email: "cascade@example.com" }),
+    );
+    const connectionId = await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId,
+        provider: "ical",
+        label: "Feed",
+        createdAt: Date.now(),
+      }),
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("calendarEvents", {
+        userId,
+        connectionId,
+        externalId: "evt-1",
+        title: "Meeting",
+        startsAt: Date.now(),
+        endsAt: Date.now() + 60_000,
+        isAllDay: false,
+        updatedAt: Date.now(),
+      }),
+    );
+
+    await t.run((ctx) => deleteUser(ctx, { externalAuthId }));
+    await new Promise((r) => setTimeout(r, 0));
+    await t.finishAllScheduledFunctions(() => {});
+
+    const connections = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
+    const events = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
+    expect(connections).toEqual([]);
+    expect(events).toEqual([]);
+  });
+
+  test("does not schedule any cleanup when the user does not exist", async () => {
+    const t = convexTest(schema, modules);
+    // Seed an unrelated user+connection so we can verify it survives.
+    const survivorId = await t.run((ctx) =>
+      createUser(ctx, { externalAuthId: "survivor", email: "s@example.com" }),
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId: survivorId,
+        provider: "ical",
+        label: "Untouched",
+        createdAt: Date.now(),
+      }),
+    );
+    await t.run((ctx) => deleteUser(ctx, { externalAuthId: "nope" }));
+    await new Promise((r) => setTimeout(r, 0));
+    await t.finishAllScheduledFunctions(() => {});
+    const connections = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
+    expect(connections.map((c) => c.label)).toEqual(["Untouched"]);
+  });
 });

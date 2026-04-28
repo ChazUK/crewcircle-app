@@ -8,6 +8,21 @@
  * @module
  */
 
+import type * as calendars_actionHelpers from "../calendars/actionHelpers.js";
+import type * as calendars_actions from "../calendars/actions.js";
+import type * as calendars_db_cascadeDelete from "../calendars/db/cascadeDelete.js";
+import type * as calendars_db_getConnection from "../calendars/db/getConnection.js";
+import type * as calendars_db_writeEvents from "../calendars/db/writeEvents.js";
+import type * as calendars_domain_crypto from "../calendars/domain/crypto.js";
+import type * as calendars_domain_googleEvents from "../calendars/domain/googleEvents.js";
+import type * as calendars_domain_icalUrl from "../calendars/domain/icalUrl.js";
+import type * as calendars_domain_parseIcs from "../calendars/domain/parseIcs.js";
+import type * as calendars_google from "../calendars/google.js";
+import type * as calendars_mutations from "../calendars/mutations.js";
+import type * as calendars_queries from "../calendars/queries.js";
+import type * as calendars_scheduler from "../calendars/scheduler.js";
+import type * as crons from "../crons.js";
+import type * as files_mutations from "../files/mutations.js";
 import type * as http from "../http.js";
 import type * as users_db_getUser from "../users/db/getUser.js";
 import type * as users_db_upsertUser from "../users/db/upsertUser.js";
@@ -25,6 +40,21 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "calendars/actionHelpers": typeof calendars_actionHelpers;
+  "calendars/actions": typeof calendars_actions;
+  "calendars/db/cascadeDelete": typeof calendars_db_cascadeDelete;
+  "calendars/db/getConnection": typeof calendars_db_getConnection;
+  "calendars/db/writeEvents": typeof calendars_db_writeEvents;
+  "calendars/domain/crypto": typeof calendars_domain_crypto;
+  "calendars/domain/googleEvents": typeof calendars_domain_googleEvents;
+  "calendars/domain/icalUrl": typeof calendars_domain_icalUrl;
+  "calendars/domain/parseIcs": typeof calendars_domain_parseIcs;
+  "calendars/google": typeof calendars_google;
+  "calendars/mutations": typeof calendars_mutations;
+  "calendars/queries": typeof calendars_queries;
+  "calendars/scheduler": typeof calendars_scheduler;
+  crons: typeof crons;
+  "files/mutations": typeof files_mutations;
   http: typeof http;
   "users/db/getUser": typeof users_db_getUser;
   "users/db/upsertUser": typeof users_db_upsertUser;

@@ -1,19 +1,15 @@
-import { useClerk, useUser } from "@clerk/expo";
-import { Pressable, Text, View } from "react-native";
-
-import { layout } from "@/styles/layout";
+import { useUser } from "@clerk/expo";
+import { Text, View } from "react-native";
 
 export default function Home() {
   const { user } = useUser();
-  const { signOut } = useClerk();
 
   return (
-    <View style={layout.centered}>
-      <Text>Welcome to CrewCircle!</Text>
-      <Text>Hello {user?.emailAddresses[0].emailAddress}</Text>
-      <Pressable onPress={() => signOut()}>
-        <Text>Sign out</Text>
-      </Pressable>
+    <View className="flex-1 items-center justify-center">
+      <Text className="text-2xl font-bold">Welcome to CrewCircle!</Text>
+      <Text className="text-base text-default-500 mt-2">
+        {user?.emailAddresses[0]?.emailAddress}
+      </Text>
     </View>
   );
 }

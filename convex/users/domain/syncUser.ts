@@ -1,5 +1,6 @@
 import { MutationCtx } from "@convex/_generated/server";
 
+import { scheduleDeleteUserCalendarData } from "../../calendars/db/cascadeDelete";
 import { getUserByExternalId } from "../db/getUser";
 import { upsertUser } from "../db/upsertUser";
 
@@ -48,6 +49,10 @@ export const deleteUser = async (
 
   if (!user) return null;
 
+  // Clerk's user.deleted webhook fires this; cascade so the user's calendar
+  // connections and cached events go with them. Connection deletion runs in
+  // scheduled mutations so it scales past a single transaction's budget.
+  await scheduleDeleteUserCalendarData(ctx, user._id);
   await ctx.db.delete(user._id);
 
   return true;
