@@ -21,7 +21,7 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.crewcircle.crewcircle-app",
+      bundleIdentifier: "com.crewcircle.crewcircleapp",
       usesAppleSignIn: true,
       infoPlist: {
         NSPhotoLibraryUsageDescription:
@@ -42,7 +42,7 @@ export default {
         backgroundColor: "#FFFFFF",
       },
       predictiveBackGestureEnabled: false,
-      package: "com.crewcircle.crewcircle-app",
+      package: "com.crewcircle.crewcircleapp",
     },
     plugins: [
       "@clerk/expo",
