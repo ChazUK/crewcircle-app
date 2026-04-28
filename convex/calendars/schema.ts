@@ -50,6 +50,14 @@ export const CalendarEvent = {
   // sub-calendar applies, else the raw provider event id. Ensures uniqueness
   // across sub-calendars of the same connection.
   externalId: v.string(),
+  // Original VEVENT UID (or provider event id), shared across every expanded
+  // instance of a recurring event. `externalId` carries a recurrence suffix
+  // for instances; `uid` lets callers group instances back to their seed.
+  uid: v.optional(v.string()),
+  // Epoch ms of the recurrence-id this row represents — set on every expanded
+  // instance of an RRULE/RDATE event (including RECURRENCE-ID overrides),
+  // unset for non-recurring events.
+  recurrenceId: v.optional(v.number()),
   title: v.string(),
   description: v.optional(v.string()),
   location: v.optional(v.string()),

@@ -9,6 +9,8 @@ import { parseIcs } from "./domain/parseIcs";
 const EventInputValidator = v.object({
   externalId: v.string(),
   subCalendarId: v.optional(v.string()),
+  uid: v.optional(v.string()),
+  recurrenceId: v.optional(v.number()),
   title: v.string(),
   description: v.optional(v.string()),
   location: v.optional(v.string()),
@@ -24,6 +26,11 @@ async function requireUser(ctx: ActionCtx): Promise<Doc<"users">> {
 }
 
 const MAX_ICAL_REDIRECTS = 5;
+
+// Match the Apple/Google sync windows so iCal recurrence expansion materialises
+// the same horizon (30 days back, 180 days forward) into calendarEvents.
+const ICAL_WINDOW_PAST_MS = 30 * 24 * 60 * 60 * 1000;
+const ICAL_WINDOW_FUTURE_MS = 180 * 24 * 60 * 60 * 1000;
 
 // Walk redirects manually so we can re-run the SSRF hostname check on every
 // Location header. With `redirect: "follow"` the browser would happily send us
@@ -53,7 +60,11 @@ async function fetchAndStoreIcal(
   const res = await fetchIcalWithSafeRedirects(args.url);
   if (!res.ok) throw new Error(`Failed to fetch iCal feed (status ${res.status})`);
   const body = await res.text();
-  const events = parseIcs(body);
+  const now = Date.now();
+  const events = parseIcs(body, {
+    windowStartMs: now - ICAL_WINDOW_PAST_MS,
+    windowEndMs: now + ICAL_WINDOW_FUTURE_MS,
+  });
   await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
     connectionId: args.connectionId,
     userId: args.userId,

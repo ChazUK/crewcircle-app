@@ -10,6 +10,8 @@ const PRUNE_BATCH_SIZE = 200;
 const ParsedEventValidator = v.object({
   externalId: v.string(),
   subCalendarId: v.optional(v.string()),
+  uid: v.optional(v.string()),
+  recurrenceId: v.optional(v.number()),
   title: v.string(),
   description: v.optional(v.string()),
   location: v.optional(v.string()),

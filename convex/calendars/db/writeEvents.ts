@@ -4,6 +4,8 @@ import { MutationCtx } from "@convex/_generated/server";
 export type IncomingEvent = {
   externalId: string;
   subCalendarId?: string;
+  uid?: string;
+  recurrenceId?: number;
   title: string;
   description?: string;
   location?: string;
@@ -39,6 +41,8 @@ export async function replaceConnectionEvents(
       connectionId: args.connectionId,
       subCalendarId: event.subCalendarId,
       externalId: event.externalId,
+      uid: event.uid,
+      recurrenceId: event.recurrenceId,
       title: event.title,
       description: event.description,
       location: event.location,

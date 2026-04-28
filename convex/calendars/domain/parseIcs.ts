@@ -1,5 +1,14 @@
+import { RRuleTemporal } from "rrule-temporal";
+
 export type ParsedEvent = {
   externalId: string;
+  // Original VEVENT UID, shared across instances of a recurring event so
+  // callers can group expanded instances back to their seed.
+  uid: string;
+  // Epoch ms of the recurrence-id this instance occupies. Set for every
+  // expanded occurrence of an RRULE/RDATE event (including RECURRENCE-ID
+  // overrides) and undefined for non-recurring events.
+  recurrenceId?: number;
   title: string;
   description?: string;
   location?: string;
@@ -8,62 +17,68 @@ export type ParsedEvent = {
   isAllDay: boolean;
 };
 
-// Minimal VEVENT extractor for iCalendar (RFC 5545) feeds.
+export type ParseIcsOptions = {
+  // Inclusive lower bound and exclusive upper bound for recurrence expansion.
+  // Non-recurring events are emitted regardless of the window.
+  windowStartMs?: number;
+  windowEndMs?: number;
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Hard cap on how many occurrences of a single recurring event we'll emit.
+// Stops a malicious or misconfigured "FREQ=SECONDLY" rule from exploding.
+const MAX_OCCURRENCES_PER_RULE = 5_000;
+
+type RawDate = { ms: number; isAllDay: boolean; raw: string };
+
+type RawVEvent = {
+  uid?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  dtstart?: RawDate;
+  dtend?: { ms: number; isAllDay: boolean };
+  recurrenceId?: { ms: number };
+  rruleLine?: string;
+  rdateLines: string[];
+  exdateLines: string[];
+  transparent?: boolean;
+};
+
+// VEVENT extractor for iCalendar (RFC 5545) feeds.
 // - Unfolds continuation lines (leading space/tab).
 // - Parses DTSTART/DTEND in UTC (Z suffix), with TZID parameter, floating
 //   local, or date-only form.
-// - Does NOT expand RRULE — recurring events appear once at their initial
-//   occurrence.
+// - Expands RRULE/RDATE within the supplied sync window (rrule-temporal),
+//   honoring EXDATE exclusions and RECURRENCE-ID overrides.
 // - iCalendar names are case-insensitive per RFC 5545 §3.1, so we normalize
 //   names and BEGIN/END markers to uppercase before matching.
-export function parseIcs(raw: string): ParsedEvent[] {
+export function parseIcs(raw: string, options: ParseIcsOptions = {}): ParsedEvent[] {
   const unfolded = raw.replace(/\r?\n[ \t]/g, "");
   const lines = unfolded.split(/\r?\n/);
 
+  const rawEvents = collectVEvents(lines);
+  const grouped = groupByUid(rawEvents);
+
   const events: ParsedEvent[] = [];
-  let current:
-    | (Partial<ParsedEvent> & {
-        startIsAllDay?: boolean;
-        endIsAllDay?: boolean;
-        endExplicit?: boolean;
-        // TRANSP:TRANSPARENT marks the event as not blocking time; we drop
-        // these so birthdays / "free" feed entries don't appear as busy.
-        transparent?: boolean;
-      })
-    | null = null;
+  for (const group of grouped) {
+    pushGroup(events, group, options);
+  }
+  return events;
+}
+
+function collectVEvents(lines: string[]): RawVEvent[] {
+  const out: RawVEvent[] = [];
+  let current: RawVEvent | null = null;
 
   for (const line of lines) {
     const upperLine = line.toUpperCase();
     if (upperLine === "BEGIN:VEVENT") {
-      current = {};
+      current = { rdateLines: [], exdateLines: [] };
       continue;
     }
     if (upperLine === "END:VEVENT") {
-      if (
-        current &&
-        !current.transparent &&
-        current.startsAt != null &&
-        current.externalId &&
-        current.title
-      ) {
-        if (current.endsAt == null) {
-          // RFC 5545 §3.6.1: when DTEND is absent, a DATE-valued DTSTART spans
-          // the whole day (end = start + 24h), while a DATE-TIME valued DTSTART
-          // "takes up no time" (end = start).
-          current.endsAt = current.startIsAllDay
-            ? current.startsAt + 24 * 60 * 60 * 1000
-            : current.startsAt;
-        }
-        events.push({
-          externalId: current.externalId,
-          title: current.title,
-          description: current.description,
-          location: current.location,
-          startsAt: current.startsAt,
-          endsAt: current.endsAt,
-          isAllDay: Boolean(current.startIsAllDay),
-        });
-      }
+      if (current) out.push(current);
       current = null;
       continue;
     }
@@ -75,25 +90,11 @@ export function parseIcs(raw: string): ParsedEvent[] {
     const value = line.slice(colonIdx + 1);
     const parts = nameAndParams.split(";");
     const name = parts[0].toUpperCase();
-    const params = new Map<string, string>();
-    for (let i = 1; i < parts.length; i++) {
-      const eq = parts[i].indexOf("=");
-      if (eq < 0) continue;
-      const k = parts[i].slice(0, eq).toUpperCase();
-      // RFC 5545 §3.1.1 permits DQUOTE around param values, and some
-      // producers (Outlook exports, Microsoft ICS, etc.) prefix TZIDs with
-      // a leading `/`. Strip both so lookups into the IANA database match.
-      let v = parts[i].slice(eq + 1);
-      if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
-        v = v.slice(1, -1);
-      }
-      if (v.startsWith("/")) v = v.slice(1);
-      params.set(k, v);
-    }
+    const params = parseParams(parts.slice(1));
 
     switch (name) {
       case "UID":
-        current.externalId = value;
+        current.uid = value;
         break;
       case "SUMMARY":
         current.title = unescapeIcsText(value);
@@ -107,20 +108,33 @@ export function parseIcs(raw: string): ParsedEvent[] {
       case "DTSTART": {
         const parsed = parseIcsDate(value, params);
         if (parsed) {
-          current.startsAt = parsed.ms;
-          current.startIsAllDay = parsed.isDateOnly;
+          current.dtstart = { ms: parsed.ms, isAllDay: parsed.isDateOnly, raw: line };
         }
         break;
       }
       case "DTEND": {
         const parsed = parseIcsDate(value, params);
         if (parsed) {
-          current.endsAt = parsed.ms;
-          current.endIsAllDay = parsed.isDateOnly;
-          current.endExplicit = true;
+          current.dtend = { ms: parsed.ms, isAllDay: parsed.isDateOnly };
         }
         break;
       }
+      case "RECURRENCE-ID": {
+        const parsed = parseIcsDate(value, params);
+        if (parsed) current.recurrenceId = { ms: parsed.ms };
+        break;
+      }
+      case "RRULE":
+        // Re-emit with the canonical "RRULE:" prefix; rrule-temporal expects
+        // the property name as part of the snippet it parses.
+        current.rruleLine = `RRULE:${value}`;
+        break;
+      case "RDATE":
+        current.rdateLines.push(line);
+        break;
+      case "EXDATE":
+        current.exdateLines.push(line);
+        break;
       case "TRANSP":
         current.transparent = value.toUpperCase() === "TRANSPARENT";
         break;
@@ -128,7 +142,228 @@ export function parseIcs(raw: string): ParsedEvent[] {
         break;
     }
   }
-  return events;
+  return out;
+}
+
+function parseParams(rawParams: string[]): Map<string, string> {
+  const params = new Map<string, string>();
+  for (const part of rawParams) {
+    const eq = part.indexOf("=");
+    if (eq < 0) continue;
+    const k = part.slice(0, eq).toUpperCase();
+    // RFC 5545 §3.1.1 permits DQUOTE around param values, and some
+    // producers (Outlook exports, Microsoft ICS, etc.) prefix TZIDs with
+    // a leading `/`. Strip both so lookups into the IANA database match.
+    let v = part.slice(eq + 1);
+    if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
+      v = v.slice(1, -1);
+    }
+    if (v.startsWith("/")) v = v.slice(1);
+    params.set(k, v);
+  }
+  return params;
+}
+
+type Group = { uid: string; base?: RawVEvent; overrides: RawVEvent[] };
+
+function groupByUid(rawEvents: RawVEvent[]): Group[] {
+  const map = new Map<string, Group>();
+  for (const ev of rawEvents) {
+    if (!ev.uid) continue;
+    let group = map.get(ev.uid);
+    if (!group) {
+      group = { uid: ev.uid, overrides: [] };
+      map.set(ev.uid, group);
+    }
+    if (ev.recurrenceId) {
+      group.overrides.push(ev);
+    } else if (!group.base) {
+      group.base = ev;
+    } else {
+      // Multiple base events with the same UID is malformed; treat the
+      // duplicate as an override at its own DTSTART so we don't lose data.
+      if (ev.dtstart) {
+        group.overrides.push({ ...ev, recurrenceId: { ms: ev.dtstart.ms } });
+      }
+    }
+  }
+  return [...map.values()];
+}
+
+function pushGroup(out: ParsedEvent[], group: Group, options: ParseIcsOptions) {
+  const base = group.base;
+  if (!base) {
+    // Pure orphan overrides (no seed in this feed slice). Emit them at their
+    // own DTSTART so the user still sees the moved instance.
+    for (const ov of group.overrides) emitOverrideOrphan(out, group.uid, ov, options);
+    return;
+  }
+  if (base.transparent || !base.dtstart || !base.title) return;
+
+  const isRecurring = Boolean(base.rruleLine) || base.rdateLines.length > 0;
+  if (!isRecurring) {
+    // Legacy single-event path. Preserves externalId = UID so previously
+    // cached rows aren't orphaned by the upgrade.
+    const endsAt = resolveEndsAt(base);
+    out.push({
+      externalId: group.uid,
+      uid: group.uid,
+      title: base.title,
+      description: base.description,
+      location: base.location,
+      startsAt: base.dtstart.ms,
+      endsAt,
+      isAllDay: base.dtstart.isAllDay,
+    });
+    return;
+  }
+
+  expandRecurrence(out, group, base, options);
+}
+
+function resolveEndsAt(ev: RawVEvent): number {
+  if (ev.dtend) return ev.dtend.ms;
+  // RFC 5545 §3.6.1: when DTEND is absent, a DATE-valued DTSTART spans the
+  // whole day, while a DATE-TIME valued DTSTART "takes up no time".
+  return ev.dtstart!.ms + (ev.dtstart!.isAllDay ? DAY_MS : 0);
+}
+
+function emitOverrideOrphan(
+  out: ParsedEvent[],
+  uid: string,
+  ov: RawVEvent,
+  options: ParseIcsOptions,
+) {
+  if (ov.transparent || !ov.dtstart || !ov.title || !ov.recurrenceId) return;
+  const startsAt = ov.dtstart.ms;
+  const endsAt = resolveEndsAt(ov);
+  if (!withinWindow(startsAt, endsAt, options)) return;
+  out.push({
+    externalId: `${uid}::${ov.recurrenceId.ms}`,
+    uid,
+    recurrenceId: ov.recurrenceId.ms,
+    title: ov.title,
+    description: ov.description,
+    location: ov.location,
+    startsAt,
+    endsAt,
+    isAllDay: ov.dtstart.isAllDay,
+  });
+}
+
+function withinWindow(startsAt: number, endsAt: number, options: ParseIcsOptions): boolean {
+  if (options.windowStartMs != null && endsAt <= options.windowStartMs) return false;
+  if (options.windowEndMs != null && startsAt >= options.windowEndMs) return false;
+  return true;
+}
+
+function expandRecurrence(
+  out: ParsedEvent[],
+  group: Group,
+  base: RawVEvent,
+  options: ParseIcsOptions,
+) {
+  const snippet = buildRruleSnippet(base);
+  if (!snippet) return;
+
+  // The duration carries through every instance — RFC 5545 says recurrence
+  // overrides only change the dtstart (and optionally the dtend), so missing
+  // dtend on an occurrence implies the same duration as the seed.
+  const durationMs = (base.dtend?.ms ?? base.dtstart!.ms) - base.dtstart!.ms;
+  const isAllDay = base.dtstart!.isAllDay;
+
+  // Window defaults: if callers don't constrain, use a sensible bounded
+  // ±1 year so an unbounded RRULE doesn't run forever.
+  const now = Date.now();
+  const windowStart = options.windowStartMs ?? now - 365 * DAY_MS;
+  const windowEnd = options.windowEndMs ?? now + 365 * DAY_MS;
+
+  let rrule: RRuleTemporal;
+  try {
+    rrule = new RRuleTemporal({
+      rruleString: snippet,
+      maxIterations: MAX_OCCURRENCES_PER_RULE,
+      includeDtstart: true,
+    });
+  } catch {
+    // Malformed recurrence — fall back to emitting just the seed at its
+    // DTSTART so the user at least sees one instance.
+    if (!withinWindow(base.dtstart!.ms, base.dtstart!.ms + durationMs, options)) return;
+    out.push(seedToInstance(group.uid, base, base.dtstart!.ms, durationMs, isAllDay));
+    return;
+  }
+
+  let occurrences: { ms: number }[];
+  try {
+    const range = rrule.between(new Date(windowStart), new Date(windowEnd), true);
+    occurrences = range.map((zdt) => ({ ms: zdt.epochMilliseconds }));
+  } catch {
+    return;
+  }
+
+  const overridesByRecurrenceMs = new Map<number, RawVEvent>();
+  for (const ov of group.overrides) {
+    if (ov.recurrenceId) overridesByRecurrenceMs.set(ov.recurrenceId.ms, ov);
+  }
+
+  const consumed = new Set<number>();
+  for (const occurrence of occurrences) {
+    const override = overridesByRecurrenceMs.get(occurrence.ms);
+    if (override) {
+      consumed.add(occurrence.ms);
+      if (override.transparent || !override.dtstart || !override.title) continue;
+      out.push({
+        externalId: `${group.uid}::${occurrence.ms}`,
+        uid: group.uid,
+        recurrenceId: occurrence.ms,
+        title: override.title,
+        description: override.description,
+        location: override.location,
+        startsAt: override.dtstart.ms,
+        endsAt: resolveEndsAt(override),
+        isAllDay: override.dtstart.isAllDay,
+      });
+      continue;
+    }
+    out.push(seedToInstance(group.uid, base, occurrence.ms, durationMs, isAllDay));
+  }
+
+  // Overrides whose recurrence-id sat outside the expanded window but whose
+  // moved DTSTART falls inside it (e.g. a meeting bumped from yesterday into
+  // today) still belong on the diary.
+  for (const ov of group.overrides) {
+    if (!ov.recurrenceId || consumed.has(ov.recurrenceId.ms)) continue;
+    emitOverrideOrphan(out, group.uid, ov, options);
+  }
+}
+
+function seedToInstance(
+  uid: string,
+  base: RawVEvent,
+  startsAt: number,
+  durationMs: number,
+  isAllDay: boolean,
+): ParsedEvent {
+  return {
+    externalId: `${uid}::${startsAt}`,
+    uid,
+    recurrenceId: startsAt,
+    title: base.title!,
+    description: base.description,
+    location: base.location,
+    startsAt,
+    endsAt: startsAt + durationMs,
+    isAllDay,
+  };
+}
+
+function buildRruleSnippet(base: RawVEvent): string | null {
+  if (!base.dtstart) return null;
+  const lines: string[] = [base.dtstart.raw];
+  if (base.rruleLine) lines.push(base.rruleLine);
+  for (const r of base.rdateLines) lines.push(r);
+  for (const e of base.exdateLines) lines.push(e);
+  return lines.join("\n");
 }
 
 function unescapeIcsText(value: string): string {
