@@ -1,8 +1,10 @@
 // @vitest-environment node
 import { convexTest, type TestConvex } from "convex-test";
+import type { PaginationResult } from "convex/server";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { internal } from "../_generated/api";
+import type { Doc } from "../_generated/dataModel";
 import schema from "../schema";
 import { encryptJson } from "./domain/crypto";
 
@@ -24,11 +26,14 @@ async function insertUser(t: TestConvex<typeof schema>, externalAuthId: string) 
   );
 }
 
-describe("listAllConnections", () => {
-  test("returns an empty list when nothing is connected", async () => {
+describe("listConnectionsPage", () => {
+  test("returns an empty page when nothing is connected", async () => {
     const t = convexTest(schema, modules);
-    const result = await t.query(internal.calendars.scheduler.listAllConnections, {});
-    expect(result).toEqual([]);
+    const result = await t.query(internal.calendars.scheduler.listConnectionsPage, {
+      paginationOpts: { numItems: 100, cursor: null },
+    });
+    expect(result.page).toEqual([]);
+    expect(result.isDone).toBe(true);
   });
 
   test("returns every connection across all users", async () => {
@@ -49,8 +54,39 @@ describe("listAllConnections", () => {
         createdAt: Date.now(),
       });
     });
-    const result = await t.query(internal.calendars.scheduler.listAllConnections, {});
-    expect(result.map((c) => c.label).sort()).toEqual(["A", "B"]);
+    const result = await t.query(internal.calendars.scheduler.listConnectionsPage, {
+      paginationOpts: { numItems: 100, cursor: null },
+    });
+    expect(result.page.map((c) => c.label).sort()).toEqual(["A", "B"]);
+    expect(result.isDone).toBe(true);
+  });
+
+  test("paginates across multiple pages", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, "many");
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 5; i++) {
+        await ctx.db.insert("calendarConnections", {
+          userId,
+          provider: "ical",
+          label: `feed-${i}`,
+          createdAt: Date.now() + i,
+        });
+      }
+    });
+
+    const labels: string[] = [];
+    let cursor: string | null = null;
+    while (true) {
+      const result: PaginationResult<Doc<"calendarConnections">> = await t.query(
+        internal.calendars.scheduler.listConnectionsPage,
+        { paginationOpts: { numItems: 2, cursor } },
+      );
+      labels.push(...result.page.map((c) => c.label));
+      if (result.isDone) break;
+      cursor = result.continueCursor;
+    }
+    expect(labels.sort()).toEqual(["feed-0", "feed-1", "feed-2", "feed-3", "feed-4"]);
   });
 });
 
