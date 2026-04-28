@@ -6,12 +6,13 @@ const googleIosUrlScheme = process.env.EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME;
 
 export default {
   expo: {
-    name: "crew-circle-app",
-    slug: "crew-circle-app",
+    owner: "crew-circle",
+    name: "crewcircle-app",
+    slug: "crewcircle-app",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./src/assets/icons/ios-light.png",
-    scheme: "crew-circle",
+    scheme: "crewcircle",
     userInterfaceStyle: "light",
     splash: {
       image: "./src/assets/icons/splash-icon-light.png",
@@ -20,7 +21,7 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.crewcircle.crewcircle",
+      bundleIdentifier: "com.crewcircle.crewcircle-app",
       usesAppleSignIn: true,
       infoPlist: {
         NSPhotoLibraryUsageDescription:
@@ -41,7 +42,7 @@ export default {
         backgroundColor: "#FFFFFF",
       },
       predictiveBackGestureEnabled: false,
-      package: "com.crewcircle.crewcircle",
+      package: "com.crewcircle.crewcircle-app",
     },
     plugins: [
       "@clerk/expo",
@@ -70,6 +71,9 @@ export default {
       reactCompiler: true,
     },
     extra: {
+      eas: {
+        projectId: "baad0bec-08b5-4748-a328-79164048238c",
+      },
       EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME: process.env.EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME,
     },
   },

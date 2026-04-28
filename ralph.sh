@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ralph.sh — Autonomous multi-agent GitHub issue solver for crew-circle-app
+# ralph.sh — Autonomous multi-agent GitHub issue solver for crewcircle-app
 #
 # Spawns N Claude Code agents in parallel. Each agent:
 #   1. Claims the oldest open, unblocked GitHub issue
@@ -29,7 +29,7 @@ set -euo pipefail
 # ─────────────────────────────────────────────────────────────
 # Config — all overridable via env vars
 # ─────────────────────────────────────────────────────────────
-REPO="${RALPH_REPO:-ChazUK/crew-circle-app}"
+REPO="${RALPH_REPO:-ChazUK/crewcircle-app}"
 NUM_AGENTS="${RALPH_AGENTS:-5}"
 MAX_ITER="${RALPH_MAX_ITER:-20}"       # Max issues per agent before it self-terminates
 SANDBOX="${RALPH_SANDBOX:-0}"          # 1 = wrap each claude invocation in Docker
