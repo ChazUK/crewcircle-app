@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
+import { assertMaxLength } from "../lib/stringValidation";
 import { deleteConnectionEvents, replaceConnectionEvents } from "./db/writeEvents";
 import { CalendarProvider } from "./schema";
 
@@ -35,6 +36,7 @@ export const insertConnection = internalMutation({
     enabledSubCalendarIds: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    assertMaxLength(args.label, "label", 256);
     return ctx.db.insert("calendarConnections", {
       userId: args.userId,
       provider: args.provider,

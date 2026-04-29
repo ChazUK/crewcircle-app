@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation } from "../_generated/server";
+import { assertMaxLength } from "../lib/stringValidation";
 import { getUserByExternalId } from "./db/getUser";
 import { upsertCurrentUser } from "./domain/upsertCurrentUser";
 import { assertSafeProfileUrl } from "./domain/urlValidation";
@@ -32,6 +33,9 @@ export const completeOnboarding = mutation({
     const user = await getUserByExternalId(ctx, identity.subject);
     if (!user) throw new Error("User not found");
 
+    assertMaxLength(args.firstName, "firstName", 100);
+    assertMaxLength(args.lastName, "lastName", 100);
+
     await ctx.db.patch(user._id, {
       firstName: args.firstName,
       lastName: args.lastName,
@@ -46,6 +50,7 @@ export const completeOnboarding = mutation({
 
 export const updateProfile = mutation({
   args: {
+    bio: v.optional(v.string()),
     website: v.optional(v.string()),
     imdbUrl: v.optional(v.string()),
     cvUrl: v.optional(v.string()),
@@ -57,11 +62,13 @@ export const updateProfile = mutation({
     const user = await getUserByExternalId(ctx, identity.subject);
     if (!user) throw new Error("User not found");
 
+    assertMaxLength(args.bio, "bio", 1000);
     assertSafeProfileUrl(args.website, "website");
     assertSafeProfileUrl(args.imdbUrl, "imdbUrl");
     assertSafeProfileUrl(args.cvUrl, "cvUrl");
 
     await ctx.db.patch(user._id, {
+      ...(args.bio !== undefined && { bio: args.bio }),
       ...(args.website !== undefined && { website: args.website }),
       ...(args.imdbUrl !== undefined && { imdbUrl: args.imdbUrl }),
       ...(args.cvUrl !== undefined && { cvUrl: args.cvUrl }),

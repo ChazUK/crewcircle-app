@@ -26,6 +26,87 @@ async function makeTestWithUser() {
   return t;
 }
 
+describe("completeOnboarding string length validation", () => {
+  test("rejects firstName longer than 100 characters", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+        firstName: "A".repeat(101),
+        lastName: "Smith",
+        userType: "crew",
+      }),
+    ).rejects.toThrow("firstName exceeds maximum length of 100 characters");
+  });
+
+  test("rejects lastName longer than 100 characters", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+        firstName: "Alice",
+        lastName: "B".repeat(101),
+        userType: "crew",
+      }),
+    ).rejects.toThrow("lastName exceeds maximum length of 100 characters");
+  });
+
+  test("accepts firstName and lastName at exactly 100 characters", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+      firstName: "A".repeat(100),
+      lastName: "B".repeat(100),
+      userType: "crew",
+    });
+  });
+
+  test("accepts firstName and lastName within limits", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+      firstName: "Alice",
+      lastName: "Smith",
+      userType: "crew",
+    });
+  });
+});
+
+describe("updateProfile bio length validation", () => {
+  test("rejects bio longer than 1000 characters", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
+        bio: "B".repeat(10_000),
+      }),
+    ).rejects.toThrow("bio exceeds maximum length of 1000 characters");
+  });
+
+  test("rejects bio at 1001 characters", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
+        bio: "B".repeat(1001),
+      }),
+    ).rejects.toThrow("bio exceeds maximum length of 1000 characters");
+  });
+
+  test("accepts bio at exactly 1000 characters", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
+      bio: "B".repeat(1000),
+    });
+  });
+
+  test("accepts a short bio", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
+      bio: "Experienced focus puller based in London.",
+    });
+  });
+
+  test("accepts undefined bio (no-op)", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {});
+  });
+});
+
 describe("updateProfile URL validation", () => {
   test("rejects javascript: protocol as website", async () => {
     const t = await makeTestWithUser();
