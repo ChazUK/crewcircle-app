@@ -116,6 +116,12 @@
       "skillPath": "skills/engineering/setup-matt-pocock-skills/SKILL.md",
       "computedHash": "3a32f8f1ed8160c9d286a2aabe88ee9b884c6f3f88a7a6c47b7d5d552c959587"
     },
+    "tanstack-form": {
+      "source": "tanstack-skills/tanstack-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/tanstack-form/skills/tanstack-form/SKILL.md",
+      "computedHash": "1eb9f9fc43ab2777f586f916b2234c5340ed98f296a98b22c75cbbafcbd29b86"
+    },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -160,6 +166,12 @@
       "sourceType": "github",
       "skillPath": "skills/productivity/write-a-skill/SKILL.md",
       "computedHash": "b44d8aab2ead83c716e01af4c9a24ccc4575ce70ad58ec4f1749fb88c9cc82ba"
+    },
+    "zod": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/zod/SKILL.md",
+      "computedHash": "e5d8e35002d0d6b03db0b0daad54e1b82c9c10804f8a745025c07db5ea685655"
     },
     "zoom-out": {
       "source": "mattpocock/skills",
