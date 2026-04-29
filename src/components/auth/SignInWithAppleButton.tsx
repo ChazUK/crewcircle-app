@@ -27,10 +27,12 @@ export function SignInWithAppleButton({ onSignInComplete }: Props) {
           router.replace("/");
         }
       }
-    } catch (err: any) {
-      if (err.code === "ERR_REQUEST_CANCELED") return;
+    } catch (err: unknown) {
+      const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
+      if (code === "ERR_REQUEST_CANCELED") return;
 
-      Alert.alert("Error", err.message || "An error occurred during Apple sign-in");
+      const message = err instanceof Error ? err.message : "An error occurred during Apple sign-in";
+      Alert.alert("Error", message);
       console.error("Sign in with Apple error:", JSON.stringify(err, null, 2));
     }
   };
