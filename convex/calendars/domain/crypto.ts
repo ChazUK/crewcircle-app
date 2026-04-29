@@ -6,7 +6,7 @@ const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 const KEY_LENGTH = 32;
 
-function getKey(): Buffer {
+const _KEY = (() => {
   const raw = process.env.CALENDAR_ENCRYPTION_KEY;
   if (!raw) {
     throw new Error(
@@ -20,6 +20,10 @@ function getKey(): Buffer {
     );
   }
   return key;
+})();
+
+function getKey(): Buffer {
+  return _KEY;
 }
 
 export function encryptJson(payload: unknown): ArrayBuffer {

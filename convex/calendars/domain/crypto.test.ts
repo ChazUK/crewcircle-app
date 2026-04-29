@@ -1,19 +1,21 @@
 // @vitest-environment node
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
+
+// 32 bytes of zeros encoded as base64 — a deterministic test key.
+const TEST_KEY = Buffer.alloc(32, 0).toString("base64");
+
+// Must run before the static import below so the module-level IIFE finds the key.
+vi.hoisted(() => {
+  process.env.CALENDAR_ENCRYPTION_KEY = Buffer.alloc(32, 0).toString("base64");
+});
 
 import { decryptJson, encryptJson } from "./crypto";
 
-// 32 bytes of zeros encoded as base64 — a deterministic test key that the
-// production code will never accept because getKey validates length only.
-const TEST_KEY = Buffer.alloc(32, 0).toString("base64");
-
 describe("encryptJson / decryptJson", () => {
-  beforeEach(() => {
-    vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
-  });
-
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
+    vi.resetModules();
   });
 
   test("round-trips arbitrary JSON payloads", () => {
@@ -41,13 +43,15 @@ describe("encryptJson / decryptJson", () => {
     expect(() => decryptJson(bytes.buffer)).toThrow();
   });
 
-  test("throws when CALENDAR_ENCRYPTION_KEY is missing", () => {
+  test("throws at module load when CALENDAR_ENCRYPTION_KEY is missing", async () => {
+    vi.resetModules();
     vi.stubEnv("CALENDAR_ENCRYPTION_KEY", "");
-    expect(() => encryptJson({})).toThrow(/CALENDAR_ENCRYPTION_KEY is not set/);
+    await expect(import("./crypto")).rejects.toThrow(/CALENDAR_ENCRYPTION_KEY is not set/);
   });
 
-  test("throws when CALENDAR_ENCRYPTION_KEY is not 32 bytes", () => {
+  test("throws at module load when CALENDAR_ENCRYPTION_KEY is not 32 bytes", async () => {
+    vi.resetModules();
     vi.stubEnv("CALENDAR_ENCRYPTION_KEY", Buffer.alloc(16, 0).toString("base64"));
-    expect(() => encryptJson({})).toThrow(/32 bytes/);
+    await expect(import("./crypto")).rejects.toThrow(/32 bytes/);
   });
 });

@@ -2,6 +2,11 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+// Must run before static imports so the module-level IIFE in crypto.ts finds the key.
+vi.hoisted(() => {
+  process.env.CALENDAR_ENCRYPTION_KEY = Buffer.alloc(32, 0).toString("base64");
+});
+
 import { api, internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import schema from "../schema";
