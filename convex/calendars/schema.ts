@@ -35,6 +35,9 @@ export const CalendarConnection = {
   // - Apple: device localCalendarIds from expo-calendar
   // - iCal: not applicable (the feed URL is opaque)
   enabledSubCalendarIds: v.optional(v.array(v.string())),
+  // Optimistic-lock nonce written atomically with each token refresh so that
+  // concurrent refreshes are serialised: only the first writer wins.
+  refreshNonce: v.optional(v.string()),
   // Sync metadata
   lastSyncedAt: v.optional(v.number()),
   lastSyncError: v.optional(v.string()),

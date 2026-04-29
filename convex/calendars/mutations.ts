@@ -116,6 +116,27 @@ export const updateConnectionTokens = internalMutation({
   },
 });
 
+export const updateTokensIfNonce = internalMutation({
+  args: {
+    connectionId: v.id("calendarConnections"),
+    expectedNonce: v.optional(v.string()),
+    encryptedTokens: v.bytes(),
+    tokenExpiresAt: v.optional(v.number()),
+    newNonce: v.string(),
+  },
+  handler: async (ctx, args): Promise<boolean> => {
+    const connection = await ctx.db.get(args.connectionId);
+    if (!connection) return false;
+    if (connection.refreshNonce !== args.expectedNonce) return false;
+    await ctx.db.patch(args.connectionId, {
+      encryptedTokens: args.encryptedTokens,
+      tokenExpiresAt: args.tokenExpiresAt,
+      refreshNonce: args.newNonce,
+    });
+    return true;
+  },
+});
+
 export const markSynced = internalMutation({
   args: {
     connectionId: v.id("calendarConnections"),
