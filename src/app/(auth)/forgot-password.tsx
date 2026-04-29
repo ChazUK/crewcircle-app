@@ -10,6 +10,7 @@ import { withUniwind } from "uniwind";
 
 import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
+import { getClerkErrorMessage } from "@/utils/clerkErrors";
 
 type Step = "email" | "code" | "new-password" | "mfa";
 
@@ -233,7 +234,7 @@ export default function Page() {
                       isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
                       error={
                         clerkErrors.fields.code?.longMessage ??
-                        (clerkErrors.global?.[0] as any)?.errors?.[0]?.longMessage
+                        getClerkErrorMessage(clerkErrors.global?.[0])
                       }
                       onResend={() => {
                         codeForm.reset();

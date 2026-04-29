@@ -21,6 +21,7 @@ import { SignInWithAppleButton } from "@/components/auth/SignInWithAppleButton";
 import { SignInWithGoogleButton } from "@/components/auth/SignInWithGoogleButton";
 import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
+import { getClerkErrorMessage } from "@/utils/clerkErrors";
 
 const StyledSafeAreaView = withUniwind(SafeAreaView);
 
@@ -195,7 +196,7 @@ export default function Page() {
                       isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
                       error={
                         clerkErrors.fields.code?.longMessage ??
-                        (clerkErrors.global?.[0] as any)?.errors?.[0]?.longMessage
+                        getClerkErrorMessage(clerkErrors.global?.[0])
                       }
                       onResend={() => {
                         verifyForm.reset();
@@ -240,7 +241,7 @@ export default function Page() {
                       isDisabled={!canSubmit || !!isSubmitting || fetchStatus === "fetching"}
                       error={
                         clerkErrors.fields.code?.longMessage ??
-                        (clerkErrors.global?.[0] as any)?.errors?.[0]?.longMessage
+                        getClerkErrorMessage(clerkErrors.global?.[0])
                       }
                       onResend={() => {
                         verifyForm.reset();
