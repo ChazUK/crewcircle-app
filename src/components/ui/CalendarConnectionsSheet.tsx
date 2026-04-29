@@ -20,6 +20,7 @@ import {
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Platform, Text, View } from "react-native";
 
+import { GoogleCalendarListSchema } from "./googleCalendarSchemas";
 import {
   AppleCalendarIcon,
   GoogleCalendarIcon,
@@ -187,8 +188,12 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
       try {
         let options: SubCalendarOption[] = [];
         if (args.provider === "google") {
-          const items = await listGoogleCalendars({ connectionId: args.connectionId });
-          options = items.map((item) => ({
+          const raw = await listGoogleCalendars({ connectionId: args.connectionId });
+          const parsed = GoogleCalendarListSchema.safeParse(raw);
+          if (!parsed.success) {
+            throw new Error("Unexpected response from Google Calendar API");
+          }
+          options = parsed.data.map((item) => ({
             id: item.id,
             label: item.label,
             hint: item.primary ? "Primary" : item.accessRole,

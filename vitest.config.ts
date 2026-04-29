@@ -11,6 +11,14 @@ export default defineConfig({
           environment: "edge-runtime",
         },
       },
+      {
+        extends: true,
+        test: {
+          name: "src",
+          include: ["src/**/*.test.ts"],
+          environment: "node",
+        },
+      },
     ],
     coverage: {
       provider: "v8",
