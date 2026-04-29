@@ -291,8 +291,10 @@ The story file must:
 - Pass realistic \`args\` values — no empty strings or undefined where a real value would be shown
 
 Storybook is already installed in this project — check \`package.json\` for the exact
-Storybook React Native version and follow existing \`.stories.tsx\` files in \`src/\` as
+Storybook React Native version and follow existing \`.stories.tsx\` files in \`src/components\` as
 reference before writing your own.
+
+Do not create Stories for components that are not UI components (e.g. app routes, hooks, utils, etc.).
 
 ### Step 4 — Feedback loops (MUST all pass before opening a PR)
 Run these in order and fix every failure before continuing:
