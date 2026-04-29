@@ -10,7 +10,6 @@ const meta = {
     onChange: () => {},
     onBlur: () => {},
     onSubmit: () => {},
-    onBack: () => {},
     isLoading: false,
     isDisabled: false,
   },

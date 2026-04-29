@@ -27,10 +27,13 @@ export function SignInWithGoogleButton({ onSignInComplete }: Props) {
           router.replace("/");
         }
       }
-    } catch (err: any) {
-      if (err.code === "SIGN_IN_CANCELLED" || err.code === "-5") return;
+    } catch (err: unknown) {
+      const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
+      if (code === "SIGN_IN_CANCELLED" || code === "-5") return;
 
-      Alert.alert("Error", err.message || "An error occurred during Google sign-in");
+      const message =
+        err instanceof Error ? err.message : "An error occurred during Google sign-in";
+      Alert.alert("Error", message);
       console.error("Sign in with Google error:", JSON.stringify(err, null, 2));
     }
   };
