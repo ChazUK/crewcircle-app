@@ -1,4 +1,5 @@
 import { Button, Card, FieldError, InputOTP } from "heroui-native";
+import { useState } from "react";
 import { Text, View } from "react-native";
 
 import { useCountdown } from "@/hooks/useCountdown";
@@ -30,6 +31,7 @@ export function VerifyCodeScreen({
   onResend,
 }: Props) {
   const [countdown, startCountdown] = useCountdown(onResend ? 30 : 0);
+  const [resendError, setResendError] = useState<string | null>(null);
 
   return (
     <View className="gap-6">
@@ -72,22 +74,24 @@ export function VerifyCodeScreen({
       </Card>
 
       {onResend && (
-        <View className="items-center">
+        <View className="items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             isDisabled={isDisabled || isLoading || countdown > 0}
             onPress={async () => {
+              setResendError(null);
               try {
                 await onResend();
                 startCountdown(30);
-              } catch (error) {
-                console.error("[VerifyCodeScreen] Resend failed:", error);
+              } catch {
+                setResendError("Failed to resend code. Please try again.");
               }
             }}
           >
             {countdown > 0 ? `Resend code in ${countdown}s` : "Resend code"}
           </Button>
+          {resendError && <FieldError isInvalid>{resendError}</FieldError>}
         </View>
       )}
     </View>

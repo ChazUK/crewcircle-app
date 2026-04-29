@@ -77,3 +77,11 @@ export const Loading: Story = {
     isDisabled: true,
   },
 };
+
+export const ResendError: Story = {
+  args: {
+    title: "Verify your account",
+    subtitle: "Enter the 6-digit code sent to your email",
+    onResend: () => Promise.reject(new Error("Network error")),
+  },
+};
