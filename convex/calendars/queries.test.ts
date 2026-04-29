@@ -170,6 +170,18 @@ describe("listEventsInRange", () => {
     expect(result).toEqual([]);
   });
 
+  test("throws ConvexError when the date range exceeds 90 days", async () => {
+    const t = convexTest(schema, modules);
+    const base = Date.UTC(2026, 0, 1);
+    const ninetyOneDays = 91 * ONE_DAY;
+    await expect(
+      t.query(api.calendars.queries.listEventsInRange, {
+        startsAtMs: base,
+        endsAtMs: base + ninetyOneDays,
+      }),
+    ).rejects.toThrow("Date range exceeds the maximum allowed window of 90 days");
+  });
+
   test("does not leak another user's events", async () => {
     const { t } = await setupUserWithConnection();
     const otherUser = await t.run((ctx) =>

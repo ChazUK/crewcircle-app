@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
 import { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
@@ -54,12 +54,19 @@ export const listConnections = query({
 // endsAt.
 const OVERLAP_LOOKBACK_MS = 365 * 24 * 60 * 60 * 1000;
 
+const MAX_RANGE_MS = 90 * 24 * 60 * 60 * 1000;
+const MAX_EVENTS = 2000;
+
 export const listEventsInRange = query({
   args: {
     startsAtMs: v.number(),
     endsAtMs: v.number(),
   },
   handler: async (ctx, args) => {
+    if (args.endsAtMs - args.startsAtMs > MAX_RANGE_MS) {
+      throw new ConvexError("Date range exceeds the maximum allowed window of 90 days");
+    }
+
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
     const user = await getUserByExternalId(ctx, identity.subject);
@@ -73,7 +80,7 @@ export const listEventsInRange = query({
           .gte("startsAt", args.startsAtMs - OVERLAP_LOOKBACK_MS)
           .lt("startsAt", args.endsAtMs),
       )
-      .collect();
+      .take(MAX_EVENTS);
 
     return events
       .filter((event) => event.endsAt > args.startsAtMs)
