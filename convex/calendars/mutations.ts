@@ -1,11 +1,15 @@
 import { v } from "convex/values";
+import { z } from "zod";
 
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
+import { parseOrConvexError } from "../lib/parseOrConvexError";
 import { deleteConnectionEvents, replaceConnectionEvents } from "./db/writeEvents";
 import { CalendarProvider } from "./schema";
 
 const PRUNE_BATCH_SIZE = 200;
+
+const insertConnectionSchema = z.object({ label: z.string().max(256) });
 
 const ParsedEventValidator = v.object({
   externalId: v.string(),
@@ -35,6 +39,7 @@ export const insertConnection = internalMutation({
     enabledSubCalendarIds: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    parseOrConvexError(insertConnectionSchema, args);
     return ctx.db.insert("calendarConnections", {
       userId: args.userId,
       provider: args.provider,

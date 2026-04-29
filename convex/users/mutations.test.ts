@@ -26,6 +26,87 @@ async function makeTestWithUser() {
   return t;
 }
 
+describe("completeOnboarding string length validation", () => {
+  test("rejects firstName longer than 100 characters", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+        firstName: "A".repeat(101),
+        lastName: "Smith",
+        userType: "crew",
+      }),
+    ).rejects.toThrow("Too big: expected string to have <=100 characters");
+  });
+
+  test("rejects lastName longer than 100 characters", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+        firstName: "Alice",
+        lastName: "B".repeat(101),
+        userType: "crew",
+      }),
+    ).rejects.toThrow("Too big: expected string to have <=100 characters");
+  });
+
+  test("accepts firstName and lastName at exactly 100 characters", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+      firstName: "A".repeat(100),
+      lastName: "B".repeat(100),
+      userType: "crew",
+    });
+  });
+
+  test("accepts firstName and lastName within limits", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+      firstName: "Alice",
+      lastName: "Smith",
+      userType: "crew",
+    });
+  });
+});
+
+describe("updateProfile bio length validation", () => {
+  test("rejects bio longer than 1000 characters", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
+        bio: "B".repeat(10_000),
+      }),
+    ).rejects.toThrow("Too big: expected string to have <=1000 characters");
+  });
+
+  test("rejects bio at 1001 characters", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
+        bio: "B".repeat(1001),
+      }),
+    ).rejects.toThrow("Too big: expected string to have <=1000 characters");
+  });
+
+  test("accepts bio at exactly 1000 characters", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
+      bio: "B".repeat(1000),
+    });
+  });
+
+  test("accepts a short bio", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
+      bio: "Experienced focus puller based in London.",
+    });
+  });
+
+  test("accepts undefined bio (no-op)", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {});
+  });
+});
+
 describe("updateProfile URL validation", () => {
   test("rejects javascript: protocol as website", async () => {
     const t = await makeTestWithUser();
@@ -33,7 +114,7 @@ describe("updateProfile URL validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         website: "javascript:alert(1)",
       }),
-    ).rejects.toThrow("must use http or https");
+    ).rejects.toThrow("Invalid URL");
   });
 
   test("rejects plain string without protocol as website", async () => {
@@ -42,7 +123,7 @@ describe("updateProfile URL validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         website: "not-a-url",
       }),
-    ).rejects.toThrow("not a valid URL");
+    ).rejects.toThrow("Invalid URL");
   });
 
   test("rejects javascript: protocol as imdbUrl", async () => {
@@ -51,7 +132,7 @@ describe("updateProfile URL validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         imdbUrl: "javascript:void(0)",
       }),
-    ).rejects.toThrow("must use http or https");
+    ).rejects.toThrow("Invalid URL");
   });
 
   test("rejects plain string without protocol as cvUrl", async () => {
@@ -60,7 +141,7 @@ describe("updateProfile URL validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         cvUrl: "my-cv",
       }),
-    ).rejects.toThrow("not a valid URL");
+    ).rejects.toThrow("Invalid URL");
   });
 
   test("accepts valid https:// URL", async () => {

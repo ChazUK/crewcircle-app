@@ -1,9 +1,24 @@
 import { v } from "convex/values";
+import { z } from "zod";
 
 import { mutation } from "../_generated/server";
+import { parseOrConvexError } from "../lib/parseOrConvexError";
 import { getUserByExternalId } from "./db/getUser";
 import { upsertCurrentUser } from "./domain/upsertCurrentUser";
-import { assertSafeProfileUrl } from "./domain/urlValidation";
+
+const httpUrl = z.url({ protocol: /^https?$/, hostname: z.regexes.domain });
+
+const completeOnboardingSchema = z.object({
+  firstName: z.string().max(100),
+  lastName: z.string().max(100),
+});
+
+const updateProfileSchema = z.object({
+  bio: z.string().max(1000).optional(),
+  website: httpUrl.optional(),
+  imdbUrl: httpUrl.optional(),
+  cvUrl: httpUrl.optional(),
+});
 
 export const upsertUser = mutation({
   args: {},
@@ -32,6 +47,8 @@ export const completeOnboarding = mutation({
     const user = await getUserByExternalId(ctx, identity.subject);
     if (!user) throw new Error("User not found");
 
+    parseOrConvexError(completeOnboardingSchema, args);
+
     await ctx.db.patch(user._id, {
       firstName: args.firstName,
       lastName: args.lastName,
@@ -46,6 +63,7 @@ export const completeOnboarding = mutation({
 
 export const updateProfile = mutation({
   args: {
+    bio: v.optional(v.string()),
     website: v.optional(v.string()),
     imdbUrl: v.optional(v.string()),
     cvUrl: v.optional(v.string()),
@@ -57,11 +75,10 @@ export const updateProfile = mutation({
     const user = await getUserByExternalId(ctx, identity.subject);
     if (!user) throw new Error("User not found");
 
-    assertSafeProfileUrl(args.website, "website");
-    assertSafeProfileUrl(args.imdbUrl, "imdbUrl");
-    assertSafeProfileUrl(args.cvUrl, "cvUrl");
+    parseOrConvexError(updateProfileSchema, args);
 
     await ctx.db.patch(user._id, {
+      ...(args.bio !== undefined && { bio: args.bio }),
       ...(args.website !== undefined && { website: args.website }),
       ...(args.imdbUrl !== undefined && { imdbUrl: args.imdbUrl }),
       ...(args.cvUrl !== undefined && { cvUrl: args.cvUrl }),
