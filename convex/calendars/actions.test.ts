@@ -433,6 +433,26 @@ describe("syncIcalConnectionInternal", () => {
 });
 
 describe("setEnabledSubCalendars", () => {
+  test("throws ConvexError when enabledSubCalendarIds is empty", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t);
+    const connectionId = await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId,
+        provider: "apple",
+        label: "Apple",
+        enabledSubCalendarIds: ["cal-1"],
+        createdAt: Date.now(),
+      }),
+    );
+    await expect(
+      t.withIdentity(identity).action(api.calendars.actions.setEnabledSubCalendars, {
+        connectionId,
+        enabledSubCalendarIds: [],
+      }),
+    ).rejects.toThrow(/enabledSubCalendarIds must contain at least one/);
+  });
+
   test("updates the enabled list for an iCal connection and re-fetches", async () => {
     const t = convexTest(schema, modules);
     await seedUser(t);
