@@ -493,7 +493,7 @@ describe("syncGoogleConnectionInternal", () => {
     );
 
     let tokenRefreshCallCount = 0;
-    stubFetches([
+    const { calls } = stubFetches([
       // Token refresh call — simulate another concurrent action winning by writing a
       // new nonce into the DB before this action's CAS mutation runs.
       async (url: string) => {
@@ -521,6 +521,11 @@ describe("syncGoogleConnectionInternal", () => {
 
     // Only one HTTP refresh call was made (no retry loop)
     expect(tokenRefreshCallCount).toBe(1);
+    // Events request used the re-read token, not the locally-refreshed one
+    const eventsCall = calls[1];
+    expect((eventsCall.init?.headers as Record<string, string>)?.Authorization).toBe(
+      "Bearer token-from-winner",
+    );
     // DB nonce belongs to the winning action — this action's CAS write was skipped
     const conn = await t.run((ctx) => ctx.db.get(connectionId));
     expect(conn?.refreshNonce).toBe("nonce-from-winner");
