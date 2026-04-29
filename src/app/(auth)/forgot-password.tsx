@@ -22,7 +22,6 @@ export default function Page() {
 
   useEffect(() => {
     return () => {
-      console.log("reset, forgot password");
       signIn.reset();
     };
   }, []);
