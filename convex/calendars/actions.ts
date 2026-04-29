@@ -255,7 +255,7 @@ export const setEnabledSubCalendars = action({
     if (args.enabledSubCalendarIds.length === 0) {
       throw new ConvexError(
         "enabledSubCalendarIds must contain at least one calendar ID. " +
-          "To disconnect the calendar entirely, use disconnectCalendar.",
+          "To disconnect the calendar entirely, use disconnect.",
       );
     }
     const user = await requireUser(ctx);
