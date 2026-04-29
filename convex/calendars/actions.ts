@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
 import { api, internal } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
@@ -252,6 +252,12 @@ export const setEnabledSubCalendars = action({
     enabledSubCalendarIds: v.array(v.string()),
   },
   handler: async (ctx, args): Promise<null> => {
+    if (args.enabledSubCalendarIds.length === 0) {
+      throw new ConvexError(
+        "enabledSubCalendarIds must contain at least one calendar ID. " +
+          "To disconnect the calendar entirely, use disconnect.",
+      );
+    }
     const user = await requireUser(ctx);
     const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
       internal.calendars.actionHelpers.getConnectionForOwner,
