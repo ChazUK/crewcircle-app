@@ -35,7 +35,7 @@ describe("completeOnboarding string length validation", () => {
         lastName: "Smith",
         userType: "crew",
       }),
-    ).rejects.toThrow("firstName exceeds maximum length of 100 characters");
+    ).rejects.toThrow("Too big: expected string to have <=100 characters");
   });
 
   test("rejects lastName longer than 100 characters", async () => {
@@ -46,7 +46,7 @@ describe("completeOnboarding string length validation", () => {
         lastName: "B".repeat(101),
         userType: "crew",
       }),
-    ).rejects.toThrow("lastName exceeds maximum length of 100 characters");
+    ).rejects.toThrow("Too big: expected string to have <=100 characters");
   });
 
   test("accepts firstName and lastName at exactly 100 characters", async () => {
@@ -75,7 +75,7 @@ describe("updateProfile bio length validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         bio: "B".repeat(10_000),
       }),
-    ).rejects.toThrow("bio exceeds maximum length of 1000 characters");
+    ).rejects.toThrow("Too big: expected string to have <=1000 characters");
   });
 
   test("rejects bio at 1001 characters", async () => {
@@ -84,7 +84,7 @@ describe("updateProfile bio length validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         bio: "B".repeat(1001),
       }),
-    ).rejects.toThrow("bio exceeds maximum length of 1000 characters");
+    ).rejects.toThrow("Too big: expected string to have <=1000 characters");
   });
 
   test("accepts bio at exactly 1000 characters", async () => {
@@ -114,7 +114,7 @@ describe("updateProfile URL validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         website: "javascript:alert(1)",
       }),
-    ).rejects.toThrow("must use http or https");
+    ).rejects.toThrow("Invalid URL");
   });
 
   test("rejects plain string without protocol as website", async () => {
@@ -123,7 +123,7 @@ describe("updateProfile URL validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         website: "not-a-url",
       }),
-    ).rejects.toThrow("not a valid URL");
+    ).rejects.toThrow("Invalid URL");
   });
 
   test("rejects javascript: protocol as imdbUrl", async () => {
@@ -132,7 +132,7 @@ describe("updateProfile URL validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         imdbUrl: "javascript:void(0)",
       }),
-    ).rejects.toThrow("must use http or https");
+    ).rejects.toThrow("Invalid URL");
   });
 
   test("rejects plain string without protocol as cvUrl", async () => {
@@ -141,7 +141,7 @@ describe("updateProfile URL validation", () => {
       t.withIdentity(identity).mutation(api.users.mutations.updateProfile, {
         cvUrl: "my-cv",
       }),
-    ).rejects.toThrow("not a valid URL");
+    ).rejects.toThrow("Invalid URL");
   });
 
   test("accepts valid https:// URL", async () => {

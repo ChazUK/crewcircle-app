@@ -35,7 +35,7 @@ describe("insertConnection label length validation", () => {
         enabledSubCalendarIds: [],
         events: [],
       }),
-    ).rejects.toThrow("label exceeds maximum length of 256 characters");
+    ).rejects.toThrow("Too big: expected string to have <=256 characters");
   });
 
   test("rejects label at 10 000 characters via connectApple", async () => {
@@ -46,7 +46,7 @@ describe("insertConnection label length validation", () => {
         enabledSubCalendarIds: [],
         events: [],
       }),
-    ).rejects.toThrow("label exceeds maximum length of 256 characters");
+    ).rejects.toThrow("Too big: expected string to have <=256 characters");
   });
 
   test("accepts label at exactly 256 characters via connectApple", async () => {
