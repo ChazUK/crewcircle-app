@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getUserByExternalId } from "./db/getUser";
 import { upsertCurrentUser } from "./domain/upsertCurrentUser";
+import { assertSafeProfileUrl } from "./domain/urlValidation";
 
 export const upsertUser = mutation({
   args: {},
@@ -39,6 +40,31 @@ export const completeOnboarding = mutation({
       userType: args.userType,
       ...(args.departments?.[0] && { department: args.departments[0] }),
       hasCompletedOnboarding: true,
+    });
+  },
+});
+
+export const updateProfile = mutation({
+  args: {
+    website: v.optional(v.string()),
+    imdbUrl: v.optional(v.string()),
+    cvUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await getUserByExternalId(ctx, identity.subject);
+    if (!user) throw new Error("User not found");
+
+    assertSafeProfileUrl(args.website, "website");
+    assertSafeProfileUrl(args.imdbUrl, "imdbUrl");
+    assertSafeProfileUrl(args.cvUrl, "cvUrl");
+
+    await ctx.db.patch(user._id, {
+      ...(args.website !== undefined && { website: args.website }),
+      ...(args.imdbUrl !== undefined && { imdbUrl: args.imdbUrl }),
+      ...(args.cvUrl !== undefined && { cvUrl: args.cvUrl }),
     });
   },
 });
