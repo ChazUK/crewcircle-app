@@ -134,6 +134,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
   const [icalUrl, setIcalUrl] = useState("");
   const [icalLabel, setIcalLabel] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [appleDeviceCalendars, setAppleDeviceCalendars] = useState<Calendar.Calendar[]>([]);
   const [applePickerOpen, setApplePickerOpen] = useState(false);
@@ -273,6 +274,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
   }, [googleResponse, connectGoogleAction, openManagePicker]);
 
   const handleConnectGoogle = useCallback(async () => {
+    if (isConnecting) return;
     setError(null);
     const resolvedClientId =
       Platform.OS === "ios"
@@ -295,12 +297,15 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
       redirectUri: googleRequest.redirectUri,
       clientId: resolvedClientId,
     };
+    setIsConnecting(true);
     try {
       await promptGoogle();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to launch Google sign-in");
+    } finally {
+      setIsConnecting(false);
     }
-  }, [googleRequest, promptGoogle]);
+  }, [isConnecting, googleRequest, promptGoogle]);
 
   const handleConnectIcal = useCallback(async () => {
     const trimmed = icalUrl.trim();
@@ -582,7 +587,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange }: Props) {
               </Text>
               <ListGroup>
                 {addTiles.map((tile, index) => {
-                  const isBusyTile = busy === tile.key;
+                  const isBusyTile = busy === tile.key || (tile.key === "google" && isConnecting);
                   return (
                     <Fragment key={tile.key}>
                       {index > 0 && <Separator className="mx-4" />}
