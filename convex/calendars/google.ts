@@ -1,5 +1,7 @@
 "use node";
 
+import { randomUUID } from "node:crypto";
+
 import { v } from "convex/values";
 
 import { api, internal } from "../_generated/api";
@@ -200,6 +202,7 @@ async function ensureAccessToken(
   if (!tokens.refreshToken) {
     throw new Error("Access token expired and no refresh token available; reconnect required");
   }
+  const currentNonce = connection.refreshNonce;
   const refreshed = await refreshAccessToken({
     refreshToken: tokens.refreshToken,
     clientId,
@@ -210,12 +213,29 @@ async function ensureAccessToken(
     tokenType: refreshed.token_type ?? tokens.tokenType,
   };
   const encrypted = encryptJson(nextTokens);
-  await ctx.runMutation(internal.calendars.mutations.updateConnectionTokens, {
+  const updated: boolean = await ctx.runMutation(internal.calendars.mutations.updateTokensIfNonce, {
     connectionId: connection._id,
+    expectedNonce: currentNonce,
     encryptedTokens: encrypted,
     tokenExpiresAt: Date.now() + refreshed.expires_in * 1000,
+    newNonce: randomUUID(),
   });
-  return refreshed.access_token;
+  if (updated) {
+    return refreshed.access_token;
+  }
+  // Another concurrent action already refreshed. Re-read the freshly stored token.
+  const fresh: Doc<"calendarConnections"> | null = await ctx.runQuery(
+    internal.calendars.actionHelpers.getConnectionInternal,
+    { connectionId: connection._id },
+  );
+  if (!fresh?.encryptedTokens) {
+    throw new Error("Token refresh race: re-read connection is missing credentials");
+  }
+  const freshTokens = decryptJson<EncryptedOAuthTokens>(fresh.encryptedTokens);
+  if (!freshTokens.accessToken) {
+    throw new Error("Token refresh race: re-read connection is missing access token");
+  }
+  return freshTokens.accessToken;
 }
 
 export const connectGoogle = action({

@@ -31,7 +31,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function stubFetches(handlers: Array<(url: string, init?: RequestInit) => Response>) {
+function stubFetches(
+  handlers: Array<(url: string, init?: RequestInit) => Response | Promise<Response>>,
+) {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   let index = 0;
   const fn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -470,5 +472,148 @@ describe("syncGoogleConnectionInternal", () => {
         userId,
       }),
     ).rejects.toThrow(/OAuth client id/);
+  });
+
+  test("concurrent refresh: nonce mismatch causes fallback to re-read token without a second HTTP refresh", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await seedUser(t);
+    const expiredTokens = encryptJson({ accessToken: "expired", refreshToken: "refresh-1" });
+    const connectionId = await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId,
+        provider: "google",
+        label: "Google",
+        oauthClientId: "client-id",
+        encryptedTokens: expiredTokens,
+        tokenExpiresAt: Date.now() - 1000,
+        refreshNonce: "initial-nonce",
+        enabledSubCalendarIds: ["cal"],
+        createdAt: Date.now(),
+      }),
+    );
+
+    let tokenRefreshCallCount = 0;
+    const { calls } = stubFetches([
+      // Token refresh call — simulate another concurrent action winning by writing a
+      // new nonce into the DB before this action's CAS mutation runs.
+      async (url: string) => {
+        if (url.includes("oauth2.googleapis.com/token")) {
+          tokenRefreshCallCount++;
+          const otherTokens = encryptJson({ accessToken: "token-from-winner", refreshToken: "r" });
+          await t.run((ctx) =>
+            ctx.db.patch(connectionId, {
+              refreshNonce: "nonce-from-winner",
+              encryptedTokens: otherTokens,
+              tokenExpiresAt: Date.now() + 3600 * 1000,
+            }),
+          );
+        }
+        return json({ access_token: "token-from-this-action", expires_in: 3600 });
+      },
+      // Events list — called with the re-read token (token-from-winner)
+      () => json({ items: [] }),
+    ]);
+
+    await t.action(internal.calendars.google.syncGoogleConnectionInternal, {
+      connectionId,
+      userId,
+    });
+
+    // Only one HTTP refresh call was made (no retry loop)
+    expect(tokenRefreshCallCount).toBe(1);
+    // Events request used the re-read token, not the locally-refreshed one
+    const eventsCall = calls[1];
+    expect((eventsCall.init?.headers as Record<string, string>)?.Authorization).toBe(
+      "Bearer token-from-winner",
+    );
+    // DB nonce belongs to the winning action — this action's CAS write was skipped
+    const conn = await t.run((ctx) => ctx.db.get(connectionId));
+    expect(conn?.refreshNonce).toBe("nonce-from-winner");
+  });
+});
+
+describe("updateTokensIfNonce", () => {
+  async function seedConnection(t: TestConvex<typeof schema>, nonce?: string) {
+    const userId = await seedUser(t);
+    const connectionId = await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId,
+        provider: "google",
+        label: "Google",
+        encryptedTokens: encryptJson({ accessToken: "old-token" }),
+        refreshNonce: nonce,
+        createdAt: Date.now(),
+      }),
+    );
+    return { userId, connectionId };
+  }
+
+  test("updates tokens and returns true when nonce matches", async () => {
+    const t = convexTest(schema, modules);
+    const { connectionId } = await seedConnection(t, "nonce-1");
+
+    const newTokens = encryptJson({ accessToken: "new-token" });
+    const updated = await t.mutation(internal.calendars.mutations.updateTokensIfNonce, {
+      connectionId,
+      expectedNonce: "nonce-1",
+      encryptedTokens: newTokens,
+      tokenExpiresAt: Date.now() + 3_600_000,
+      newNonce: "nonce-2",
+    });
+
+    expect(updated).toBe(true);
+    const conn = await t.run((ctx) => ctx.db.get(connectionId));
+    expect(conn?.refreshNonce).toBe("nonce-2");
+  });
+
+  test("is a no-op and returns false when nonce does not match", async () => {
+    const t = convexTest(schema, modules);
+    const { connectionId } = await seedConnection(t, "nonce-current");
+
+    const newTokens = encryptJson({ accessToken: "new-token" });
+    const updated = await t.mutation(internal.calendars.mutations.updateTokensIfNonce, {
+      connectionId,
+      expectedNonce: "nonce-stale",
+      encryptedTokens: newTokens,
+      tokenExpiresAt: Date.now() + 3_600_000,
+      newNonce: "nonce-next",
+    });
+
+    expect(updated).toBe(false);
+    const conn = await t.run((ctx) => ctx.db.get(connectionId));
+    expect(conn?.refreshNonce).toBe("nonce-current");
+  });
+
+  test("succeeds when both expected and stored nonce are undefined (first-ever refresh)", async () => {
+    const t = convexTest(schema, modules);
+    const { connectionId } = await seedConnection(t, undefined);
+
+    const newTokens = encryptJson({ accessToken: "first-token" });
+    const updated = await t.mutation(internal.calendars.mutations.updateTokensIfNonce, {
+      connectionId,
+      expectedNonce: undefined,
+      encryptedTokens: newTokens,
+      tokenExpiresAt: Date.now() + 3_600_000,
+      newNonce: "nonce-first",
+    });
+
+    expect(updated).toBe(true);
+    const conn = await t.run((ctx) => ctx.db.get(connectionId));
+    expect(conn?.refreshNonce).toBe("nonce-first");
+  });
+
+  test("returns false when connection does not exist", async () => {
+    const t = convexTest(schema, modules);
+    const { connectionId } = await seedConnection(t);
+    await t.run((ctx) => ctx.db.delete(connectionId));
+
+    const updated = await t.mutation(internal.calendars.mutations.updateTokensIfNonce, {
+      connectionId,
+      expectedNonce: undefined,
+      encryptedTokens: encryptJson({ accessToken: "x" }),
+      newNonce: "nonce-1",
+    });
+
+    expect(updated).toBe(false);
   });
 });
