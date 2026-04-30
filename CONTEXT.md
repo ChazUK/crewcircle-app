@@ -166,6 +166,12 @@ _Avoid_: Date range, fetch window, sync range
 
 ---
 
+## Shared types
+
+Types that must be used by both `convex/` (server) and `src/` (client) live in `types/` at the repo root and are imported via the `@shared/*` alias (e.g. `import type { IncomingEvent } from "@shared/calendars"`).
+
+`types/` files must contain **only pure TypeScript type definitions** — no runtime imports. This boundary is what prevents server and client code from mixing. See `CLAUDE.md` → Code Boundaries for the full rules.
+
 ## Industry Context
 
 **Diary Service**:

@@ -4,7 +4,7 @@ import type {
   IncomingEvent,
   SyncWindow,
   WriteError,
-} from "../orchestrator/types";
+} from "@shared/calendars";
 
 export const microsoftCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: true,
@@ -15,15 +15,15 @@ export const microsoftCapabilities: CalendarProviderCapabilities = {
 export const MicrosoftCalendarAdapter: CalendarProvider = {
   capabilities: microsoftCapabilities,
 
-  fetchEvents(_window: SyncWindow): Promise<IncomingEvent[]> {
+  async fetchEvents(_window: SyncWindow): Promise<IncomingEvent[]> {
     throw new Error("Not implemented: Microsoft Calendar is not yet supported");
   },
 
-  writeEvent(_event: IncomingEvent): Promise<WriteError | null> {
+  async writeEvent(_event: IncomingEvent): Promise<WriteError | null> {
     throw new Error("Not implemented: Microsoft Calendar is not yet supported");
   },
 
-  listSubCalendars(): Promise<Array<{ id: string; label: string }>> {
+  async listSubCalendars(): Promise<Array<{ id: string; label: string }>> {
     throw new Error("Not implemented: Microsoft Calendar is not yet supported");
   },
 };

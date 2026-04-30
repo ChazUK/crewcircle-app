@@ -1,4 +1,4 @@
-import type { AdapterRegistry, SyncWindow } from "./types";
+import type { AdapterRegistry, SyncWindow } from "@shared/calendars";
 
 export function currentSyncWindow(): SyncWindow {
   return {

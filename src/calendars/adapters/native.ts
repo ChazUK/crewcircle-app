@@ -3,7 +3,7 @@ import type {
   CalendarProviderCapabilities,
   IncomingEvent,
   WriteError,
-} from "@convex/calendars/orchestrator/types";
+} from "@shared/calendars";
 
 export const nativeCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: false,
@@ -14,11 +14,11 @@ export const nativeCapabilities: CalendarProviderCapabilities = {
 export const NativeCalendarAdapter: CalendarProvider = {
   capabilities: nativeCapabilities,
 
-  writeEvent(_event: IncomingEvent): Promise<WriteError | null> {
+  async writeEvent(_event: IncomingEvent): Promise<WriteError | null> {
     throw new Error("Not implemented: NativeCalendarAdapter");
   },
 
-  listSubCalendars(): Promise<Array<{ id: string; label: string }>> {
+  async listSubCalendars(): Promise<Array<{ id: string; label: string }>> {
     throw new Error("Not implemented: NativeCalendarAdapter");
   },
 };

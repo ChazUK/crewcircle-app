@@ -3,7 +3,7 @@ import type {
   CalendarProviderCapabilities,
   IncomingEvent,
   SyncWindow,
-} from "../orchestrator/types";
+} from "@shared/calendars";
 
 export const icalCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: true,
@@ -14,7 +14,7 @@ export const icalCapabilities: CalendarProviderCapabilities = {
 export const ICalAdapter: CalendarProvider = {
   capabilities: icalCapabilities,
 
-  fetchEvents(_window: SyncWindow): Promise<IncomingEvent[]> {
+  async fetchEvents(_window: SyncWindow): Promise<IncomingEvent[]> {
     throw new Error("Not implemented: ICalAdapter");
   },
 };

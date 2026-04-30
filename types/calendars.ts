@@ -1,6 +1,15 @@
-import type { IncomingEvent } from "../db/writeEvents";
-
-export type { IncomingEvent };
+export type IncomingEvent = {
+  externalId: string;
+  subCalendarId?: string;
+  uid?: string;
+  recurrenceId?: number;
+  title: string;
+  description?: string;
+  location?: string;
+  startsAt: number;
+  endsAt: number;
+  isAllDay: boolean;
+};
 
 export type CalendarProviderCapabilities = {
   serverSidePullable: boolean;

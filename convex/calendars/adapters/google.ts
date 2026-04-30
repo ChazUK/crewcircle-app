@@ -4,7 +4,7 @@ import type {
   IncomingEvent,
   SyncWindow,
   WriteError,
-} from "../orchestrator/types";
+} from "@shared/calendars";
 
 export const googleCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: true,
@@ -15,15 +15,15 @@ export const googleCapabilities: CalendarProviderCapabilities = {
 export const GoogleCalendarAdapter: CalendarProvider = {
   capabilities: googleCapabilities,
 
-  fetchEvents(_window: SyncWindow): Promise<IncomingEvent[]> {
+  async fetchEvents(_window: SyncWindow): Promise<IncomingEvent[]> {
     throw new Error("Not implemented: GoogleCalendarAdapter");
   },
 
-  writeEvent(_event: IncomingEvent): Promise<WriteError | null> {
+  async writeEvent(_event: IncomingEvent): Promise<WriteError | null> {
     throw new Error("Not implemented: GoogleCalendarAdapter");
   },
 
-  listSubCalendars(): Promise<Array<{ id: string; label: string }>> {
+  async listSubCalendars(): Promise<Array<{ id: string; label: string }>> {
     throw new Error("Not implemented: GoogleCalendarAdapter");
   },
 };
