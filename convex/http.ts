@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 
-import { downloadIcalHandler } from "./crewEvents/http";
+import { downloadIcalHandler } from "./jobs/http";
 import { handleClerkWebhook } from "./webhooks/clerk/handler";
 
 const http = httpRouter();

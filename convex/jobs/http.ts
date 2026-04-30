@@ -12,7 +12,7 @@ export const downloadIcalHandler = httpAction(async (ctx, req) => {
     return new Response("Not found", { status: 404 });
   }
 
-  const crewEventId = filename.slice(0, -4);
+  const jobId = filename.slice(0, -4);
 
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) {
@@ -21,8 +21,8 @@ export const downloadIcalHandler = httpAction(async (ctx, req) => {
 
   let result;
   try {
-    result = await ctx.runQuery(internal.crewEvents.queries.getByIdForUser, {
-      id: crewEventId as Id<"crewEvents">,
+    result = await ctx.runQuery(internal.jobs.queries.getByIdForUser, {
+      id: jobId as Id<"jobs">,
       externalAuthId: identity.subject,
     });
   } catch {
@@ -37,18 +37,18 @@ export const downloadIcalHandler = httpAction(async (ctx, req) => {
     return new Response("Forbidden", { status: 403 });
   }
 
-  const { event } = result;
-  const uid = `${crewEventId}@crewcircle.app`;
-  const description = `Role: ${event.role}\nProduction: ${event.productionTitle}`;
+  const { job } = result;
+  const uid = `${jobId}@crewcircle.app`;
+  const description = `Role: ${job.role}\nProduction: ${job.productionTitle}`;
 
   const ics = generateIcs({
     uid,
     dtstamp: Date.now(),
-    startsAt: event.startsAt,
-    endsAt: event.endsAt,
-    title: event.title,
+    startsAt: job.startsAt,
+    endsAt: job.endsAt,
+    title: job.title,
     description,
-    location: event.location,
+    location: job.location,
   });
 
   return new Response(ics, {

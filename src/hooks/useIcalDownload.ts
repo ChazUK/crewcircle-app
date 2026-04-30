@@ -11,14 +11,14 @@ export function useIcalDownload() {
   const [error, setError] = useState<Error | null>(null);
 
   const download = useCallback(
-    async (crewEventId: string) => {
+    async (jobId: string) => {
       setLoading(true);
       setError(null);
       try {
         const token = await getToken({ template: "convex" });
         if (!token) throw new Error("Not authenticated");
 
-        const url = `${CONVEX_URL}/calendar/event/${crewEventId}.ics`;
+        const url = `${CONVEX_URL}/calendar/event/${jobId}.ics`;
         const response = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -28,7 +28,7 @@ export function useIcalDownload() {
         if (!response.ok) throw new Error(`Request failed: ${response.status}`);
 
         const icsContent = await response.text();
-        const fileUri = `${FileSystem.cacheDirectory}event-${crewEventId}.ics`;
+        const fileUri = `${FileSystem.cacheDirectory}event-${jobId}.ics`;
         await FileSystem.writeAsStringAsync(fileUri, icsContent, {
           encoding: FileSystem.EncodingType.UTF8,
         });
