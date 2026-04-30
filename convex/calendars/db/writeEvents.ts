@@ -12,6 +12,7 @@ export type IncomingEvent = {
   startsAt: number;
   endsAt: number;
   isAllDay: boolean;
+  isFloating?: boolean;
 };
 
 export async function replaceConnectionEvents(
@@ -49,6 +50,7 @@ export async function replaceConnectionEvents(
       startsAt: event.startsAt,
       endsAt: event.endsAt,
       isAllDay: event.isAllDay,
+      isFloating: event.isFloating,
       updatedAt: now,
     };
     if (prior) {

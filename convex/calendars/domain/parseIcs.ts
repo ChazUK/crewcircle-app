@@ -15,6 +15,10 @@ export type ParsedEvent = {
   startsAt: number;
   endsAt: number;
   isAllDay: boolean;
+  // RFC 5545 "floating" time: no TZID and no Z suffix. The wall-clock value
+  // is stored verbatim as if it were UTC. Clients must display UTC components
+  // directly rather than converting to local time.
+  isFloating: boolean;
 };
 
 export type ParseIcsOptions = {
@@ -29,7 +33,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // Stops a malicious or misconfigured "FREQ=SECONDLY" rule from exploding.
 const MAX_OCCURRENCES_PER_RULE = 5_000;
 
-type RawDate = { ms: number; isAllDay: boolean; raw: string };
+type RawDate = { ms: number; isAllDay: boolean; raw: string; isFloating?: boolean };
 
 type RawVEvent = {
   uid?: string;
@@ -108,7 +112,12 @@ function collectVEvents(lines: string[]): RawVEvent[] {
       case "DTSTART": {
         const parsed = parseIcsDate(value, params);
         if (parsed) {
-          current.dtstart = { ms: parsed.ms, isAllDay: parsed.isDateOnly, raw: line };
+          current.dtstart = {
+            ms: parsed.ms,
+            isAllDay: parsed.isDateOnly,
+            raw: line,
+            isFloating: parsed.isFloating,
+          };
         }
         break;
       }
@@ -214,6 +223,7 @@ function pushGroup(out: ParsedEvent[], group: Group, options: ParseIcsOptions) {
       startsAt: base.dtstart.ms,
       endsAt,
       isAllDay: base.dtstart.isAllDay,
+      isFloating: base.dtstart.isFloating ?? false,
     });
     return;
   }
@@ -248,6 +258,7 @@ function emitOverrideOrphan(
     startsAt,
     endsAt,
     isAllDay: ov.dtstart.isAllDay,
+    isFloating: ov.dtstart.isFloating ?? false,
   });
 }
 
@@ -271,6 +282,7 @@ function expandRecurrence(
   // dtend on an occurrence implies the same duration as the seed.
   const durationMs = (base.dtend?.ms ?? base.dtstart!.ms) - base.dtstart!.ms;
   const isAllDay = base.dtstart!.isAllDay;
+  const isFloating = base.dtstart!.isFloating ?? false;
 
   // Window defaults: if callers don't constrain, use a sensible bounded
   // ±1 year so an unbounded RRULE doesn't run forever.
@@ -289,7 +301,7 @@ function expandRecurrence(
     // Malformed recurrence — fall back to emitting just the seed at its
     // DTSTART so the user at least sees one instance.
     if (!withinWindow(base.dtstart!.ms, base.dtstart!.ms + durationMs, options)) return;
-    out.push(seedToInstance(group.uid, base, base.dtstart!.ms, durationMs, isAllDay));
+    out.push(seedToInstance(group.uid, base, base.dtstart!.ms, durationMs, isAllDay, isFloating));
     return;
   }
 
@@ -322,10 +334,11 @@ function expandRecurrence(
         startsAt: override.dtstart.ms,
         endsAt: resolveEndsAt(override),
         isAllDay: override.dtstart.isAllDay,
+        isFloating: override.dtstart.isFloating ?? false,
       });
       continue;
     }
-    out.push(seedToInstance(group.uid, base, occurrence.ms, durationMs, isAllDay));
+    out.push(seedToInstance(group.uid, base, occurrence.ms, durationMs, isAllDay, isFloating));
   }
 
   // Overrides whose recurrence-id sat outside the expanded window but whose
@@ -343,6 +356,7 @@ function seedToInstance(
   startsAt: number,
   durationMs: number,
   isAllDay: boolean,
+  isFloating: boolean,
 ): ParsedEvent {
   return {
     externalId: `${uid}::${startsAt}`,
@@ -354,6 +368,7 @@ function seedToInstance(
     startsAt,
     endsAt: startsAt + durationMs,
     isAllDay,
+    isFloating,
   };
 }
 
@@ -377,7 +392,7 @@ function unescapeIcsText(value: string): string {
 function parseIcsDate(
   value: string,
   params: Map<string, string>,
-): { ms: number; isDateOnly: boolean } | null {
+): { ms: number; isDateOnly: boolean; isFloating?: boolean } | null {
   const valueType = params.get("VALUE")?.toUpperCase();
   const isDateOnly = valueType === "DATE" || /^\d{8}$/.test(value);
   if (isDateOnly) {
@@ -405,9 +420,13 @@ function parseIcsDate(
     if (ms != null) return { ms, isDateOnly: false };
   }
   // Floating time (no TZID, no Z) — RFC 5545 says interpret in the observer's
-  // local zone. We have no "observer" server-side, so fall back to UTC for
-  // deterministic storage.
-  return { ms: Date.UTC(year, month - 1, day, hour, minute, second), isDateOnly: false };
+  // local zone. The wall-clock value is stored verbatim as UTC ms so it can
+  // be round-tripped. Callers must use UTC components for display, not local.
+  return {
+    ms: Date.UTC(year, month - 1, day, hour, minute, second),
+    isDateOnly: false,
+    isFloating: true,
+  };
 }
 
 // Convert a wall-clock timestamp in the given IANA zone to an absolute UTC

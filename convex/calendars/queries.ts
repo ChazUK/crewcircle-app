@@ -94,6 +94,7 @@ export const listEventsInRange = query({
         startsAt: event.startsAt,
         endsAt: event.endsAt,
         isAllDay: event.isAllDay,
+        isFloating: event.isFloating,
       }));
   },
 });

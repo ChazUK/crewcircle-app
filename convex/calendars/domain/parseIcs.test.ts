@@ -188,7 +188,7 @@ describe("parseIcs", () => {
     expect(event.startsAt).toBe(Date.UTC(2026, 4, 1, 9, 0, 0));
   });
 
-  test("floating times without TZID are stored as UTC", () => {
+  test("floating times without TZID are stored as UTC wall-clock and flagged isFloating", () => {
     const ics = buildIcs(
       vevent({
         UID: "floating",
@@ -200,6 +200,59 @@ describe("parseIcs", () => {
     const [event] = parseIcs(ics);
     expect(event.startsAt).toBe(Date.UTC(2026, 4, 1, 9, 0, 0));
     expect(event.endsAt).toBe(Date.UTC(2026, 4, 1, 10, 0, 0));
+    expect(event.isFloating).toBe(true);
+  });
+
+  test("floating event wall-clock value is recoverable via UTC components (UTC+5 scenario)", () => {
+    // A floating DTSTART of "09:00" should display as 09:00 on any device,
+    // including one in UTC+5. Since the wall-clock value is stored as
+    // Date.UTC(..., 9, 0, 0), reading getUTCHours() always returns 9.
+    const ics = buildIcs(
+      vevent({
+        UID: "floating-utc5",
+        SUMMARY: "Morning standup",
+        DTSTART: "20260501T090000",
+        DTEND: "20260501T093000",
+      }),
+    );
+    const [event] = parseIcs(ics);
+    expect(event.isFloating).toBe(true);
+    const startDate = new Date(event.startsAt);
+    const endDate = new Date(event.endsAt);
+    // UTC components reflect the original wall-clock time regardless of the
+    // device's local timezone (e.g. UTC+5 would show 14:00 without this flag).
+    expect(startDate.getUTCHours()).toBe(9);
+    expect(startDate.getUTCMinutes()).toBe(0);
+    expect(endDate.getUTCHours()).toBe(9);
+    expect(endDate.getUTCMinutes()).toBe(30);
+  });
+
+  test("non-floating UTC events have isFloating false", () => {
+    const ics = buildIcs(
+      vevent({
+        UID: "utc-event",
+        SUMMARY: "UTC event",
+        DTSTART: "20260501T090000Z",
+        DTEND: "20260501T100000Z",
+      }),
+    );
+    const [event] = parseIcs(ics);
+    expect(event.isFloating).toBe(false);
+  });
+
+  test("TZID events have isFloating false", () => {
+    const ics = buildIcs(
+      [
+        "BEGIN:VEVENT",
+        "UID:tzid-not-floating",
+        "SUMMARY:NY meeting",
+        "DTSTART;TZID=America/New_York:20260501T090000",
+        "DTEND;TZID=America/New_York:20260501T100000",
+        "END:VEVENT",
+      ].join("\r\n"),
+    );
+    const [event] = parseIcs(ics);
+    expect(event.isFloating).toBe(false);
   });
 
   test("malformed DTSTART values are ignored", () => {

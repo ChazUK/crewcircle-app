@@ -26,8 +26,24 @@ function parseIsoDateLocal(isoDate: string): Date {
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
-function formatTimeRange(startsAt: number, endsAt: number, isAllDay: boolean): string {
+function padTwo(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function formatTimeRange(
+  startsAt: number,
+  endsAt: number,
+  isAllDay: boolean,
+  isFloating?: boolean,
+): string {
   if (isAllDay) return "All day";
+  if (isFloating) {
+    // Floating events store the wall-clock value as UTC ms. Read UTC components
+    // directly so the display matches the original wall-clock time on any device.
+    const s = new Date(startsAt);
+    const e = new Date(endsAt);
+    return `${padTwo(s.getUTCHours())}:${padTwo(s.getUTCMinutes())} – ${padTwo(e.getUTCHours())}:${padTwo(e.getUTCMinutes())}`;
+  }
   const start = format(new Date(startsAt), "HH:mm");
   const end = format(new Date(endsAt), "HH:mm");
   return `${start} – ${end}`;
@@ -162,7 +178,7 @@ export default function Diary() {
                 className="rounded-xl border border-default-200 bg-default-100/50 p-3"
               >
                 <Text className="text-xs font-semibold uppercase text-foreground/60">
-                  {formatTimeRange(event.startsAt, event.endsAt, event.isAllDay)}
+                  {formatTimeRange(event.startsAt, event.endsAt, event.isAllDay, event.isFloating)}
                 </Text>
                 <Text className="text-base font-medium text-foreground" numberOfLines={2}>
                   {event.title}

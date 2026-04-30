@@ -68,6 +68,9 @@ export const CalendarEvent = {
   startsAt: v.number(),
   endsAt: v.number(),
   isAllDay: v.boolean(),
+  // RFC 5545 floating time: wall-clock stored verbatim as UTC ms. Clients must
+  // display UTC components rather than converting to local time.
+  isFloating: v.optional(v.boolean()),
   updatedAt: v.number(),
 };
 

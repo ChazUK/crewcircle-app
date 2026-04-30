@@ -22,6 +22,7 @@ const ParsedEventValidator = v.object({
   startsAt: v.number(),
   endsAt: v.number(),
   isAllDay: v.boolean(),
+  isFloating: v.optional(v.boolean()),
 });
 
 export const insertConnection = internalMutation({
