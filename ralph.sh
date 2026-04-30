@@ -24,15 +24,6 @@
 #   RALPH_PRD_NUMBER=42 ./ralph.sh     # Point agents at a PRD issue for context
 #   RALPH_MAX_ITER=10 ./ralph.sh       # Cap at 10 issues per agent then stop
 #   RALPH_TIMEOUT=7200 ./ralph.sh      # Claude timeout in seconds per issue (default: 3600)
-#   RALPH_UI=1 ./ralph.sh              # Tmux split-pane UI — one pane per agent (requires tmux)
-#
-# How it works:
-# - RALPH_UI=1 creates a tmux session and re-invokes ralph.sh inside pane 0 with RALPH_UI=0 (prevents infinite loop)
-# - Each agent tees its claude output to both a per-issue log (.ralph/logs/agent-1-issue-52.log) and a cumulative per-agent log (.ralph/logs/agent-1.log)
-# - Each watcher pane does tail -F agent-N.log — works even before the first issue is claimed since the files are pre-created
-# - A coloured ══ #52: <title> ══ separator is written to the cumulative log whenever an agent picks up a new issue
-
-# tmux controls: Ctrl+B D to detach (ralph keeps running), Ctrl+B arrow to navigate panes, Ctrl+B z to zoom a single pane full-screen.
 
 set -euo pipefail
 
@@ -45,17 +36,6 @@ MAX_ITER="${RALPH_MAX_ITER:-20}"       # Max issues per agent before it self-ter
 SANDBOX="${RALPH_SANDBOX:-0}"          # 1 = wrap each claude invocation in Docker
 PRD_NUMBER="${RALPH_PRD_NUMBER:-}"     # GitHub issue # that contains the PRD (optional)
 AGENT_TIMEOUT="${RALPH_TIMEOUT:-3600}" # Seconds before killing a hung claude process
-RALPH_UI="${RALPH_UI:-0}"             # 1 = tmux split-pane UI, one pane per agent
-
-# Resolve timeout command — GNU coreutils 'timeout' is not bundled on macOS.
-# Install via: brew install coreutils  (provides 'gtimeout')
-if command -v timeout &>/dev/null; then
-  TIMEOUT_CMD="timeout"
-elif command -v gtimeout &>/dev/null; then
-  TIMEOUT_CMD="gtimeout"
-else
-  TIMEOUT_CMD=""
-fi
 
 CLAIMED_LABEL="ralph-in-progress"
 BLOCKED_LABEL="blocked"
@@ -86,34 +66,11 @@ agent_log() {
 # ─────────────────────────────────────────────────────────────
 AGENT_PIDS=()
 
-# Recursively kill an entire process tree (pid + all descendants).
-# Plain `kill $pid` only kills the shell wrapper, leaving claude and tee as orphans.
-kill_tree() {
-  local pid="$1"
-  local child
-  for child in $(pgrep -P "$pid" 2>/dev/null || true); do
-    kill_tree "$child"
-  done
-  kill "$pid" 2>/dev/null || true
-}
-
 cleanup() {
-  # Disable the trap first so re-entrant signals during cleanup don't loop.
-  trap - EXIT INT TERM
-
-  info "Shutting down — killing agents and releasing in-flight claims..."
-
-  # Kill every agent and its entire descendant tree (shell → timeout → claude → tee).
+  info "Shutting down — releasing any in-flight claims..."
   for pid in "${AGENT_PIDS[@]:-}"; do
-    kill_tree "$pid"
+    kill "$pid" 2>/dev/null || true
   done
-
-  # If running as the inner ralph inside a tmux session, kill the whole session so
-  # all watcher panes close automatically rather than leaving zombie tail -F processes.
-  if [[ -n "${TMUX:-}" ]]; then
-    tmux kill-session -t "ralph" 2>/dev/null || true
-  fi
-
   # Release ralph-in-progress label from any issues still actively being worked on.
   # Assignment to $ASSIGNEE stays as a permanent record so issues are never re-claimed.
   local claimed
@@ -125,11 +82,9 @@ cleanup() {
     warn "Releasing in-flight claim on issue #$num"
     gh issue edit "$num" --remove-label "$CLAIMED_LABEL" --repo "$REPO" 2>/dev/null || true
   done
-
   # Prune worktrees
   git -C "$SCRIPT_DIR" worktree prune 2>/dev/null || true
   rm -rf "$WORKTREES_DIR"
-
   # Remove persistent sandboxes now that all agents are done
   if [[ "$SANDBOX" == "1" ]]; then
     for i in $(seq 1 "$NUM_AGENTS"); do
@@ -167,59 +122,6 @@ check_deps() {
       SANDBOX=0
     fi
   fi
-
-  if [[ -z "$TIMEOUT_CMD" ]]; then
-    warn "Neither 'timeout' nor 'gtimeout' found — agent timeout disabled"
-    warn "  To enable: brew install coreutils"
-  fi
-
-  if [[ "$RALPH_UI" == "1" ]] && ! command -v tmux &>/dev/null; then
-    err "RALPH_UI=1 requires tmux. Install with: brew install tmux"
-    exit 1
-  fi
-}
-
-# ─────────────────────────────────────────────────────────────
-# Tmux UI
-# ─────────────────────────────────────────────────────────────
-ui_launch() {
-  # Creates a tmux session:
-  #   Pane 0      — ralph orchestration (re-runs this script with RALPH_UI=0)
-  #   Panes 1..N  — tail -F of each agent's cumulative log
-  # Then attaches the terminal to that session.
-  local session="ralph"
-  local cols rows
-  cols=$(tput cols 2>/dev/null || echo 220)
-  rows=$(tput lines 2>/dev/null || echo 50)
-
-  tmux kill-session -t "$session" 2>/dev/null || true
-  mkdir -p "$LOG_DIR"
-
-  # Pre-create agent log files so tail -F can follow them before the first issue starts
-  for i in $(seq 1 "$NUM_AGENTS"); do
-    : > "$LOG_DIR/agent-${i}.log"
-  done
-
-  # Pane 0: ralph orchestration — re-invoke with UI disabled to avoid infinite loop
-  tmux new-session -d -s "$session" -x "$cols" -y "$rows" \
-    -- env RALPH_UI=0 bash "$SCRIPT_DIR/ralph.sh"
-
-  # Brief pause so ralph can initialise before we add watcher panes
-  sleep 2
-
-  # Panes 1..N: live tail of each agent's cumulative log
-  for i in $(seq 1 "$NUM_AGENTS"); do
-    local log="$LOG_DIR/agent-${i}.log"
-    tmux split-window -t "$session" \
-      "printf '\033[1;35m ── Agent #${i} ── \033[0m\n\n'; tail -n +1 -F '$log'"
-    tmux select-layout -t "$session" tiled
-  done
-
-  # Focus the orchestration pane
-  tmux select-pane -t "$session:0.0"
-
-  info "Attaching to tmux session '$session'  (Ctrl+B D to detach, Ctrl+B arrow to navigate panes)"
-  tmux attach-session -t "$session"
 }
 
 # ─────────────────────────────────────────────────────────────
@@ -373,7 +275,6 @@ build_prompt() {
   local issue_title="$2"
   local issue_body="$3"
   local branch="$4"
-  local worktree="$5"
 
   local prd_section=""
   if [[ -n "$PRD_NUMBER" ]]; then
@@ -404,15 +305,8 @@ ${prd_section}
 ## Repository
 - **GitHub repo:** ${REPO}
 - **Working branch:** \`${branch}\` (already checked out — do NOT switch branches)
-- **Worktree root:** \`${worktree}\` — this is your working directory and your filesystem boundary
 - **Stack:** React Native (Expo) + Convex backend, TypeScript strict mode
 - **Domain:** UK film/TV production crew short term hiring tool (see \`CONTEXT.md\`)
-
-> **IMPORTANT — filesystem boundary**: You are running inside an isolated git worktree at
-> \`${worktree}\`. You must ONLY read and write files inside this directory. Do NOT navigate
-> to, read, or modify anything outside it — especially not the parent repo at
-> \`$(dirname "$worktree")\` or any sibling worktrees. Doing so would corrupt another
-> agent's work or the main branch.
 
 ## Available Skills
 Use these /skills to list all available skills to help you with specific tasks (invoke with /skill-name):
@@ -567,7 +461,6 @@ run_claude() {
   local worktree="$1"
   local prompt_file="$2"
   local log_file="$3"
-  local agent_log="$4"   # cumulative per-agent log (for live UI); always written to
 
   if [[ "$SANDBOX" == "1" ]]; then
     # Docker sandbox mode: each agent runs in an isolated microVM via `docker sandbox run`.
@@ -596,7 +489,7 @@ RUNNER
 
     docker sandbox run claude "$worktree" \
       -- bash .ralph-run.sh \
-      2>&1 | tee -a "$agent_log" > "$log_file"
+      > "$log_file" 2>&1
 
     rm -f "$worktree/.ralph-prompt.txt" "$worktree/.ralph-run.sh" 2>/dev/null || true
   else
@@ -606,10 +499,10 @@ RUNNER
       # Read prompt into a variable — avoids re-expansion of special chars when passing to -p
       local prompt
       prompt=$(cat "$prompt_file")
-      ${TIMEOUT_CMD:+$TIMEOUT_CMD "$AGENT_TIMEOUT"} \
+      timeout "$AGENT_TIMEOUT" \
         claude --dangerously-skip-permissions --verbose --output-format stream-json \
           -p "$prompt" \
-        2>&1 | tee -a "$agent_log" > "$log_file"
+        > "$log_file" 2>&1
     )
   fi
 }
@@ -620,11 +513,6 @@ RUNNER
 agent_loop() {
   local agent_id="$1"
   local iter=0
-  local cumulative_log="$LOG_DIR/agent-${agent_id}.log"
-
-  # Exit immediately on SIGINT/TERM so a Ctrl+C doesn't get misread as a recoverable
-  # claude failure and cause the agent to loop to the next issue.
-  trap 'exit 130' INT TERM
 
   agent_log "$agent_id" "started (max $MAX_ITER issues)"
 
@@ -701,36 +589,18 @@ agent_loop() {
       git -C "$SCRIPT_DIR" worktree add -b "$branch" "$worktree" main
     fi
 
-    # Write a Claude Code settings file into the worktree that hard-denies access to
-    # anything outside it. This is a machine-enforced guardrail on top of the prompt
-    # instruction — prevents the agent from reading/writing the main repo or sibling worktrees.
-    mkdir -p "$worktree/.claude"
-    cat > "$worktree/.claude/settings.local.json" <<JSON
-{
-  "permissions": {
-    "deny": ["Bash(cd:${SCRIPT_DIR}*)", "Write(${SCRIPT_DIR}/*)", "Edit(${SCRIPT_DIR}/*)"]
-  }
-}
-JSON
-    # Exclude the settings file from git so the agent never accidentally commits it
-    printf '.claude/settings.local.json\n' >> "$(git -C "$worktree" rev-parse --git-dir)/info/exclude"
-
     # ── Build the prompt ───────────────────────────────────────
     local prompt_file="$RALPH_DIR/prompt-agent${agent_id}-issue${issue_number}.txt"
-    build_prompt "$issue_number" "$issue_title" "$issue_body" "$branch" "$worktree" > "$prompt_file"
+    build_prompt "$issue_number" "$issue_title" "$issue_body" "$branch" > "$prompt_file"
 
     local log_file="$LOG_DIR/agent-${agent_id}-issue-${issue_number}.log"
     agent_log "$agent_id" "running claude on #$issue_number... (log: $log_file)"
 
-    # Print a visible separator in the cumulative log so the live UI shows issue boundaries
-    printf '\n\033[1;36m══ #%s: %s ══\033[0m\n\n' \
-      "$issue_number" "$issue_title" >> "$cumulative_log"
-
     # ── Run the agent ──────────────────────────────────────────
     local run_exit=0
-    run_claude "$worktree" "$prompt_file" "$log_file" "$cumulative_log" || run_exit=$?
+    run_claude "$worktree" "$prompt_file" "$log_file" || run_exit=$?
 
-    if [[ $run_exit -eq 124 && -n "$TIMEOUT_CMD" ]]; then
+    if [[ $run_exit -eq 124 ]]; then
       warn "Agent #$agent_id — claude timed out after ${AGENT_TIMEOUT}s for issue #$issue_number"
     elif [[ $run_exit -ne 0 ]]; then
       warn "Agent #$agent_id — claude exited with code $run_exit for issue #$issue_number"
@@ -826,12 +696,6 @@ main() {
   echo >&2
 
   check_deps
-
-  if [[ "$RALPH_UI" == "1" ]]; then
-    ui_launch   # Creates tmux session and attaches; blocks until user exits tmux
-    return 0
-  fi
-
   ensure_labels
 
   mkdir -p "$WORKTREES_DIR" "$LOG_DIR"
