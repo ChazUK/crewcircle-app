@@ -1,5 +1,5 @@
 pre-commit:
-  parallel: true
+  piped: true
   jobs:
     - name: lint-fix
       glob: "**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts,json,jsonc}"
@@ -11,4 +11,3 @@ pre-commit:
       stage_fixed: true
     - name: test
       run: npx vitest run
-      follow: true
