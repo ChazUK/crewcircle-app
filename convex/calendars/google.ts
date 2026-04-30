@@ -5,17 +5,10 @@ import { v } from "convex/values";
 import { api, internal } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
 import { action, internalAction } from "../_generated/server";
-import {
-  GoogleCalendarAdapter,
-  ensureAccessToken,
-  fetchCalendarList,
-  fetchEventsForCalendars,
-} from "./adapters/google";
-import { ICalAdapter } from "./adapters/ical";
-import { MicrosoftCalendarAdapter } from "./adapters/microsoft";
-import { NativeCalendarAdapter } from "./adapters/native";
+import { ensureAccessToken, fetchCalendarList, fetchEventsForCalendars } from "./adapters/google";
 import { encryptJson, type EncryptedOAuthTokens } from "./domain/crypto";
-import { createCalendarOrchestrator, currentSyncWindow } from "./orchestrator";
+import { currentSyncWindow } from "./orchestrator";
+import { orchestrator } from "./orchestrator/registry";
 
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo";
@@ -28,15 +21,6 @@ type TokenResponse = {
   scope?: string;
   token_type?: string;
 };
-
-const adapterRegistry = {
-  google: GoogleCalendarAdapter,
-  ical: ICalAdapter,
-  native: NativeCalendarAdapter,
-  microsoft: MicrosoftCalendarAdapter,
-};
-
-const orchestrator = createCalendarOrchestrator(adapterRegistry);
 
 async function exchangeAuthorizationCode(params: {
   code: string;
