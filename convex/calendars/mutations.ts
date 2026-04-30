@@ -107,20 +107,6 @@ export const pruneDisabledSubCalendarEvents = internalMutation({
   },
 });
 
-export const updateConnectionTokens = internalMutation({
-  args: {
-    connectionId: v.id("calendarConnections"),
-    encryptedTokens: v.bytes(),
-    tokenExpiresAt: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.connectionId, {
-      encryptedTokens: args.encryptedTokens,
-      tokenExpiresAt: args.tokenExpiresAt,
-    });
-  },
-});
-
 export const updateTokensIfNonce = internalMutation({
   args: {
     connectionId: v.id("calendarConnections"),

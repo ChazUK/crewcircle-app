@@ -185,10 +185,9 @@ describe("GoogleCalendarAdapter.listSubCalendars — birthday/holiday filtering"
         }),
     ]);
 
-    const result = await t.action(
-      internal.calendars.adapters.google.googleListSubCalendarsInternal,
-      { connectionId },
-    );
+    const result = await t.action(internal.calendars.google.listGoogleSubCalendarsInternal, {
+      connectionId,
+    });
 
     expect(result.map((c) => c.id)).toEqual(["me@example.com"]);
     expect(result.find((c) => c.label === "Birthdays")).toBeUndefined();
@@ -217,10 +216,9 @@ describe("GoogleCalendarAdapter.listSubCalendars — birthday/holiday filtering"
         }),
     ]);
 
-    const result = await t.action(
-      internal.calendars.adapters.google.googleListSubCalendarsInternal,
-      { connectionId },
-    );
+    const result = await t.action(internal.calendars.google.listGoogleSubCalendarsInternal, {
+      connectionId,
+    });
 
     expect(result.map((c) => c.id)).toEqual(["me@example.com"]);
     expect(result.find((c) => c.label?.includes("Holiday"))).toBeUndefined();
@@ -250,10 +248,9 @@ describe("GoogleCalendarAdapter.listSubCalendars — birthday/holiday filtering"
         }),
     ]);
 
-    const result = await t.action(
-      internal.calendars.adapters.google.googleListSubCalendarsInternal,
-      { connectionId },
-    );
+    const result = await t.action(internal.calendars.google.listGoogleSubCalendarsInternal, {
+      connectionId,
+    });
 
     expect(result).toEqual([
       { id: "me@example.com", label: "My Cal", primary: true, hint: "owner" },

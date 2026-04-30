@@ -1,5 +1,10 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+// Must run before static imports so the module-level IIFE in crypto.ts finds the key.
+vi.hoisted(() => {
+  process.env.CALENDAR_ENCRYPTION_KEY = Buffer.alloc(32, 0).toString("base64");
+});
 
 import { api, internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
@@ -65,7 +70,14 @@ async function readConnection(t: TestHarness, id: Id<"calendarConnections">) {
   return t.run((ctx) => ctx.db.get(id));
 }
 
+const TEST_KEY = Buffer.alloc(32, 0).toString("base64");
+
+beforeEach(() => {
+  vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
+});
+
 afterEach(() => {
+  vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
@@ -227,24 +239,26 @@ describe("connectIcal", () => {
   });
 });
 
-describe("connectApple", () => {
+describe("connectNative", () => {
   test("stores the connection plus pushed events", async () => {
     const t = convexTest(schema, modules);
     await seedUser(t);
-    const connectionId = await t.withIdentity(identity).action(api.calendars.actions.connectApple, {
-      label: "Apple",
-      enabledSubCalendarIds: ["cal-1"],
-      events: [
-        {
-          externalId: "cal-1::a",
-          subCalendarId: "cal-1",
-          title: "From device",
-          startsAt: Date.UTC(2026, 4, 1, 9),
-          endsAt: Date.UTC(2026, 4, 1, 10),
-          isAllDay: false,
-        },
-      ],
-    });
+    const connectionId = await t
+      .withIdentity(identity)
+      .action(api.calendars.actions.connectNative, {
+        label: "Apple",
+        enabledSubCalendarIds: ["cal-1"],
+        events: [
+          {
+            externalId: "cal-1::a",
+            subCalendarId: "cal-1",
+            title: "From device",
+            startsAt: Date.UTC(2026, 4, 1, 9),
+            endsAt: Date.UTC(2026, 4, 1, 10),
+            isAllDay: false,
+          },
+        ],
+      });
     const events = await readEvents(t, connectionId);
     expect(events.map((e) => e.title)).toEqual(["From device"]);
     const connection = await readConnection(t, connectionId);
@@ -253,7 +267,7 @@ describe("connectApple", () => {
   });
 });
 
-describe("uploadAppleEvents", () => {
+describe("uploadNativeEvents", () => {
   test("rejects when caller does not own the connection", async () => {
     const t = convexTest(schema, modules);
     const owner = await t.run((ctx) =>
@@ -277,11 +291,11 @@ describe("uploadAppleEvents", () => {
     await expect(
       t
         .withIdentity(identity)
-        .action(api.calendars.actions.uploadAppleEvents, { connectionId, events: [] }),
+        .action(api.calendars.actions.uploadNativeEvents, { connectionId, events: [] }),
     ).rejects.toThrow(/not found/);
   });
 
-  test("rejects when the connection is not an Apple one", async () => {
+  test("rejects when the connection is not a native one", async () => {
     const t = convexTest(schema, modules);
     const userId = await seedUser(t);
     const connectionId = await t.run((ctx) =>
@@ -295,11 +309,11 @@ describe("uploadAppleEvents", () => {
     await expect(
       t
         .withIdentity(identity)
-        .action(api.calendars.actions.uploadAppleEvents, { connectionId, events: [] }),
-    ).rejects.toThrow(/Apple calendars/);
+        .action(api.calendars.actions.uploadNativeEvents, { connectionId, events: [] }),
+    ).rejects.toThrow(/uploadNativeEvents only supports native/);
   });
 
-  test("replaces events for a matching Apple connection", async () => {
+  test("replaces events for a matching native connection", async () => {
     const t = convexTest(schema, modules);
     const userId = await seedUser(t);
     const connectionId = await t.run((ctx) =>
@@ -311,7 +325,7 @@ describe("uploadAppleEvents", () => {
         createdAt: Date.now(),
       }),
     );
-    await t.withIdentity(identity).action(api.calendars.actions.uploadAppleEvents, {
+    await t.withIdentity(identity).action(api.calendars.actions.uploadNativeEvents, {
       connectionId,
       events: [
         {

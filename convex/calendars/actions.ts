@@ -1,11 +1,12 @@
+"use node";
+
 import { ConvexError, v } from "convex/values";
 
 import { api, internal } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
 import { ActionCtx, action, internalAction } from "../_generated/server";
 import { assertSafeIcalUrl, safeHostname } from "./domain/icalUrl";
-import { parseIcs } from "./domain/parseIcs";
-import { currentSyncWindow } from "./orchestrator";
+import { orchestrator } from "./orchestrator/registry";
 
 const EventInputValidator = v.object({
   externalId: v.string(),
@@ -26,48 +27,6 @@ async function requireUser(ctx: ActionCtx): Promise<Doc<"users">> {
   return user;
 }
 
-const MAX_ICAL_REDIRECTS = 5;
-
-// Walk redirects manually so we can re-run the SSRF hostname check on every
-// Location header. With `redirect: "follow"` the browser would happily send us
-// to `169.254.169.254` or `[::ffff:127.0.0.1]` if the feed owner configures
-// a 30x, bypassing the check that only looked at the initial URL.
-async function fetchIcalWithSafeRedirects(initialUrl: string): Promise<Response> {
-  let url = assertSafeIcalUrl(initialUrl);
-  for (let hop = 0; hop <= MAX_ICAL_REDIRECTS; hop++) {
-    const res = await fetch(url, { redirect: "manual" });
-    if (res.status >= 300 && res.status < 400) {
-      const location = res.headers.get("location");
-      if (!location) throw new Error(`iCal redirect ${res.status} with no Location header`);
-      // Resolve relative Location against the previous URL, then re-validate.
-      const resolved = new URL(location, url).toString();
-      url = assertSafeIcalUrl(resolved);
-      continue;
-    }
-    return res;
-  }
-  throw new Error(`iCal feed exceeded ${MAX_ICAL_REDIRECTS} redirects`);
-}
-
-async function fetchAndStoreIcal(
-  ctx: ActionCtx,
-  args: { connectionId: Id<"calendarConnections">; userId: Id<"users">; url: string },
-) {
-  const res = await fetchIcalWithSafeRedirects(args.url);
-  if (!res.ok) throw new Error(`Failed to fetch iCal feed (status ${res.status})`);
-  const body = await res.text();
-  const events = parseIcs(body, currentSyncWindow());
-  await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
-    connectionId: args.connectionId,
-    userId: args.userId,
-    events,
-  });
-  await ctx.runMutation(internal.calendars.mutations.markSynced, {
-    connectionId: args.connectionId,
-    error: undefined,
-  });
-}
-
 export const connectIcal = action({
   args: { url: v.string(), label: v.optional(v.string()) },
   handler: async (ctx, args): Promise<Id<"calendarConnections">> => {
@@ -85,21 +44,12 @@ export const connectIcal = action({
       },
     );
 
-    try {
-      await fetchAndStoreIcal(ctx, { connectionId, userId: user._id, url: safeUrl });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown sync error";
-      await ctx.runMutation(internal.calendars.mutations.markSynced, {
-        connectionId,
-        error: message,
-      });
-      throw err;
-    }
+    await orchestrator.syncConnection(ctx, connectionId);
     return connectionId;
   },
 });
 
-export const connectApple = action({
+export const connectNative = action({
   args: {
     label: v.string(),
     enabledSubCalendarIds: v.array(v.string()),
@@ -129,7 +79,7 @@ export const connectApple = action({
   },
 });
 
-export const uploadAppleEvents = action({
+export const uploadNativeEvents = action({
   args: {
     connectionId: v.id("calendarConnections"),
     events: v.array(EventInputValidator),
@@ -142,7 +92,7 @@ export const uploadAppleEvents = action({
     );
     if (!connection) throw new Error("Calendar connection not found");
     if (connection.provider !== "native") {
-      throw new Error("uploadAppleEvents only supports Apple calendars");
+      throw new Error("uploadNativeEvents only supports native calendar connections");
     }
     await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
       connectionId: args.connectionId,
@@ -166,40 +116,11 @@ export const syncConnection = action({
       { connectionId: args.connectionId, userId: user._id },
     );
     if (!connection) throw new Error("Calendar connection not found");
-
-    if (connection.provider === "ical") {
-      if (!connection.icalUrl) throw new Error("Missing iCal URL");
-      try {
-        await fetchAndStoreIcal(ctx, {
-          connectionId: args.connectionId,
-          userId: user._id,
-          url: connection.icalUrl,
-        });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown sync error";
-        await ctx.runMutation(internal.calendars.mutations.markSynced, {
-          connectionId: args.connectionId,
-          error: message,
-        });
-        throw err;
-      }
-      return null;
-    }
-
-    if (connection.provider === "google") {
-      await ctx.runAction(internal.calendars.google.syncGoogleConnectionInternal, {
-        connectionId: args.connectionId,
-        userId: user._id,
-      });
-      return null;
-    }
-
     if (connection.provider === "native") {
-      // Native (Apple) events originate on-device; the client must call uploadAppleEvents.
-      throw new Error("Apple calendars must be re-synced from the device");
+      throw new Error("Native calendars must be re-synced from the device");
     }
-
-    throw new Error(`Sync not supported for provider "${connection.provider}"`);
+    await orchestrator.syncConnection(ctx, args.connectionId);
+    return null;
   },
 });
 
@@ -216,23 +137,14 @@ export const syncIcalConnectionInternal = internalAction({
     if (!connection || connection.userId !== args.userId) {
       throw new Error("Calendar connection not found");
     }
-    if (connection.provider !== "ical" || !connection.icalUrl) {
+    if (connection.provider !== "ical") {
       throw new Error("syncIcalConnectionInternal requires an iCal connection");
     }
     try {
-      await fetchAndStoreIcal(ctx, {
-        connectionId: args.connectionId,
-        userId: args.userId,
-        url: connection.icalUrl,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown sync error";
-      await ctx.runMutation(internal.calendars.mutations.markSynced, {
-        connectionId: args.connectionId,
-        error: message,
-      });
-      // Don't rethrow — the cron scheduler fans out per-connection, we let
-      // one failure record its error without poisoning siblings.
+      await orchestrator.syncConnection(ctx, args.connectionId);
+    } catch {
+      // Don't rethrow — the cron scheduler fans out per-connection; one
+      // failure should not block siblings. The error is recorded by the orchestrator.
     }
     return null;
   },
@@ -262,26 +174,13 @@ export const setEnabledSubCalendars = action({
     });
 
     // Trigger a fresh sync so the events cache reflects the new selection.
-    // Apple events are pushed from the device — the client will call
-    // uploadAppleEvents itself after changing its selection.
-    if (connection.provider === "google") {
-      await ctx.runAction(internal.calendars.google.syncGoogleConnectionInternal, {
-        connectionId: args.connectionId,
-        userId: user._id,
-      });
-    } else if (connection.provider === "ical" && connection.icalUrl) {
+    // Native events are pushed from the device; the client calls uploadNativeEvents itself.
+    if (connection.provider !== "native") {
       try {
-        await fetchAndStoreIcal(ctx, {
-          connectionId: args.connectionId,
-          userId: user._id,
-          url: connection.icalUrl,
-        });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown sync error";
-        await ctx.runMutation(internal.calendars.mutations.markSynced, {
-          connectionId: args.connectionId,
-          error: message,
-        });
+        await orchestrator.syncConnection(ctx, args.connectionId);
+      } catch {
+        // Sync errors are recorded by the orchestrator; swallow so the
+        // sub-calendar selection itself still succeeds.
       }
     }
     return null;

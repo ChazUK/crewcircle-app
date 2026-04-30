@@ -11,11 +11,10 @@ import type {
   WriteError,
   WriteSuccess,
 } from "@shared/calendars";
-import { v } from "convex/values";
 
 import { internal } from "../../_generated/api";
 import type { Doc } from "../../_generated/dataModel";
-import { type ActionCtx, internalAction } from "../../_generated/server";
+import type { ActionCtx } from "../../_generated/server";
 import { decryptJson, encryptJson, type EncryptedOAuthTokens } from "../domain/crypto";
 import {
   type GoogleEvent,
@@ -157,7 +156,9 @@ export async function fetchCalendarList(accessToken: string): Promise<GoogleCale
   return items;
 }
 
-async function fetchAllCalendars(accessToken: string): Promise<GoogleCalendarListEntry[]> {
+// fetchCalendarListAll fetches every calendar the token can see (no minAccessRole filter),
+// used for the sub-calendar picker where write-only or reader calendars are still valid choices.
+async function fetchCalendarListAll(accessToken: string): Promise<GoogleCalendarListEntry[]> {
   const items: GoogleCalendarListEntry[] = [];
   let pageToken: string | undefined;
   do {
@@ -266,7 +267,7 @@ export const GoogleCalendarAdapter: CalendarProvider = {
       );
     }
     const accessToken = await ensureAccessToken(actionCtx, conn, clientId);
-    const items = await fetchAllCalendars(accessToken);
+    const items = await fetchCalendarListAll(accessToken);
     return items
       .filter((item) => !item.id.includes(BIRTHDAY_PATTERN) && !item.id.includes(HOLIDAY_PATTERN))
       .map((item) => ({
@@ -286,10 +287,10 @@ export const GoogleCalendarAdapter: CalendarProvider = {
         "Google connection is missing its original OAuth client id; please reconnect.",
       );
     }
-    const scope = conn.scope ?? "";
+    const scopes = new Set((conn.scope ?? "").split(/\s+/));
     if (
-      !scope.includes("calendar.events") &&
-      !scope.split(/\s+/).includes("https://www.googleapis.com/auth/calendar")
+      !scopes.has("https://www.googleapis.com/auth/calendar") &&
+      !scopes.has("https://www.googleapis.com/auth/calendar.events")
     ) {
       return {
         kind: "insufficient_scope",
@@ -317,7 +318,7 @@ export const GoogleCalendarAdapter: CalendarProvider = {
       body.end = { dateTime: new Date(event.endsAt).toISOString() };
     }
 
-    const url = `${CALENDAR_BASE}/calendars/${encodeURIComponent(calendarId!)}/events`;
+    const url = `${CALENDAR_BASE}/calendars/${encodeURIComponent(calendarId)}/events`;
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -334,18 +335,3 @@ export const GoogleCalendarAdapter: CalendarProvider = {
     return { externalId: created.id };
   },
 };
-
-export const googleListSubCalendarsInternal = internalAction({
-  args: { connectionId: v.id("calendarConnections") },
-  handler: async (ctx, args): Promise<SubCalendar[]> => {
-    const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
-      internal.calendars.actionHelpers.getConnectionInternal,
-      { connectionId: args.connectionId },
-    );
-    if (!connection) throw new Error("Calendar connection not found");
-    if (connection.provider !== "google") {
-      throw new Error("googleListSubCalendarsInternal only supports Google connections");
-    }
-    return GoogleCalendarAdapter.listSubCalendars!(ctx, connection);
-  },
-});

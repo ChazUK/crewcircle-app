@@ -1,11 +1,26 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+// Must run before static imports so the module-level IIFE in crypto.ts finds the key.
+vi.hoisted(() => {
+  process.env.CALENDAR_ENCRYPTION_KEY = Buffer.alloc(32, 0).toString("base64");
+});
 
 import { api } from "../_generated/api";
 import schema from "../schema";
 
 const modules = import.meta.glob("/convex/**/*.ts");
+
+const TEST_KEY = Buffer.alloc(32, 0).toString("base64");
+
+beforeEach(() => {
+  vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 const identity = {
   subject: "clerk_user_42",
@@ -27,10 +42,10 @@ async function makeTestWithUser() {
 }
 
 describe("insertConnection label length validation", () => {
-  test("rejects label longer than 256 characters via connectApple", async () => {
+  test("rejects label longer than 256 characters via connectNative", async () => {
     const t = await makeTestWithUser();
     await expect(
-      t.withIdentity(identity).action(api.calendars.actions.connectApple, {
+      t.withIdentity(identity).action(api.calendars.actions.connectNative, {
         label: "L".repeat(257),
         enabledSubCalendarIds: [],
         events: [],
@@ -38,10 +53,10 @@ describe("insertConnection label length validation", () => {
     ).rejects.toThrow("Too big: expected string to have <=256 characters");
   });
 
-  test("rejects label at 10 000 characters via connectApple", async () => {
+  test("rejects label at 10 000 characters via connectNative", async () => {
     const t = await makeTestWithUser();
     await expect(
-      t.withIdentity(identity).action(api.calendars.actions.connectApple, {
+      t.withIdentity(identity).action(api.calendars.actions.connectNative, {
         label: "L".repeat(10_000),
         enabledSubCalendarIds: [],
         events: [],
@@ -49,18 +64,18 @@ describe("insertConnection label length validation", () => {
     ).rejects.toThrow("Too big: expected string to have <=256 characters");
   });
 
-  test("accepts label at exactly 256 characters via connectApple", async () => {
+  test("accepts label at exactly 256 characters via connectNative", async () => {
     const t = await makeTestWithUser();
-    await t.withIdentity(identity).action(api.calendars.actions.connectApple, {
+    await t.withIdentity(identity).action(api.calendars.actions.connectNative, {
       label: "L".repeat(256),
       enabledSubCalendarIds: [],
       events: [],
     });
   });
 
-  test("accepts a short label via connectApple", async () => {
+  test("accepts a short label via connectNative", async () => {
     const t = await makeTestWithUser();
-    await t.withIdentity(identity).action(api.calendars.actions.connectApple, {
+    await t.withIdentity(identity).action(api.calendars.actions.connectNative, {
       label: "My Work Calendar",
       enabledSubCalendarIds: [],
       events: [],

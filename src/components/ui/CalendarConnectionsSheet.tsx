@@ -116,13 +116,13 @@ async function readAppleEvents(subCalendarIds: string[]): Promise<EventInput[]> 
 export function CalendarConnectionsSheet({ isOpen, onOpenChange, _initialSyncWarning }: Props) {
   const connections = useQuery(api.calendars.queries.listConnections) ?? [];
   const connectIcal = useAction(api.calendars.actions.connectIcal);
-  const connectApple = useAction(api.calendars.actions.connectApple);
+  const connectApple = useAction(api.calendars.actions.connectNative);
   const connectGoogleAction = useAction(api.calendars.google.connectGoogle);
   const listGoogleCalendars = useAction(api.calendars.google.listGoogleCalendars);
   const syncConnection = useAction(api.calendars.actions.syncConnection);
   const setEnabledSubCalendars = useAction(api.calendars.actions.setEnabledSubCalendars);
   const disconnect = useAction(api.calendars.actions.disconnect);
-  const uploadAppleEvents = useAction(api.calendars.actions.uploadAppleEvents);
+  const uploadAppleEvents = useAction(api.calendars.actions.uploadNativeEvents);
 
   const [googleRequest, googleResponse, promptGoogle] = Google.useAuthRequest({
     iosClientId: GOOGLE_IOS_CLIENT_ID,

@@ -24,8 +24,8 @@ export const syncAllConnections = internalAction({
       );
 
       for (const connection of page.page) {
-        // Native (Apple) events live on the device; the client must push them via
-        // uploadAppleEvents. Microsoft (Outlook) isn't implemented yet.
+        // Native events live on the device; the client pushes them via uploadNativeEvents.
+        // Microsoft (Outlook) is not yet implemented.
         if (connection.provider === "native" || connection.provider === "microsoft") continue;
 
         if (connection.provider === "google") {

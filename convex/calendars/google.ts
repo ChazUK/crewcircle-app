@@ -1,13 +1,13 @@
 "use node";
 
+import type { SubCalendar } from "@shared/calendars";
 import { v } from "convex/values";
 
 import { api, internal } from "../_generated/api";
 import { Doc, Id } from "../_generated/dataModel";
 import { action, internalAction } from "../_generated/server";
-import { ensureAccessToken, fetchCalendarList, fetchEventsForCalendars } from "./adapters/google";
+import { GoogleCalendarAdapter, ensureAccessToken, fetchCalendarList } from "./adapters/google";
 import { encryptJson, type EncryptedOAuthTokens } from "./domain/crypto";
-import { currentSyncWindow } from "./orchestrator";
 import { orchestrator } from "./orchestrator/registry";
 
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -186,36 +186,22 @@ export const syncGoogleConnectionInternal = internalAction({
     if (connection.provider !== "google") {
       throw new Error("syncGoogleConnectionInternal only supports Google connections");
     }
-    const clientId = connection.oauthClientId;
-    if (!clientId) {
-      throw new Error(
-        "Google connection is missing its original OAuth client id; please reconnect.",
-      );
-    }
-    const enabledIds =
-      connection.enabledSubCalendarIds && connection.enabledSubCalendarIds.length > 0
-        ? connection.enabledSubCalendarIds
-        : ["primary"];
-    try {
-      const accessToken = await ensureAccessToken(ctx, connection, clientId);
-      const events = await fetchEventsForCalendars(accessToken, enabledIds, currentSyncWindow());
-      await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
-        connectionId: args.connectionId,
-        userId: args.userId,
-        events,
-      });
-      await ctx.runMutation(internal.calendars.mutations.markSynced, {
-        connectionId: args.connectionId,
-        error: undefined,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown sync error";
-      await ctx.runMutation(internal.calendars.mutations.markSynced, {
-        connectionId: args.connectionId,
-        error: message,
-      });
-      throw err;
-    }
+    await orchestrator.syncConnection(ctx, args.connectionId);
     return null;
+  },
+});
+
+export const listGoogleSubCalendarsInternal = internalAction({
+  args: { connectionId: v.id("calendarConnections") },
+  handler: async (ctx, args): Promise<SubCalendar[]> => {
+    const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
+      internal.calendars.actionHelpers.getConnectionInternal,
+      { connectionId: args.connectionId },
+    );
+    if (!connection) throw new Error("Calendar connection not found");
+    if (connection.provider !== "google") {
+      throw new Error("listGoogleSubCalendarsInternal only supports Google connections");
+    }
+    return GoogleCalendarAdapter.listSubCalendars!(ctx, connection);
   },
 });
