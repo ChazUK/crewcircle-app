@@ -11,3 +11,4 @@ pre-commit:
       stage_fixed: true
     - name: test
       run: npx vitest run
+      follow: true
