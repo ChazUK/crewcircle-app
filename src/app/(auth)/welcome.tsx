@@ -32,7 +32,6 @@ export default function Page() {
             Sign in
           </Link>
         </Text>
-        {__DEV__ && <Link href="/storybook">Open Storybook</Link>}
       </View>
     </SafeAreaView>
   );
