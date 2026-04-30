@@ -1,18 +1,8 @@
 import { Doc, Id } from "@convex/_generated/dataModel";
 import { MutationCtx } from "@convex/_generated/server";
+import type { IncomingEvent } from "@shared/calendars";
 
-export type IncomingEvent = {
-  externalId: string;
-  subCalendarId?: string;
-  uid?: string;
-  recurrenceId?: number;
-  title: string;
-  description?: string;
-  location?: string;
-  startsAt: number;
-  endsAt: number;
-  isAllDay: boolean;
-};
+export type { IncomingEvent };
 
 export async function replaceConnectionEvents(
   ctx: MutationCtx,

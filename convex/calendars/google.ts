@@ -14,13 +14,12 @@ import {
   googleEventToIncoming,
   shouldSkipGoogleEvent,
 } from "./domain/googleEvents";
+import { currentSyncWindow } from "./orchestrator";
 
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const USERINFO_ENDPOINT = "https://openidconnect.googleapis.com/v1/userinfo";
 const CALENDAR_BASE = "https://www.googleapis.com/calendar/v3";
 const DEFAULT_SCOPE = "https://www.googleapis.com/auth/calendar.readonly openid email";
-const SYNC_WINDOW_PAST_MS = 30 * 24 * 60 * 60 * 1000;
-const SYNC_WINDOW_FUTURE_MS = 180 * 24 * 60 * 60 * 1000;
 
 type TokenResponse = {
   access_token: string;
@@ -144,8 +143,9 @@ async function fetchEventsForCalendar(
   accessToken: string,
   calendarId: string,
 ): Promise<IncomingEvent[]> {
-  const timeMin = new Date(Date.now() - SYNC_WINDOW_PAST_MS).toISOString();
-  const timeMax = new Date(Date.now() + SYNC_WINDOW_FUTURE_MS).toISOString();
+  const { windowStartMs, windowEndMs } = currentSyncWindow();
+  const timeMin = new Date(windowStartMs).toISOString();
+  const timeMax = new Date(windowEndMs).toISOString();
   const events: IncomingEvent[] = [];
   let pageToken: string | undefined;
   do {

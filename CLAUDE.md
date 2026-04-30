@@ -31,6 +31,23 @@ Convex agent skills for common tasks can be installed by running `npx convex ai-
 
 <!-- convex-ai-end -->
 
+## Code Boundaries
+
+The codebase has three distinct runtime zones. Never mix imports across these boundaries:
+
+| Zone         | Directory | May import from                                               |
+| ------------ | --------- | ------------------------------------------------------------- |
+| Shared types | `types/`  | Nothing — pure TypeScript types only, no runtime dependencies |
+| Server       | `convex/` | `@shared/*`, `@convex/_generated/*`, npm packages             |
+| Client       | `src/`    | `@shared/*`, `@/*`, `@convex/_generated/*`, npm packages      |
+
+**Rules:**
+
+- `types/` files must contain only type definitions — no `import` of anything with a runtime (no React Native, no Convex functions, no Node built-ins). Use `import type` for any cross-references within `types/`.
+- `convex/` must never import from `src/` — server code must not depend on client/device APIs.
+- `src/` must never import from `convex/` directly — only via the generated client at `@convex/_generated/`.
+- All new shared types (types used by both `convex/` and `src/`) go in `types/` and are imported via `@shared/*`.
+
 ## Agent skills
 
 ### Issue tracker
