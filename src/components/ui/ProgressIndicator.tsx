@@ -1,3 +1,4 @@
+import { useThemeColor } from "heroui-native";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -10,6 +11,9 @@ type Props = {
 export function ProgressIndicator({ currentStep, totalSteps, className }: Props) {
   const safeTotalSteps = Math.min(5, Math.max(1, Math.trunc(totalSteps)));
   const safeCurrentStep = Math.min(safeTotalSteps, Math.max(1, Math.trunc(currentStep)));
+
+  const accentColor = useThemeColor("accent");
+  const defaultColor = useThemeColor("default");
 
   return (
     <View
@@ -30,9 +34,9 @@ export function ProgressIndicator({ currentStep, totalSteps, className }: Props)
             key={step}
             style={[
               styles.line,
-              isCompleted && styles.lineCompleted,
-              isActive && styles.lineActive,
-              !isCompleted && !isActive && styles.lineUpcoming,
+              isCompleted || isActive
+                ? { backgroundColor: accentColor }
+                : { backgroundColor: defaultColor },
             ]}
           />
         );
@@ -52,16 +56,5 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 4,
     borderRadius: 2,
-  },
-  lineCompleted: {
-    backgroundColor: "#0a7ea4",
-  },
-  lineActive: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#0a7ea4",
-  },
-  lineUpcoming: {
-    backgroundColor: "#ccc",
   },
 });
