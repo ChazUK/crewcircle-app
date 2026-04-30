@@ -170,7 +170,7 @@ describe("deleteConnectionEvents", () => {
         events: Array.from({ length: 5 }, (_, i) => event(`e${i}`)),
       }),
     );
-    await t.run((ctx) => deleteConnectionEvents(ctx, connectionId));
+    await t.run((ctx) => deleteConnectionEvents(ctx, connectionId, null));
     const rows = await t.run((ctx) =>
       ctx.db
         .query("calendarEvents")
@@ -182,7 +182,8 @@ describe("deleteConnectionEvents", () => {
 
   test("is a no-op when the connection has no events", async () => {
     const { t, connectionId } = await makeHarness();
-    await t.run((ctx) => deleteConnectionEvents(ctx, connectionId));
+    const { done } = await t.run((ctx) => deleteConnectionEvents(ctx, connectionId, null));
+    expect(done).toBe(true);
     const rows = await t.run((ctx) =>
       ctx.db
         .query("calendarEvents")
@@ -190,5 +191,39 @@ describe("deleteConnectionEvents", () => {
         .collect(),
     );
     expect(rows).toEqual([]);
+  });
+
+  test("returns done:false and a cursor when more than 200 events remain", async () => {
+    const { t, userId, connectionId } = await makeHarness();
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 201; i++) {
+        await ctx.db.insert("calendarEvents", {
+          userId,
+          connectionId,
+          externalId: `e${i}`,
+          title: `event-${i}`,
+          startsAt: Date.now(),
+          endsAt: Date.now() + 60_000,
+          isAllDay: false,
+          updatedAt: Date.now(),
+        });
+      }
+    });
+
+    const first = await t.run((ctx) => deleteConnectionEvents(ctx, connectionId, null));
+    expect(first.done).toBe(false);
+
+    const second = await t.run((ctx) =>
+      deleteConnectionEvents(ctx, connectionId, first.continueCursor),
+    );
+    expect(second.done).toBe(true);
+
+    const remaining = await t.run((ctx) =>
+      ctx.db
+        .query("calendarEvents")
+        .withIndex("byConnection", (q) => q.eq("connectionId", connectionId))
+        .collect(),
+    );
+    expect(remaining).toEqual([]);
   });
 });

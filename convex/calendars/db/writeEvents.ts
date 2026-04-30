@@ -75,14 +75,12 @@ export async function replaceConnectionEvents(
 export async function deleteConnectionEvents(
   ctx: MutationCtx,
   connectionId: Id<"calendarConnections">,
-) {
-  while (true) {
-    const batch = await ctx.db
-      .query("calendarEvents")
-      .withIndex("byConnection", (q) => q.eq("connectionId", connectionId))
-      .take(200);
-    if (batch.length === 0) break;
-    for (const row of batch) await ctx.db.delete(row._id);
-    if (batch.length < 200) break;
-  }
+  cursor: string | null,
+): Promise<{ done: boolean; continueCursor: string }> {
+  const result = await ctx.db
+    .query("calendarEvents")
+    .withIndex("byConnection", (q) => q.eq("connectionId", connectionId))
+    .paginate({ cursor, numItems: 200 });
+  for (const row of result.page) await ctx.db.delete(row._id);
+  return { done: result.isDone, continueCursor: result.continueCursor };
 }

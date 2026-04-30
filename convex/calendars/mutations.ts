@@ -166,10 +166,39 @@ export const replaceEvents = internalMutation({
   },
 });
 
+export const deleteConnectionBatch = internalMutation({
+  args: {
+    connectionId: v.id("calendarConnections"),
+    cursor: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const { done, continueCursor } = await deleteConnectionEvents(
+      ctx,
+      args.connectionId,
+      args.cursor,
+    );
+    if (!done) {
+      await ctx.scheduler.runAfter(0, internal.calendars.mutations.deleteConnectionBatch, {
+        connectionId: args.connectionId,
+        cursor: continueCursor,
+      });
+    } else {
+      await ctx.db.delete(args.connectionId);
+    }
+  },
+});
+
 export const deleteConnection = internalMutation({
   args: { connectionId: v.id("calendarConnections") },
   handler: async (ctx, args) => {
-    await deleteConnectionEvents(ctx, args.connectionId);
-    await ctx.db.delete(args.connectionId);
+    const { done, continueCursor } = await deleteConnectionEvents(ctx, args.connectionId, null);
+    if (!done) {
+      await ctx.scheduler.runAfter(0, internal.calendars.mutations.deleteConnectionBatch, {
+        connectionId: args.connectionId,
+        cursor: continueCursor,
+      });
+    } else {
+      await ctx.db.delete(args.connectionId);
+    }
   },
 });
