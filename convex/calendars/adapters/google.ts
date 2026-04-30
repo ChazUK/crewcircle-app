@@ -288,10 +288,13 @@ export const GoogleCalendarAdapter: CalendarProvider = {
       );
     }
     const scopes = new Set((conn.scope ?? "").split(/\s+/));
-    if (
-      !scopes.has("https://www.googleapis.com/auth/calendar") &&
-      !scopes.has("https://www.googleapis.com/auth/calendar.events")
-    ) {
+    const WRITE_SCOPES = [
+      "https://www.googleapis.com/auth/calendar",
+      "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/calendar.events.owned",
+      "https://www.googleapis.com/auth/calendar.app.created",
+    ];
+    if (!WRITE_SCOPES.some((s) => scopes.has(s))) {
       return {
         kind: "insufficient_scope",
         message:
