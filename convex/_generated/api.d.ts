@@ -22,6 +22,7 @@ import type * as calendars_migrations from "../calendars/migrations.js";
 import type * as calendars_mutations from "../calendars/mutations.js";
 import type * as calendars_queries from "../calendars/queries.js";
 import type * as calendars_scheduler from "../calendars/scheduler.js";
+import type * as crewEvents_queries from "../crewEvents/queries.js";
 import type * as crons from "../crons.js";
 import type * as files_mutations from "../files/mutations.js";
 import type * as http from "../http.js";
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   "calendars/mutations": typeof calendars_mutations;
   "calendars/queries": typeof calendars_queries;
   "calendars/scheduler": typeof calendars_scheduler;
+  "crewEvents/queries": typeof crewEvents_queries;
   crons: typeof crons;
   "files/mutations": typeof files_mutations;
   http: typeof http;

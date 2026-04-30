@@ -144,6 +144,10 @@ _Avoid_: Calendar list entry, calendar source
 A single event stored in CrewCircle, pulled from an external Calendar Provider via a Calendar Connection. Owned by the Calendar Connection that produced it; replaced in full on each sync.
 _Avoid_: Event, appointment, entry
 
+**iCal Download**:
+A one-off `.ics` file generated server-side for a specific Booked Job or Requested Job and delivered to the device so the Crew Member can import the event into any calendar app. Distinct from Calendar Sync — this is a one-time, user-triggered action, not an ongoing connection.
+_Avoid_: Calendar export, event export
+
 **Booked Job**:
 A Job a Crew Member has been confirmed for; appears in their Diary.
 _Avoid_: Confirmed booking, accepted job

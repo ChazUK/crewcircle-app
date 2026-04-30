@@ -400,6 +400,21 @@ Update it at the start of every step so a future iteration can resume without re
 - Explore the relevant files (\`src/\`, \`convex/\`) before touching anything
 - Check \`git log --oneline -20\` for recent related changes
 
+### Step 1b — Adding packages
+The worktree does NOT have its own node_modules. Existing packages resolve by walking up to the
+parent repo's node_modules — they are available without any install step.
+
+If the implementation genuinely requires a package that is not already installed:
+\`\`\`bash
+npx expo install <package>   # Expo-compatible packages — updates package.json and installs
+npm install <package>        # everything else
+\`\`\`
+Then follow the output — Expo will tell you if app.config.ts needs a plugin entry.
+
+**Do NOT substitute an inferior workaround for a missing package.** If the spec calls for
+\`expo-*\`, install \`expo-*\`. Workarounds that paper over a missing dependency
+ship broken behaviour and pass code review because they compile.
+
 ### Step 2 — Plan (small steps)
 Break the work into the smallest possible independent commits.
 One logical change per commit. Smaller steps = higher quality output.
