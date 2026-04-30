@@ -44,7 +44,6 @@ BLOCKED_LABEL="blocked"
 READY_LABEL="ready-for-agent"
 HUMAN_LABEL="ready-for-human"
 PRD_LABEL="prd"
-ASSIGNEE="ChazUK"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RALPH_DIR="$SCRIPT_DIR/.ralph"
@@ -113,7 +112,6 @@ cleanup() {
   wait 2>/dev/null || true
 
   # Release ralph-in-progress label from any issues still actively being worked on.
-  # Assignment to $ASSIGNEE stays as a permanent record so issues are never re-claimed.
   local claimed
   claimed=$(gh issue list \
     --repo "$REPO" --state open \
@@ -218,9 +216,6 @@ find_next_issue() {
           (.labels | map(.name) |
             (contains([\"$BLOCKED_LABEL\"]) or contains([\"$PRD_LABEL\"]) or contains([\"$CLAIMED_LABEL\"]))
           ) | not
-        ) |
-        select(
-          (.assignees | map(.login) | contains([\"$ASSIGNEE\"])) | not
         )
       ]
       | sort_by(.createdAt)
@@ -281,22 +276,22 @@ unblock_resolved_issues() {
   done
 }
 
-# Atomically claim an issue by assigning it. Returns 0 if successful.
+# Atomically claim an issue by adding the in-progress label. Returns 0 if successful.
 claim_issue() {
   local number="$1"
-  gh issue edit "$number" --add-label "$CLAIMED_LABEL" --add-assignee "$ASSIGNEE" --repo "$REPO" 2>/dev/null || return 1
+  gh issue edit "$number" --add-label "$CLAIMED_LABEL" --repo "$REPO" 2>/dev/null || return 1
   # Re-read to guard against tiny race window between two agents
-  local assignees
-  assignees=$(gh issue view "$number" \
-    --repo "$REPO" --json assignees \
-    --jq '.assignees[].login' 2>/dev/null || echo "")
-  echo "$assignees" | grep -q "^${ASSIGNEE}$"
+  local labels
+  labels=$(gh issue view "$number" \
+    --repo "$REPO" --json labels \
+    --jq '.labels[].name' 2>/dev/null || echo "")
+  echo "$labels" | grep -q "^${CLAIMED_LABEL}$"
 }
 
 release_issue() {
   local number="$1"
-  # Only called when losing a claim race — removes both label and assignment
-  gh issue edit "$number" --remove-label "$CLAIMED_LABEL" --remove-assignee "$ASSIGNEE" --repo "$REPO" 2>/dev/null || true
+  # Only called when losing a claim race
+  gh issue edit "$number" --remove-label "$CLAIMED_LABEL" --repo "$REPO" 2>/dev/null || true
 }
 
 # Called when unresolved "Blocked by #N" dependencies are detected before the agent runs.
@@ -689,7 +684,6 @@ agent_loop() {
         --remove-label "$CLAIMED_LABEL" \
         --remove-label "$READY_LABEL" \
         --repo "$REPO" 2>/dev/null || true
-      # Assignment to $ASSIGNEE stays permanently — prevents re-claiming on future runs.
       # GitHub will auto-close the issue when the PR is merged ("Closes #N").
 
     elif grep -q '<promise>BLOCKED</promise>' "$log_file" 2>/dev/null; then
@@ -739,7 +733,7 @@ ${error_detail:-No structured error found — agent produced no promise signal}
 
 **Full log:** \`${log_file}\`
 
-To retry, remove the \`${HUMAN_LABEL}\` label and \`${ASSIGNEE}\` assignee from this issue, then re-add \`${READY_LABEL}\`.
+To retry, remove the \`${HUMAN_LABEL}\` label from this issue and re-add \`${READY_LABEL}\`.
 COMMENT
 )"
       gh issue comment "$issue_number" --body "$comment_body" --repo "$REPO" 2>/dev/null || \
