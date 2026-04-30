@@ -24,6 +24,7 @@ import type * as calendars_google from "../calendars/google.js";
 import type * as calendars_migrations from "../calendars/migrations.js";
 import type * as calendars_mutations from "../calendars/mutations.js";
 import type * as calendars_orchestrator_index from "../calendars/orchestrator/index.js";
+import type * as calendars_orchestrator_registry from "../calendars/orchestrator/registry.js";
 import type * as calendars_queries from "../calendars/queries.js";
 import type * as calendars_scheduler from "../calendars/scheduler.js";
 import type * as crons from "../crons.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   "calendars/migrations": typeof calendars_migrations;
   "calendars/mutations": typeof calendars_mutations;
   "calendars/orchestrator/index": typeof calendars_orchestrator_index;
+  "calendars/orchestrator/registry": typeof calendars_orchestrator_registry;
   "calendars/queries": typeof calendars_queries;
   "calendars/scheduler": typeof calendars_scheduler;
   crons: typeof crons;

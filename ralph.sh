@@ -556,7 +556,7 @@ run_claude() {
 set -euo pipefail
 # Read prompt into a variable — avoids re-expansion of special chars when passing to -p
 prompt=\$(cat .ralph-prompt.txt)
-exec claude --dangerously-skip-permissions --verbose --output-format stream-json --model "${CLAUDE_MODEL}" -p "\$prompt"
+exec claude --dangerously-skip-permissions --verbose --output-format stream-json --model "${CLAUDE_MODEL}" --effort xhigh -p "\$prompt"
 RUNNER
     chmod +x "$worktree/.ralph-run.sh"
 
