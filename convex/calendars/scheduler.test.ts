@@ -98,7 +98,7 @@ describe("listConnectionsPage", () => {
 describe("syncAllConnections", () => {
   const TEST_KEY = Buffer.alloc(32, 0).toString("base64");
 
-  test("kicks off per-provider syncs for Google and iCal and skips Apple/Outlook", async () => {
+  test("kicks off per-provider syncs for Google and iCal and skips native/microsoft", async () => {
     vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
 
     // Route responses by URL so Google API calls get JSON and iCal fetches
@@ -152,13 +152,13 @@ describe("syncAllConnections", () => {
       });
       await ctx.db.insert("calendarConnections", {
         userId,
-        provider: "apple",
+        provider: "native",
         label: "Apple",
         createdAt: Date.now(),
       });
       await ctx.db.insert("calendarConnections", {
         userId,
-        provider: "outlook",
+        provider: "microsoft",
         label: "Outlook",
         createdAt: Date.now(),
       });
@@ -172,8 +172,8 @@ describe("syncAllConnections", () => {
     const byProvider = Object.fromEntries(connections.map((c) => [c.provider, c]));
     expect(byProvider.ical.lastSyncedAt).toBeTruthy();
     expect(byProvider.google.lastSyncedAt).toBeTruthy();
-    expect(byProvider.apple.lastSyncedAt).toBeUndefined();
-    expect(byProvider.outlook.lastSyncedAt).toBeUndefined();
+    expect(byProvider.native.lastSyncedAt).toBeUndefined();
+    expect(byProvider.microsoft.lastSyncedAt).toBeUndefined();
 
     // The Google sync actually pulled the stubbed event into the cache.
     const googleEvents = await t.run((ctx) =>

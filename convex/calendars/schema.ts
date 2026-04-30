@@ -3,8 +3,8 @@ import { v } from "convex/values";
 
 export const CalendarProvider = v.union(
   v.literal("google"),
-  v.literal("apple"),
-  v.literal("outlook"),
+  v.literal("native"),
+  v.literal("microsoft"),
   v.literal("ical"),
 );
 
@@ -17,11 +17,11 @@ export const CalendarConnection = {
   externalAccountId: v.optional(v.string()),
   // For provider="ical" — the subscription URL
   icalUrl: v.optional(v.string()),
-  // For provider="apple" — the on-device calendar id from expo-calendar
+  // For provider="native" — the on-device calendar id from expo-calendar
   localCalendarId: v.optional(v.string()),
-  // For provider="google" / "outlook" — OAuth scope granted
+  // For provider="google" / "microsoft" — OAuth scope granted
   scope: v.optional(v.string()),
-  // For provider="google" / "outlook" — the OAuth client_id that issued the tokens.
+  // For provider="google" / "microsoft" — the OAuth client_id that issued the tokens.
   // Refresh-token exchange must be made against the same client, so it's persisted here.
   oauthClientId: v.optional(v.string()),
   // Encrypted JSON blob: { accessToken, refreshToken, tokenType }

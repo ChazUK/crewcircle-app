@@ -24,9 +24,9 @@ export const syncAllConnections = internalAction({
       );
 
       for (const connection of page.page) {
-        // Apple events live on the device; the client must push them via
-        // uploadAppleEvents. Outlook isn't implemented yet.
-        if (connection.provider === "apple" || connection.provider === "outlook") continue;
+        // Native (Apple) events live on the device; the client must push them via
+        // uploadAppleEvents. Microsoft (Outlook) isn't implemented yet.
+        if (connection.provider === "native" || connection.provider === "microsoft") continue;
 
         if (connection.provider === "google") {
           await ctx.scheduler.runAfter(0, internal.calendars.google.syncGoogleConnectionInternal, {

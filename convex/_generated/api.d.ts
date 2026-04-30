@@ -18,6 +18,7 @@ import type * as calendars_domain_googleEvents from "../calendars/domain/googleE
 import type * as calendars_domain_icalUrl from "../calendars/domain/icalUrl.js";
 import type * as calendars_domain_parseIcs from "../calendars/domain/parseIcs.js";
 import type * as calendars_google from "../calendars/google.js";
+import type * as calendars_migrations from "../calendars/migrations.js";
 import type * as calendars_mutations from "../calendars/mutations.js";
 import type * as calendars_queries from "../calendars/queries.js";
 import type * as calendars_scheduler from "../calendars/scheduler.js";
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   "calendars/domain/icalUrl": typeof calendars_domain_icalUrl;
   "calendars/domain/parseIcs": typeof calendars_domain_parseIcs;
   "calendars/google": typeof calendars_google;
+  "calendars/migrations": typeof calendars_migrations;
   "calendars/mutations": typeof calendars_mutations;
   "calendars/queries": typeof calendars_queries;
   "calendars/scheduler": typeof calendars_scheduler;

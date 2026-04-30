@@ -267,7 +267,7 @@ describe("uploadAppleEvents", () => {
     const connectionId = await t.run((ctx) =>
       ctx.db.insert("calendarConnections", {
         userId: owner,
-        provider: "apple",
+        provider: "native",
         label: "Not mine",
         enabledSubCalendarIds: [],
         createdAt: Date.now(),
@@ -305,7 +305,7 @@ describe("uploadAppleEvents", () => {
     const connectionId = await t.run((ctx) =>
       ctx.db.insert("calendarConnections", {
         userId,
-        provider: "apple",
+        provider: "native",
         label: "Apple",
         enabledSubCalendarIds: ["cal"],
         createdAt: Date.now(),
@@ -362,7 +362,7 @@ describe("syncConnection", () => {
     const connectionId = await t.run((ctx) =>
       ctx.db.insert("calendarConnections", {
         userId,
-        provider: "apple",
+        provider: "native",
         label: "Apple",
         createdAt: Date.now(),
       }),
@@ -418,7 +418,7 @@ describe("syncIcalConnectionInternal", () => {
     const connectionId = await t.run((ctx) =>
       ctx.db.insert("calendarConnections", {
         userId,
-        provider: "apple",
+        provider: "native",
         label: "Apple",
         createdAt: Date.now(),
       }),
@@ -439,7 +439,7 @@ describe("setEnabledSubCalendars", () => {
     const connectionId = await t.run((ctx) =>
       ctx.db.insert("calendarConnections", {
         userId,
-        provider: "apple",
+        provider: "native",
         label: "Apple",
         enabledSubCalendarIds: ["cal-1"],
         createdAt: Date.now(),

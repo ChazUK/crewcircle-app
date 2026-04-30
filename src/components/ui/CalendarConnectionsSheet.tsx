@@ -77,8 +77,8 @@ const PROVIDER_META: Record<
   { title: string; Icon: React.ComponentType<{ size?: number }> }
 > = {
   google: { title: "Google Calendar", Icon: GoogleCalendarIcon },
-  apple: { title: "Apple Calendar", Icon: AppleCalendarIcon },
-  outlook: { title: "Outlook", Icon: OutlookCalendarIcon },
+  native: { title: "Apple Calendar", Icon: AppleCalendarIcon },
+  microsoft: { title: "Outlook", Icon: OutlookCalendarIcon },
   ical: { title: "iCal URL", Icon: LinkCalendarIcon },
 };
 
@@ -186,7 +186,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange, _initialSyncWar
       provider: Provider;
       currentIds: string[];
     }) => {
-      if (args.provider === "ical" || args.provider === "outlook") return;
+      if (args.provider === "ical" || args.provider === "microsoft") return;
       setError(null);
       setBusy(args.connectionId);
       try {
@@ -202,7 +202,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange, _initialSyncWar
             label: item.label,
             hint: item.primary ? "Primary" : item.accessRole,
           }));
-        } else if (args.provider === "apple") {
+        } else if (args.provider === "native") {
           const permission = await Calendar.requestCalendarPermissionsAsync();
           if (permission.status !== "granted") {
             throw new Error("Calendar permission is required");
@@ -235,8 +235,8 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange, _initialSyncWar
         connectionId: target.connectionId,
         enabledSubCalendarIds: pickedIds,
       });
-      if (target.provider === "apple") {
-        // For Apple the server can't sync on its own; push events from the device.
+      if (target.provider === "native") {
+        // For native (Apple) calendars the server can't sync on its own; push events from the device.
         const events = await readAppleEvents(pickedIds);
         await uploadAppleEvents({ connectionId: target.connectionId, events });
       }
@@ -403,7 +403,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange, _initialSyncWar
       setBusy(connection._id);
       setError(null);
       try {
-        if (connection.provider === "apple") {
+        if (connection.provider === "native") {
           const ids = connection.enabledSubCalendarIds ?? [];
           if (ids.length === 0) {
             throw new Error("No calendars selected for this Apple connection");
@@ -448,13 +448,13 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange, _initialSyncWar
         onPress: handleConnectGoogle,
       },
       {
-        key: "apple" as const,
+        key: "native" as const,
         title: "Apple Calendar",
         Icon: AppleCalendarIcon,
         onPress: handleStartApple,
       },
       {
-        key: "outlook" as const,
+        key: "microsoft" as const,
         title: "Outlook",
         Icon: OutlookCalendarIcon,
         onPress: handleOutlook,
@@ -510,7 +510,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange, _initialSyncWar
                     const isBusyRow = busy === connection._id;
                     const isExpanded = expandedId === connection._id;
                     const hasSubCalendars =
-                      connection.provider === "google" || connection.provider === "apple";
+                      connection.provider === "google" || connection.provider === "native";
 
                     return (
                       <Fragment key={connection._id}>
@@ -544,7 +544,7 @@ export function CalendarConnectionsSheet({ isOpen, onOpenChange, _initialSyncWar
                               <Text className="text-sm text-muted-foreground">
                                 iCal feeds are a single subscription — no sub-calendars to pick.
                               </Text>
-                            ) : connection.provider === "outlook" ? (
+                            ) : connection.provider === "microsoft" ? (
                               <Text className="text-sm text-muted-foreground">
                                 Outlook support isn't wired up yet.
                               </Text>

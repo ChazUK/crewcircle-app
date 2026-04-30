@@ -119,7 +119,7 @@ export const connectApple = action({
       internal.calendars.mutations.insertConnection,
       {
         userId: user._id,
-        provider: "apple",
+        provider: "native",
         label: args.label,
         enabledSubCalendarIds: args.enabledSubCalendarIds,
       },
@@ -149,7 +149,7 @@ export const uploadAppleEvents = action({
       { connectionId: args.connectionId, userId: user._id },
     );
     if (!connection) throw new Error("Calendar connection not found");
-    if (connection.provider !== "apple") {
+    if (connection.provider !== "native") {
       throw new Error("uploadAppleEvents only supports Apple calendars");
     }
     await ctx.runMutation(internal.calendars.mutations.replaceEvents, {
@@ -202,8 +202,8 @@ export const syncConnection = action({
       return null;
     }
 
-    if (connection.provider === "apple") {
-      // Apple events originate on-device; the client must call uploadAppleEvents.
+    if (connection.provider === "native") {
+      // Native (Apple) events originate on-device; the client must call uploadAppleEvents.
       throw new Error("Apple calendars must be re-synced from the device");
     }
 
