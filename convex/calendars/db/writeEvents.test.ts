@@ -130,6 +130,54 @@ describe("replaceConnectionEvents", () => {
     expect(rows[0].title).toBe("second");
   });
 
+  test("empty batch removes all existing events for the connection", async () => {
+    const { t, userId, connectionId } = await makeHarness();
+    await t.run((ctx) =>
+      replaceConnectionEvents(ctx, {
+        connectionId,
+        userId,
+        events: [event("a"), event("b"), event("c")],
+      }),
+    );
+    await t.run((ctx) => replaceConnectionEvents(ctx, { connectionId, userId, events: [] }));
+    const rows = await t.run((ctx) =>
+      ctx.db
+        .query("calendarEvents")
+        .withIndex("byConnection", (q) => q.eq("connectionId", connectionId))
+        .collect(),
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  test("mixed batch inserts, updates, and deletes in one call", async () => {
+    const { t, userId, connectionId } = await makeHarness();
+    await t.run((ctx) =>
+      replaceConnectionEvents(ctx, {
+        connectionId,
+        userId,
+        events: [event("keep", "original"), event("update-me", "old"), event("delete-me")],
+      }),
+    );
+    await t.run((ctx) =>
+      replaceConnectionEvents(ctx, {
+        connectionId,
+        userId,
+        events: [event("keep", "original"), event("update-me", "new"), event("brand-new")],
+      }),
+    );
+    const rows = await t.run((ctx) =>
+      ctx.db
+        .query("calendarEvents")
+        .withIndex("byConnection", (q) => q.eq("connectionId", connectionId))
+        .collect(),
+    );
+    const byId = Object.fromEntries(rows.map((r) => [r.externalId, r]));
+    expect(Object.keys(byId).sort()).toEqual(["brand-new", "keep", "update-me"]);
+    expect(byId["delete-me"]).toBeUndefined();
+    expect(byId["update-me"].title).toBe("new");
+    expect(byId["brand-new"].title).toBe("brand-new");
+  });
+
   test("does not touch events on other connections", async () => {
     const { t, userId, connectionId } = await makeHarness();
     const otherConnectionId = await t.run((ctx) =>
