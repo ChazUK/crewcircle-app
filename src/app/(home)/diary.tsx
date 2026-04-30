@@ -1,6 +1,7 @@
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { format } from "date-fns";
+import { useThemeColor } from "heroui-native";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
@@ -10,7 +11,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CalendarConnectionsSheet } from "@/components/ui/CalendarConnectionsSheet";
 import { GearIcon } from "@/components/ui/icons/GearIcon";
 
-const ACCENT = "#6366f1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function toIsoDate(ts: number): string {
@@ -45,6 +45,13 @@ export default function Diary() {
   const [isConnectionsOpen, setIsConnectionsOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
+  const [accent, accentForeground, foreground, muted] = useThemeColor([
+    "accent",
+    "accent-foreground",
+    "foreground",
+    "muted",
+  ]);
+
   // Query a buffer around the visible month so dots show up on the adjacent-
   // month days that react-native-calendars includes on the grid edges.
   const { startsAtMs, endsAtMs } = useMemo(() => {
@@ -75,15 +82,15 @@ export default function Diary() {
       { marked?: boolean; dotColor?: string; selected?: boolean; selectedColor?: string }
     > = {};
     for (const key of Object.keys(eventsByDate)) {
-      m[key] = { marked: true, dotColor: ACCENT };
+      m[key] = { marked: true, dotColor: accent };
     }
     m[selectedDate] = {
       ...(m[selectedDate] ?? {}),
       selected: true,
-      selectedColor: ACCENT,
+      selectedColor: accent,
     };
     return m;
-  }, [eventsByDate, selectedDate]);
+  }, [eventsByDate, selectedDate, accent]);
 
   const sortedSelectedDayEvents = useMemo(() => {
     const dayStart = parseIsoDateLocal(selectedDate).getTime();
@@ -118,18 +125,18 @@ export default function Diary() {
           theme={{
             backgroundColor: "transparent",
             calendarBackground: "transparent",
-            selectedDayBackgroundColor: ACCENT,
-            selectedDayTextColor: "#ffffff",
-            todayTextColor: ACCENT,
-            dayTextColor: "#1f2937",
-            textDisabledColor: "#d1d5db",
-            monthTextColor: "#1f2937",
-            arrowColor: ACCENT,
+            selectedDayBackgroundColor: accent,
+            selectedDayTextColor: accentForeground,
+            todayTextColor: accent,
+            dayTextColor: foreground,
+            textDisabledColor: muted,
+            monthTextColor: foreground,
+            arrowColor: accent,
             textDayFontWeight: "400",
             textMonthFontWeight: "600",
             textDayHeaderFontWeight: "500",
-            dotColor: ACCENT,
-            selectedDotColor: "#ffffff",
+            dotColor: accent,
+            selectedDotColor: accentForeground,
           }}
           style={{ marginHorizontal: 8 }}
         />
