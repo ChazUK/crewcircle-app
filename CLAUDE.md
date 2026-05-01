@@ -61,3 +61,30 @@ Default label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `read
 ### Domain docs
 
 Single-context layout — `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## GitHub issue detail standard
+
+When creating implementation issues for autonomous agents, each issue must contain enough context for a simple LLM to implement the ticket
+correctly without referring to other files or asking questions.
+
+Include:
+
+- The exact file path(s) to create or modify
+- The exact names of functions, types, methods, and fields — as they will appear in code
+- The names of indexes, tables, and Convex validators where relevant
+- Behavioural descriptions of what each function does, in plain English, step by step
+- Which existing files, types, or functions to import or reuse (by name and path)
+- Explicit constraints — what must NOT be done and why (e.g. "do not filter here — the service layer does that")
+- Cross-references to blocking tickets by number, with a one-line explanation of what the dependency provides
+- Test case descriptions as a numbered list of scenarios in plain English — not code, just "given X, expect Y"
+- Acceptance criteria as checkboxes
+
+Do not include:
+
+- Code blocks or implementation examples — describe the behaviour, not the syntax
+- Architectural rationale that belongs in the PRD — keep issues focused on the task
+- Vague instructions like "implement the sync logic" — be specific about every step
+- Assumptions about what the agent already knows — state everything explicitly
+
+The test for a good issue: a developer who has never seen this codebase should be able to implement the ticket correctly using only the
+issue body and the files referenced within it.
