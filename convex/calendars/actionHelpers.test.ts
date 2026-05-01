@@ -30,6 +30,8 @@ async function seed() {
       provider: "ical",
       label: "Mine",
       createdAt: Date.now(),
+      color: "#6366f1",
+      syncErrorCount: 0,
     }),
   );
   return { t, owner, other, connectionId };

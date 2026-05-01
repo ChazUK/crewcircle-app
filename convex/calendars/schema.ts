@@ -15,7 +15,7 @@ export const CalendarConnection = {
   label: v.string(),
   // Provider-side identifier (Google email/sub, Outlook UPN, Apple localCalendarId, etc.)
   externalAccountId: v.optional(v.string()),
-  // For provider="ical" — the subscription URL
+  // For provider="ical" — the subscription URL (stored encrypted at the application layer)
   icalUrl: v.optional(v.string()),
   // For provider="native" — the on-device calendar id from expo-calendar
   localCalendarId: v.optional(v.string()),
@@ -30,11 +30,6 @@ export const CalendarConnection = {
   encryptedTokens: v.optional(v.bytes()),
   // Unix ms — when the access token expires
   tokenExpiresAt: v.optional(v.number()),
-  // IDs of sub-calendars within this account to actively sync.
-  // - Google: calendar ids from /calendarList (e.g. "primary", "xxx@group.calendar.google.com")
-  // - Apple: device localCalendarIds from expo-calendar
-  // - iCal: not applicable (the feed URL is opaque)
-  enabledSubCalendarIds: v.optional(v.array(v.string())),
   // Optimistic-lock nonce written atomically with each token refresh so that
   // concurrent refreshes are serialised: only the first writer wins.
   refreshNonce: v.optional(v.string()),
@@ -42,13 +37,30 @@ export const CalendarConnection = {
   lastSyncedAt: v.optional(v.number()),
   lastSyncError: v.optional(v.string()),
   createdAt: v.number(),
+  // Hex colour assigned to this connection, e.g. "#6366f1"
+  color: v.string(),
+  // Incremented on each sync failure; reset to 0 on success. UI shows a badge when > 3.
+  syncErrorCount: v.number(),
+  // ETag from the last successful iCal feed fetch — used for conditional HTTP requests.
+  icalEtag: v.optional(v.string()),
+  // Last-Modified header from the last successful iCal fetch — used for conditional HTTP requests.
+  icalLastModified: v.optional(v.string()),
+};
+
+export const CalendarSubCalendar = {
+  connectionId: v.id("calendarConnections"),
+  // Provider's identifier for this sub-calendar
+  externalId: v.string(),
+  label: v.string(),
+  // Controls future visibility to other CrewCircle users (does not affect the owner's diary)
+  showAsBusy: v.boolean(),
 };
 
 export const CalendarEvent = {
   userId: v.id("users"),
   connectionId: v.id("calendarConnections"),
-  // Which sub-calendar this event came from. Empty/undefined for iCal feeds.
-  subCalendarId: v.optional(v.string()),
+  // Foreign key to the sub-calendar row this event belongs to
+  subCalendarId: v.id("calendarSubCalendars"),
   // Composite stable identifier: `${subCalendarId}::${providerEventId}` when a
   // sub-calendar applies, else the raw provider event id. Ensures uniqueness
   // across sub-calendars of the same connection.
@@ -73,8 +85,10 @@ export const CalendarEvent = {
 
 export const calendarsSchema = {
   calendarConnections: defineTable(CalendarConnection).index("byUser", ["userId"]),
+  calendarSubCalendars: defineTable(CalendarSubCalendar).index("byConnection", ["connectionId"]),
   calendarEvents: defineTable(CalendarEvent)
     .index("byConnection", ["connectionId"])
     .index("byConnectionExternal", ["connectionId", "externalId"])
+    .index("bySubCalendar", ["subCalendarId"])
     .index("byUserStartsAt", ["userId", "startsAt"]),
 };

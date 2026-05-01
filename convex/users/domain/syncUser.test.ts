@@ -100,12 +100,23 @@ describe("deleteUser", () => {
         provider: "ical",
         label: "Feed",
         createdAt: Date.now(),
+        color: "#6366f1",
+        syncErrorCount: 0,
+      }),
+    );
+    const subCalendarId = await t.run((ctx) =>
+      ctx.db.insert("calendarSubCalendars", {
+        connectionId,
+        externalId: "default",
+        label: "Default",
+        showAsBusy: true,
       }),
     );
     await t.run((ctx) =>
       ctx.db.insert("calendarEvents", {
         userId,
         connectionId,
+        subCalendarId,
         externalId: "evt-1",
         title: "Meeting",
         startsAt: Date.now(),
@@ -137,6 +148,8 @@ describe("deleteUser", () => {
         provider: "ical",
         label: "Untouched",
         createdAt: Date.now(),
+        color: "#6366f1",
+        syncErrorCount: 0,
       }),
     );
     await t.run((ctx) => deleteUser(ctx, { externalAuthId: "nope" }));
