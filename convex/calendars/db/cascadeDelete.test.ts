@@ -25,6 +25,22 @@ async function insertConnection(t: TestConvex<typeof schema>, userId: Id<"users"
       provider: "ical",
       label,
       createdAt: Date.now(),
+      color: "#6366f1",
+      syncErrorCount: 0,
+    }),
+  );
+}
+
+async function insertSubCalendar(
+  t: TestConvex<typeof schema>,
+  connectionId: Id<"calendarConnections">,
+) {
+  return t.run((ctx) =>
+    ctx.db.insert("calendarSubCalendars", {
+      connectionId,
+      externalId: "default",
+      label: "Default",
+      showAsBusy: true,
     }),
   );
 }
@@ -33,12 +49,14 @@ async function insertEvent(
   t: TestConvex<typeof schema>,
   userId: Id<"users">,
   connectionId: Id<"calendarConnections">,
+  subCalendarId: Id<"calendarSubCalendars">,
   externalId: string,
 ) {
   return t.run((ctx) =>
     ctx.db.insert("calendarEvents", {
       userId,
       connectionId,
+      subCalendarId,
       externalId,
       title: externalId,
       startsAt: Date.now(),
@@ -66,9 +84,11 @@ describe("scheduleDeleteUserCalendarData", () => {
     const userId = await insertUser(t, "target");
     const connectionA = await insertConnection(t, userId, "A");
     const connectionB = await insertConnection(t, userId, "B");
-    await insertEvent(t, userId, connectionA, "a1");
-    await insertEvent(t, userId, connectionA, "a2");
-    await insertEvent(t, userId, connectionB, "b1");
+    const subCalA = await insertSubCalendar(t, connectionA);
+    const subCalB = await insertSubCalendar(t, connectionB);
+    await insertEvent(t, userId, connectionA, subCalA, "a1");
+    await insertEvent(t, userId, connectionA, subCalA, "a2");
+    await insertEvent(t, userId, connectionB, subCalB, "b1");
 
     await t.run((ctx) => scheduleDeleteUserCalendarData(ctx, userId));
     await new Promise((r) => setTimeout(r, 0));
@@ -86,7 +106,8 @@ describe("scheduleDeleteUserCalendarData", () => {
     const bystander = await insertUser(t, "bystander");
     await insertConnection(t, target, "mine");
     const keepConnection = await insertConnection(t, bystander, "keep");
-    await insertEvent(t, bystander, keepConnection, "keep-evt");
+    const keepSubCal = await insertSubCalendar(t, keepConnection);
+    await insertEvent(t, bystander, keepConnection, keepSubCal, "keep-evt");
 
     await t.run((ctx) => scheduleDeleteUserCalendarData(ctx, target));
     await new Promise((r) => setTimeout(r, 0));
