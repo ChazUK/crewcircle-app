@@ -9,6 +9,7 @@ export type IncomingEvent = {
   startsAt: number;
   endsAt: number;
   isAllDay: boolean;
+  originalTimezone?: string;
 };
 
 export type SubCalendar = {
@@ -43,8 +44,37 @@ export type WriteError =
 
 export type WriteSuccess = { externalId: string };
 
+export type CalendarConnectParams =
+  | {
+      provider: "google";
+      authCode: string;
+      codeVerifier: string;
+      clientId: string;
+      redirectUri: string;
+      label: string;
+    }
+  | {
+      provider: "microsoft";
+      authCode: string;
+      codeVerifier: string;
+      clientId: string;
+      redirectUri: string;
+      label: string;
+    }
+  | {
+      provider: "ical";
+      url: string;
+      label: string;
+    }
+  | {
+      provider: "native";
+      deviceCalendarId: string;
+      label: string;
+    };
+
 export interface CalendarProvider<TCtx = unknown, TConn = unknown> {
   capabilities: CalendarProviderCapabilities;
+  connect(ctx: TCtx, params: CalendarConnectParams): Promise<void>;
   fetchEvents?(ctx: TCtx, connection: TConn, window: SyncWindow): Promise<IncomingEvent[]>;
   writeEvent?(
     ctx: TCtx,
@@ -54,8 +84,9 @@ export interface CalendarProvider<TCtx = unknown, TConn = unknown> {
   listSubCalendars?(ctx: TCtx, connection: TConn): Promise<SubCalendar[]>;
 }
 
-export type AdapterRegistry = {
+export type CalendarProviderRegistry = {
   google: CalendarProvider;
   ical: CalendarProvider;
-  microsoft?: CalendarProvider;
+  microsoft: CalendarProvider;
+  native: CalendarProvider;
 };

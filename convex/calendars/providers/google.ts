@@ -1,4 +1,5 @@
 import type {
+  CalendarConnectParams,
   CalendarProvider,
   CalendarProviderCapabilities,
   IncomingEvent,
@@ -8,21 +9,25 @@ import type {
   WriteSuccess,
 } from "@shared/calendars";
 
-export const microsoftCapabilities: CalendarProviderCapabilities = {
+export const googleCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: true,
   writable: true,
   hasSubCalendars: true,
 };
 
-export const MicrosoftCalendarAdapter: CalendarProvider = {
-  capabilities: microsoftCapabilities,
+export const GoogleCalendarProvider: CalendarProvider = {
+  capabilities: googleCapabilities,
+
+  async connect(_ctx: unknown, _params: CalendarConnectParams): Promise<void> {
+    throw new Error("Not implemented: Google Calendar connect");
+  },
 
   async fetchEvents(
     _ctx: unknown,
     _connection: unknown,
     _window: SyncWindow,
   ): Promise<IncomingEvent[]> {
-    throw new Error("Not implemented: Microsoft Calendar is not yet supported");
+    throw new Error("Not implemented: Google Calendar is not yet supported");
   },
 
   async writeEvent(
@@ -30,10 +35,10 @@ export const MicrosoftCalendarAdapter: CalendarProvider = {
     _connection: unknown,
     _event: IncomingEvent,
   ): Promise<WriteSuccess | WriteError> {
-    throw new Error("Not implemented: Microsoft Calendar is not yet supported");
+    throw new Error("Not implemented: Google Calendar is not yet supported");
   },
 
   async listSubCalendars(_ctx: unknown, _connection: unknown): Promise<SubCalendar[]> {
-    throw new Error("Not implemented: Microsoft Calendar is not yet supported");
+    throw new Error("Not implemented: Google Calendar is not yet supported");
   },
 };

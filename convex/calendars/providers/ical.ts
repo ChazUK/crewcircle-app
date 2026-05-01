@@ -1,4 +1,5 @@
 import type {
+  CalendarConnectParams,
   CalendarProvider,
   CalendarProviderCapabilities,
   IncomingEvent,
@@ -14,8 +15,12 @@ export const icalCapabilities: CalendarProviderCapabilities = {
   hasSubCalendars: false,
 };
 
-export const ICalAdapter: CalendarProvider = {
+export const ICalProvider: CalendarProvider = {
   capabilities: icalCapabilities,
+
+  async connect(_ctx: unknown, _params: CalendarConnectParams): Promise<void> {
+    throw new Error("Not implemented: iCal Calendar connect");
+  },
 
   async fetchEvents(
     _ctx: unknown,
