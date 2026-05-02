@@ -170,10 +170,11 @@ describe("MicrosoftCalendarProvider.connect", () => {
     const t = convexTest(schema, modules);
 
     const fetchSpy = vi.fn().mockImplementation((url: string) => {
-      if (url.includes("login.microsoftonline.com")) {
+      const { hostname, pathname } = new URL(url);
+      if (hostname === "login.microsoftonline.com") {
         return Promise.resolve({ ok: true, json: async () => FAKE_TOKEN_RESPONSE });
       }
-      if (url.includes("graph.microsoft.com/v1.0/me")) {
+      if (hostname === "graph.microsoft.com" && pathname.startsWith("/v1.0/me")) {
         return Promise.resolve({ ok: true, json: async () => FAKE_ME_RESPONSE });
       }
       return Promise.resolve({ ok: true, json: async () => ({ value: [] }) });
