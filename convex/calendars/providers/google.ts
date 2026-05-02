@@ -41,10 +41,13 @@ type GoogleUserInfo = {
 type GoogleCalendarListItem = {
   id: string;
   summary: string;
+  summaryOverride?: string;
+  primary?: boolean;
 };
 
 type GoogleCalendarListResponse = {
   items?: GoogleCalendarListItem[];
+  nextPageToken?: string;
 };
 
 function throwAuthError(message: string): never {
@@ -245,6 +248,42 @@ export const GoogleCalendarProvider: CalendarProvider = {
   },
 
   async listSubCalendars(_ctx: unknown, _connection: unknown): Promise<SubCalendar[]> {
-    throw new Error("Not implemented: Google Calendar is not yet supported");
+    const ctx = _ctx as ActionCtx;
+    const connection = _connection as Doc<"calendarConnections">;
+    if (!connection.oauthClientId) {
+      throwAuthError("Google connection missing oauthClientId");
+    }
+
+    const accessToken = await ensureAccessToken(ctx, connection, connection.oauthClientId);
+
+    const subCalendars: SubCalendar[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      const url = new URL("https://www.googleapis.com/calendar/v3/users/me/calendarList");
+      url.searchParams.set("maxResults", "250");
+      if (pageToken) url.searchParams.set("pageToken", pageToken);
+
+      const response = await fetch(url.toString(), {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        throwAuthError(`Google calendarList fetch failed (${response.status})`);
+      }
+
+      const data = (await response.json()) as GoogleCalendarListResponse;
+      for (const item of data.items ?? []) {
+        subCalendars.push({
+          id: item.id,
+          label: item.summaryOverride ?? item.summary,
+          primary: item.primary ?? false,
+        });
+      }
+
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+
+    return subCalendars;
   },
 };
