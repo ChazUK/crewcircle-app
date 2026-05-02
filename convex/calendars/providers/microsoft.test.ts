@@ -561,3 +561,379 @@ describe("ensureAccessToken", () => {
     expect(stored.refreshToken).toBe("long-lived-refresh");
   });
 });
+
+async function insertUserAndConnectionWithSubCalendar(
+  t: TestConvex<typeof schema>,
+  subCalendars: Array<{ externalId: string; label: string }> = [
+    { externalId: "cal-1", label: "Calendar" },
+  ],
+) {
+  const userId = await t.run((ctx) =>
+    ctx.db.insert("users", {
+      externalAuthId: "owner",
+      email: "owner@example.com",
+      hasCompletedOnboarding: false,
+      isPublic: false,
+    }),
+  );
+
+  const encryptedTokens = await encryptJson({
+    accessToken: "access-token",
+    refreshToken: "refresh-token",
+    tokenType: "Bearer",
+  });
+
+  const connectionId = await t.run((ctx) =>
+    ctx.db.insert("calendarConnections", {
+      userId,
+      provider: "microsoft",
+      label: "Work",
+      color: "#6366f1",
+      createdAt: 0,
+      syncErrorCount: 0,
+      oauthClientId: "test-client-id",
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 3_600_000,
+    }),
+  );
+
+  for (const cal of subCalendars) {
+    await t.run((ctx) =>
+      ctx.db.insert("calendarSubCalendars", {
+        connectionId,
+        externalId: cal.externalId,
+        label: cal.label,
+        showAsBusy: true,
+      }),
+    );
+  }
+
+  const connection = await t.run((ctx) => ctx.db.get(connectionId));
+  return { userId, connectionId, connection: connection! };
+}
+
+const SYNC_WINDOW = {
+  windowStartMs: Date.now() - 86_400_000,
+  windowEndMs: Date.now() + 86_400_000,
+};
+
+describe("MicrosoftCalendarProvider.fetchEvents", () => {
+  beforeEach(() => {
+    vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  test("fetches events from calendarView/delta and maps fields to IncomingEvent", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t);
+
+    const fakeEvent = {
+      id: "evt-1",
+      subject: "Shoot day",
+      body: { content: "On location" },
+      location: { displayName: "Pinewood Studios" },
+      start: { dateTime: "2026-05-03T09:00:00Z", timeZone: "UTC" },
+      end: { dateTime: "2026-05-03T18:00:00Z", timeZone: "UTC" },
+      isAllDay: false,
+      showAs: "busy",
+    };
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ value: [fakeEvent] }) }),
+    );
+
+    const events = await t.action((ctx) =>
+      MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW),
+    );
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      externalId: "cal-1::evt-1",
+      subCalendarId: "cal-1",
+      title: "Shoot day",
+      description: "On location",
+      location: "Pinewood Studios",
+      startsAt: new Date("2026-05-03T09:00:00Z").getTime(),
+      endsAt: new Date("2026-05-03T18:00:00Z").getTime(),
+      isAllDay: false,
+      originalTimezone: "UTC",
+      status: "confirmed",
+    });
+  });
+
+  test("sends Prefer: outlook.timezone=UTC header", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t);
+
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ value: [] }) });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await t.action((ctx) => MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW));
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect((init.headers as Record<string, string>)["Prefer"]).toBe('outlook.timezone="UTC"');
+  });
+
+  test("calls calendarView/delta endpoint with startDateTime and endDateTime", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t);
+
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ value: [] }) });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await t.action((ctx) => MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW));
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toContain("/me/calendars/cal-1/calendarView/delta");
+    expect(url).toContain("startDateTime=");
+    expect(url).toContain("endDateTime=");
+  });
+
+  test("excludes free events (showAs === free)", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          value: [
+            {
+              id: "e1",
+              subject: "Focus time",
+              showAs: "free",
+              isAllDay: false,
+              start: { dateTime: "2026-05-03T10:00:00Z", timeZone: "UTC" },
+              end: { dateTime: "2026-05-03T11:00:00Z", timeZone: "UTC" },
+            },
+            {
+              id: "e2",
+              subject: "Busy meeting",
+              showAs: "busy",
+              isAllDay: false,
+              start: { dateTime: "2026-05-03T12:00:00Z", timeZone: "UTC" },
+              end: { dateTime: "2026-05-03T13:00:00Z", timeZone: "UTC" },
+            },
+          ],
+        }),
+      }),
+    );
+
+    const events = await t.action((ctx) =>
+      MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW),
+    );
+
+    expect(events).toHaveLength(1);
+    expect(events[0].title).toBe("Busy meeting");
+  });
+
+  test("includes tentative and oof events", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          value: [
+            {
+              id: "e1",
+              subject: "Tentative",
+              showAs: "tentative",
+              isAllDay: false,
+              start: { dateTime: "2026-05-03T10:00:00Z", timeZone: "UTC" },
+              end: { dateTime: "2026-05-03T11:00:00Z", timeZone: "UTC" },
+            },
+            {
+              id: "e2",
+              subject: "OOF",
+              showAs: "oof",
+              isAllDay: false,
+              start: { dateTime: "2026-05-03T12:00:00Z", timeZone: "UTC" },
+              end: { dateTime: "2026-05-03T13:00:00Z", timeZone: "UTC" },
+            },
+          ],
+        }),
+      }),
+    );
+
+    const events = await t.action((ctx) =>
+      MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW),
+    );
+
+    expect(events).toHaveLength(2);
+    expect(events.map((e) => e.title)).toEqual(["Tentative", "OOF"]);
+  });
+
+  test("returns cancelled stub for @removed events", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          value: [{ id: "deleted-evt", "@removed": { reason: "deleted" } }],
+        }),
+      }),
+    );
+
+    const events = await t.action((ctx) =>
+      MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW),
+    );
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      externalId: "cal-1::deleted-evt",
+      subCalendarId: "cal-1",
+      status: "cancelled",
+    });
+  });
+
+  test("follows @odata.nextLink pagination", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t);
+
+    const page1Url = expect.stringContaining("/calendarView/delta");
+    const page2Url =
+      "https://graph.microsoft.com/v1.0/me/calendars/cal-1/calendarView/delta?$skiptoken=PAGE2";
+
+    const fetchSpy = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("$skiptoken=PAGE2")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            value: [
+              {
+                id: "e2",
+                subject: "Event 2",
+                showAs: "busy",
+                isAllDay: false,
+                start: { dateTime: "2026-05-04T10:00:00Z", timeZone: "UTC" },
+                end: { dateTime: "2026-05-04T11:00:00Z", timeZone: "UTC" },
+              },
+            ],
+          }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          value: [
+            {
+              id: "e1",
+              subject: "Event 1",
+              showAs: "busy",
+              isAllDay: false,
+              start: { dateTime: "2026-05-03T10:00:00Z", timeZone: "UTC" },
+              end: { dateTime: "2026-05-03T11:00:00Z", timeZone: "UTC" },
+            },
+          ],
+          "@odata.nextLink": page2Url,
+        }),
+      });
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const events = await t.action((ctx) =>
+      MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW),
+    );
+
+    expect(events).toHaveLength(2);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy.mock.calls[1][0]).toBe(page2Url);
+    void page1Url;
+  });
+
+  test("fetches events across multiple sub-calendars", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t, [
+      { externalId: "cal-1", label: "Work" },
+      { externalId: "cal-2", label: "Personal" },
+    ]);
+
+    const fetchSpy = vi.fn().mockImplementation((url: string) => {
+      const calId = url.includes("cal-1") ? "cal-1" : "cal-2";
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          value: [
+            {
+              id: `evt-${calId}`,
+              subject: `Event in ${calId}`,
+              showAs: "busy",
+              isAllDay: false,
+              start: { dateTime: "2026-05-03T10:00:00Z", timeZone: "UTC" },
+              end: { dateTime: "2026-05-03T11:00:00Z", timeZone: "UTC" },
+            },
+          ],
+        }),
+      });
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const events = await t.action((ctx) =>
+      MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW),
+    );
+
+    expect(events).toHaveLength(2);
+    expect(events.map((e) => e.subCalendarId).sort()).toEqual(["cal-1", "cal-2"]);
+  });
+
+  test("throws when calendarView/delta request fails", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 403, text: async () => "Forbidden" }),
+    );
+
+    await expect(
+      t.action((ctx) => MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW)),
+    ).rejects.toThrow("403");
+  });
+
+  test("all timestamps are UTC milliseconds", async () => {
+    const t = convexTest(schema, modules);
+    const { connection } = await insertUserAndConnectionWithSubCalendar(t);
+
+    const startIso = "2026-05-03T09:00:00Z";
+    const endIso = "2026-05-03T18:00:00Z";
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          value: [
+            {
+              id: "e1",
+              subject: "Call",
+              showAs: "busy",
+              isAllDay: false,
+              start: { dateTime: startIso, timeZone: "UTC" },
+              end: { dateTime: endIso, timeZone: "UTC" },
+            },
+          ],
+        }),
+      }),
+    );
+
+    const events = await t.action((ctx) =>
+      MicrosoftCalendarProvider.fetchEvents!(ctx, connection, SYNC_WINDOW),
+    );
+
+    expect(events[0].startsAt).toBe(new Date(startIso).getTime());
+    expect(events[0].endsAt).toBe(new Date(endIso).getTime());
+  });
+});

@@ -163,7 +163,7 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
         // Native rely on writeEvents' window prune to remove deletions
         // implicitly, so omit deletedExternalIds for them.
         const deletedExternalIds =
-          connection.provider === "google"
+          connection.provider === "google" || connection.provider === "microsoft"
             ? eventsInGroup
                 .filter((event) => event.status === "cancelled")
                 .map((event) => event.externalId)
