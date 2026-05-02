@@ -1,6 +1,7 @@
 import type {
   CalendarConnectContext,
   CalendarConnectParams,
+  CalendarConnectResult,
   CalendarProvider,
   CalendarProviderRegistry,
   IncomingEvent,
@@ -58,7 +59,7 @@ function makeProvider(overrides: Partial<CalendarProvider> = {}): CalendarProvid
       _ctx: unknown,
       _params: CalendarConnectParams,
       _context: CalendarConnectContext,
-    ): Promise<string> {
+    ): Promise<CalendarConnectResult> {
       throw new Error("not used");
     },
     async fetchEvents(

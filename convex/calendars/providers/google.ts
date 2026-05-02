@@ -1,6 +1,7 @@
 import type {
   CalendarConnectContext,
   CalendarConnectParams,
+  CalendarConnectResult,
   CalendarProvider,
   CalendarProviderCapabilities,
   IncomingEvent,
@@ -23,7 +24,7 @@ export const GoogleCalendarProvider: CalendarProvider = {
     _ctx: unknown,
     _params: CalendarConnectParams,
     _context: CalendarConnectContext,
-  ): Promise<string> {
+  ): Promise<CalendarConnectResult> {
     throw new Error("Not implemented: Google Calendar connect");
   },
 

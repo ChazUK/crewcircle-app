@@ -1,6 +1,7 @@
 import type {
   CalendarConnectContext,
   CalendarConnectParams,
+  CalendarConnectResult,
   CalendarProvider,
   CalendarProviderRegistry,
 } from "@shared/calendars";
@@ -31,7 +32,7 @@ const stubProvider: CalendarProvider = {
     _ctx: unknown,
     _params: CalendarConnectParams,
     _context: CalendarConnectContext,
-  ): Promise<string> {
+  ): Promise<CalendarConnectResult> {
     throw new Error("not used by disconnect");
   },
 };

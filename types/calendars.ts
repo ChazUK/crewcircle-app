@@ -77,13 +77,47 @@ export type CalendarConnectContext = {
   color: string;
 };
 
+// Provider-discovered fields for a Calendar Connection. Excludes
+// service-owned fields (userId, provider, label, color, createdAt,
+// syncErrorCount) which the service supplies. Optional throughout —
+// providers populate only what they discovered (e.g. iCal sets icalUrl;
+// Google sets oauth tokens; Native sets localCalendarId).
+export type CalendarConnectionBlueprint = {
+  externalAccountId?: string;
+  icalUrl?: string;
+  localCalendarId?: string;
+  scope?: string;
+  oauthClientId?: string;
+  encryptedTokens?: Uint8Array;
+  tokenExpiresAt?: number;
+};
+
+// A Sub-Calendar to insert alongside the connection. iCal returns one
+// synthetic entry (its feeds are opaque single-source); Google/Microsoft
+// return discovered sub-calendars; Native returns the selected device
+// calendar.
+export type SubCalendarBlueprint = {
+  externalId: string;
+  label: string;
+  showAsBusy: boolean;
+};
+
+// What provider.connect returns: the full state needed to install a
+// usable Calendar Connection. The service inserts connection +
+// sub-calendars in a single atomic mutation, so a partial install is
+// unrepresentable.
+export type CalendarConnectResult = {
+  connection: CalendarConnectionBlueprint;
+  subCalendars: SubCalendarBlueprint[];
+};
+
 export interface CalendarProvider<TCtx = unknown, TConn = unknown> {
   capabilities: CalendarProviderCapabilities;
   connect(
     ctx: TCtx,
     params: CalendarConnectParams,
     context: CalendarConnectContext,
-  ): Promise<string>;
+  ): Promise<CalendarConnectResult>;
   fetchEvents?(ctx: TCtx, connection: TConn, window: SyncWindow): Promise<IncomingEvent[]>;
   writeEvent?(
     ctx: TCtx,

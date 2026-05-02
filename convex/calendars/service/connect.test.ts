@@ -1,6 +1,7 @@
 import type {
   CalendarConnectContext,
   CalendarConnectParams,
+  CalendarConnectResult,
   CalendarProvider,
   CalendarProviderRegistry,
 } from "@shared/calendars";
@@ -31,21 +32,17 @@ async function insertUser(t: TestConvex<typeof schema>, externalAuthId: string) 
   );
 }
 
-async function insertConnection(
+async function insertConnectionForColours(
   t: TestConvex<typeof schema>,
   userId: Id<"users">,
-  overrides: {
-    color?: string;
-    label?: string;
-    provider?: "google" | "microsoft" | "ical" | "native";
-  } = {},
+  color: string,
 ) {
   return t.run((ctx) =>
     ctx.db.insert("calendarConnections", {
       userId,
-      provider: overrides.provider ?? "ical",
-      label: overrides.label ?? "Existing",
-      color: overrides.color ?? "#6366f1",
+      provider: "ical",
+      label: "Existing",
+      color,
       createdAt: Date.now(),
       syncErrorCount: 0,
     }),
@@ -57,7 +54,10 @@ type StubCall = {
   context: CalendarConnectContext;
 };
 
-function makeStubProvider(returnId: () => string, calls: StubCall[]): CalendarProvider {
+function makeStubProvider(
+  result: () => CalendarConnectResult,
+  calls: StubCall[],
+): CalendarProvider {
   return {
     capabilities: {
       serverSidePullable: true,
@@ -66,13 +66,16 @@ function makeStubProvider(returnId: () => string, calls: StubCall[]): CalendarPr
     },
     async connect(_ctx, params, context) {
       calls.push({ params, context });
-      return returnId();
+      return result();
     },
   };
 }
 
-function buildRegistry(returnId: () => string, calls: StubCall[]): CalendarProviderRegistry {
-  const provider = makeStubProvider(returnId, calls);
+function buildRegistry(
+  result: () => CalendarConnectResult,
+  calls: StubCall[],
+): CalendarProviderRegistry {
+  const provider = makeStubProvider(result, calls);
   return {
     google: provider,
     microsoft: provider,
@@ -81,11 +84,16 @@ function buildRegistry(returnId: () => string, calls: StubCall[]): CalendarProvi
   };
 }
 
+const emptyResult = (): CalendarConnectResult => ({
+  connection: {},
+  subCalendars: [],
+});
+
 describe("CalendarService.connect", () => {
   test("throws when the caller is not authenticated", async () => {
     const t = convexTest(schema, modules);
     const calls: StubCall[] = [];
-    const service = createCalendarService(buildRegistry(() => "irrelevant", calls));
+    const service = createCalendarService(buildRegistry(emptyResult, calls));
 
     await expect(
       t.action(async (ctx) =>
@@ -102,16 +110,9 @@ describe("CalendarService.connect", () => {
   test("assigns a palette colour and forwards it to the provider via context", async () => {
     const t = convexTest(schema, modules);
     const userId = await insertUser(t, identity.subject);
-    // Pre-create the row that the stub provider will "return" — using a non-palette colour
-    // so it does not pollute the assignPaletteColour input.
-    const newConnectionId = await insertConnection(t, userId, {
-      provider: "google",
-      label: "New",
-      color: "#000000",
-    });
 
     const calls: StubCall[] = [];
-    const service = createCalendarService(buildRegistry(() => newConnectionId, calls));
+    const service = createCalendarService(buildRegistry(emptyResult, calls));
 
     await t.withIdentity(identity).action(async (ctx) =>
       service.connect(ctx, {
@@ -132,16 +133,11 @@ describe("CalendarService.connect", () => {
   test("picks the next unused palette colour when the user already has connections", async () => {
     const t = convexTest(schema, modules);
     const userId = await insertUser(t, identity.subject);
-    await insertConnection(t, userId, { color: "#6366f1" });
-    await insertConnection(t, userId, { color: "#10b981" });
-    const newConnectionId = await insertConnection(t, userId, {
-      provider: "google",
-      label: "New",
-      color: "#000000",
-    });
+    await insertConnectionForColours(t, userId, "#6366f1");
+    await insertConnectionForColours(t, userId, "#10b981");
 
     const calls: StubCall[] = [];
-    const service = createCalendarService(buildRegistry(() => newConnectionId, calls));
+    const service = createCalendarService(buildRegistry(emptyResult, calls));
 
     await t.withIdentity(identity).action(async (ctx) =>
       service.connect(ctx, {
@@ -157,19 +153,22 @@ describe("CalendarService.connect", () => {
     expect(calls[0].context.color).toBe("#f59e0b");
   });
 
-  test("creates a synthetic sub-calendar row for iCal connections", async () => {
+  test("inserts every sub-calendar in the provider's blueprint", async () => {
     const t = convexTest(schema, modules);
-    const userId = await insertUser(t, identity.subject);
-    const newConnectionId = await insertConnection(t, userId, {
-      provider: "ical",
-      label: "Family iCloud",
-      color: "#000000",
-    });
+    await insertUser(t, identity.subject);
 
     const calls: StubCall[] = [];
-    const service = createCalendarService(buildRegistry(() => newConnectionId, calls));
+    const service = createCalendarService(
+      buildRegistry(
+        () => ({
+          connection: { icalUrl: "https://example.com/cal.ics" },
+          subCalendars: [{ externalId: "default", label: "Family iCloud", showAsBusy: true }],
+        }),
+        calls,
+      ),
+    );
 
-    await t.withIdentity(identity).action(async (ctx) =>
+    const newConnectionId = await t.withIdentity(identity).action(async (ctx) =>
       service.connect(ctx, {
         provider: "ical",
         url: "https://example.com/cal.ics",
@@ -186,23 +185,18 @@ describe("CalendarService.connect", () => {
     expect(subCalendars).toHaveLength(1);
     expect(subCalendars[0]).toMatchObject({
       connectionId: newConnectionId,
-      externalId: newConnectionId,
+      externalId: "default",
       label: "Family iCloud",
       showAsBusy: true,
     });
   });
 
-  test("does not create a sub-calendar row for non-iCal providers", async () => {
+  test("inserts no sub-calendars when the blueprint has none", async () => {
     const t = convexTest(schema, modules);
-    const userId = await insertUser(t, identity.subject);
-    const newConnectionId = await insertConnection(t, userId, {
-      provider: "google",
-      label: "Work",
-      color: "#000000",
-    });
+    await insertUser(t, identity.subject);
 
     const calls: StubCall[] = [];
-    const service = createCalendarService(buildRegistry(() => newConnectionId, calls));
+    const service = createCalendarService(buildRegistry(emptyResult, calls));
 
     await t.withIdentity(identity).action(async (ctx) =>
       service.connect(ctx, {
@@ -219,17 +213,12 @@ describe("CalendarService.connect", () => {
     expect(subCalendars).toEqual([]);
   });
 
-  test("returns the connectionId returned by the provider", async () => {
+  test("returns the connectionId of the inserted Calendar Connection", async () => {
     const t = convexTest(schema, modules);
-    const userId = await insertUser(t, identity.subject);
-    const newConnectionId = await insertConnection(t, userId, {
-      provider: "native",
-      label: "Phone",
-      color: "#000000",
-    });
+    await insertUser(t, identity.subject);
 
     const calls: StubCall[] = [];
-    const service = createCalendarService(buildRegistry(() => newConnectionId, calls));
+    const service = createCalendarService(buildRegistry(emptyResult, calls));
 
     const returned = await t.withIdentity(identity).action(async (ctx) =>
       service.connect(ctx, {
@@ -239,22 +228,20 @@ describe("CalendarService.connect", () => {
       }),
     );
 
-    expect(returned).toBe(newConnectionId);
+    const row = await t.run((ctx) => ctx.db.get(returned));
+    expect(row?._id).toBe(returned);
+    expect(row?.provider).toBe("native");
+    expect(row?.label).toBe("Phone");
   });
 
   test("delegates to the provider matching the params.provider discriminant", async () => {
     const t = convexTest(schema, modules);
-    const userId = await insertUser(t, identity.subject);
-    const newConnectionId = await insertConnection(t, userId, {
-      provider: "microsoft",
-      label: "Outlook",
-      color: "#000000",
-    });
+    await insertUser(t, identity.subject);
 
     const microsoftCalls: StubCall[] = [];
     const otherCalls: StubCall[] = [];
-    const microsoftProvider = makeStubProvider(() => newConnectionId, microsoftCalls);
-    const otherProvider = makeStubProvider(() => "should-not-be-called", otherCalls);
+    const microsoftProvider = makeStubProvider(emptyResult, microsoftCalls);
+    const otherProvider = makeStubProvider(emptyResult, otherCalls);
 
     const service = createCalendarService({
       google: otherProvider,

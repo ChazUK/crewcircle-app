@@ -34,44 +34,27 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
       const color = assignPaletteColour(usedColours);
 
       const provider = providers[params.provider];
-      const connectionIdString = await provider.connect(ctx, params, {
+      const result = await provider.connect(ctx, params, {
         userId: user._id,
         color,
       });
-      const connectionId = connectionIdString as Id<"calendarConnections">;
 
-      if (params.provider === "ical") {
-        try {
-          await ctx.runMutation(internal.calendars.mutations.insertSubCalendar, {
-            connectionId,
-            externalId: connectionId,
-            label: params.label,
-            showAsBusy: true,
-          });
-        } catch (error) {
-          // The connection row was created in a prior mutation; the synthetic
-          // sub-calendar in this one. An iCal connection without its
-          // sub-calendar can never sync, so schedule a cascade-delete to tear
-          // it down before re-throwing — failing closed beats leaving the
-          // user with a half-created connection they can't fix. Swallow
-          // cleanup failures (logging them) so the original insertSubCalendar
-          // error always surfaces to the caller — that's the error that
-          // explains why the connection failed.
-          try {
-            await ctx.runMutation(internal.calendars.db.cascadeDelete.deleteConnection, {
-              connectionId,
-            });
-          } catch (cleanupError) {
-            console.error("Failed to roll back orphaned iCal connection", {
-              connectionId,
-              cleanupError,
-            });
-          }
-          throw error;
-        }
-      }
-
-      return connectionId;
+      // One atomic mutation inserts the connection and every Sub-Calendar
+      // the provider's blueprint requires. Replaces the previous
+      // two-mutation flow (provider wrote the connection row, service
+      // wrote the sub-calendar) which could orphan an iCal connection
+      // without its synthetic Sub-Calendar on partial failure.
+      return ctx.runMutation(
+        internal.calendars.db.insertCalendarConnection.insertCalendarConnection,
+        {
+          userId: user._id,
+          provider: params.provider,
+          label: params.label,
+          color,
+          blueprint: result.connection,
+          subCalendars: result.subCalendars,
+        },
+      );
     },
 
     async disconnect(ctx: ActionCtx, connectionId: Id<"calendarConnections">): Promise<void> {
