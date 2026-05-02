@@ -38,7 +38,6 @@ type GoogleUserInfo = {
 type GoogleCalendarListItem = {
   id: string;
   summary: string;
-  primary?: boolean;
 };
 
 type GoogleCalendarListResponse = {
@@ -120,7 +119,7 @@ export const GoogleCalendarProvider: CalendarProvider = {
         subCalendars.push({
           externalId: item.id,
           label: item.summary,
-          showAsBusy: !!item.primary,
+          showAsBusy: true,
         });
       }
     }
