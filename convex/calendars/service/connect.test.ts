@@ -7,7 +7,7 @@ import type {
 } from "@shared/calendars";
 /// <reference types="vite/client" />
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { Id } from "../../_generated/dataModel";
 import schema from "../../schema";
@@ -90,6 +90,19 @@ const emptyResult = (): CalendarConnectResult => ({
 });
 
 describe("CalendarService.connect", () => {
+  // Fake timers prevent the post-connect runAfter(0, ...) callback from
+  // firing on the next tick — its production target invokes the real
+  // iCal provider (which throws "Not implemented") outside any
+  // transaction and surfaces as an unhandled rejection. Real timers are
+  // restored in afterEach without firing the queued callbacks.
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test("throws when the caller is not authenticated", async () => {
     const t = convexTest(schema, modules);
     const calls: StubCall[] = [];
@@ -263,5 +276,46 @@ describe("CalendarService.connect", () => {
 
     expect(microsoftCalls).toHaveLength(1);
     expect(otherCalls).toEqual([]);
+  });
+
+  test("schedules an immediate post-connect sync for non-native providers", async () => {
+    const t = convexTest(schema, modules);
+    await insertUser(t, identity.subject);
+
+    const calls: StubCall[] = [];
+    const service = createCalendarService(buildRegistry(emptyResult, calls));
+
+    const newConnectionId = await t.withIdentity(identity).action(async (ctx) =>
+      service.connect(ctx, {
+        provider: "ical",
+        url: "https://example.com/cal.ics",
+        label: "Family iCloud",
+      }),
+    );
+
+    const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    const retries = scheduled.filter((row) => row.name === "calendars/syncWithRetry:syncWithRetry");
+    expect(retries).toHaveLength(1);
+    expect(retries[0].args).toEqual([{ connectionId: newConnectionId }]);
+  });
+
+  test("does NOT schedule a post-connect sync for native connections", async () => {
+    const t = convexTest(schema, modules);
+    await insertUser(t, identity.subject);
+
+    const calls: StubCall[] = [];
+    const service = createCalendarService(buildRegistry(emptyResult, calls));
+
+    await t.withIdentity(identity).action(async (ctx) =>
+      service.connect(ctx, {
+        provider: "native",
+        deviceCalendarId: "device-cal-1",
+        label: "Phone",
+      }),
+    );
+
+    const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    const retries = scheduled.filter((row) => row.name === "calendars/syncWithRetry:syncWithRetry");
+    expect(retries).toEqual([]);
   });
 });
