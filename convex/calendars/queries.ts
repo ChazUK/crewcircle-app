@@ -55,18 +55,17 @@ async function fetchEventsInRange(
     )
     .collect();
 
+  const uniqueConnectionIds = [...new Set(events.map((event) => event.connectionId))];
+  const connections = await Promise.all(uniqueConnectionIds.map((id) => ctx.db.get(id)));
   const colorByConnection = new Map<Id<"calendarConnections">, string>();
-  return Promise.all(
-    events.map(async (event) => {
-      let color = colorByConnection.get(event.connectionId);
-      if (color === undefined) {
-        const connection = await ctx.db.get(event.connectionId);
-        color = connection?.color ?? "";
-        colorByConnection.set(event.connectionId, color);
-      }
-      return { ...event, color };
-    }),
-  );
+  uniqueConnectionIds.forEach((id, index) => {
+    colorByConnection.set(id, connections[index]?.color ?? "");
+  });
+
+  return events.map((event) => ({
+    ...event,
+    color: colorByConnection.get(event.connectionId) ?? "",
+  }));
 }
 
 export const getEventsForDateRange = query({
