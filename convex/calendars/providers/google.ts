@@ -18,6 +18,7 @@ import { internal } from "../../_generated/api";
 import type { Doc } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import { decryptJson, encryptJson } from "../domain/crypto";
+import { convertGoogleEvent, type GoogleApiEvent } from "./convertGoogleEvent";
 
 export const googleCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: true,
@@ -231,9 +232,67 @@ export const GoogleCalendarProvider: CalendarProvider = {
   async fetchEvents(
     _ctx: unknown,
     _connection: unknown,
-    _window: SyncWindow,
+    window: SyncWindow,
   ): Promise<IncomingEvent[]> {
-    throw new Error("Not implemented: Google Calendar is not yet supported");
+    const ctx = _ctx as ActionCtx;
+    const connection = _connection as Doc<"calendarConnections">;
+
+    if (!connection.oauthClientId) {
+      throwAuthError("Reconnect required");
+    }
+
+    const subCalendars = await ctx.runQuery(
+      internal.calendars.db.getSubCalendarsForConnection.getSubCalendarsForConnection,
+      { connectionId: connection._id },
+    );
+
+    const accessToken = await ensureAccessToken(ctx, connection, connection.oauthClientId);
+    const events: IncomingEvent[] = [];
+
+    const timeMin = new Date(window.windowStartMs).toISOString();
+    const timeMax = new Date(window.windowEndMs).toISOString();
+
+    for (const subCalendar of subCalendars) {
+      const calendarId = subCalendar.externalId;
+      let pageToken: string | undefined;
+
+      do {
+        const params = new URLSearchParams({
+          singleEvents: "true",
+          showDeleted: "true",
+          timeMin,
+          timeMax,
+          maxResults: "250",
+        });
+        if (pageToken) params.set("pageToken", pageToken);
+
+        const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`;
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (!response.ok) {
+          const text = await response.text().catch(() => String(response.status));
+          throw new Error(
+            `Google Calendar events.list failed for ${calendarId} (${response.status}): ${text}`,
+          );
+        }
+
+        const data = (await response.json()) as {
+          items?: GoogleApiEvent[];
+          nextPageToken?: string;
+        };
+
+        for (const item of data.items ?? []) {
+          const event = convertGoogleEvent(item, calendarId);
+          if (event !== null) events.push(event);
+        }
+
+        pageToken = data.nextPageToken;
+      } while (pageToken);
+    }
+
+    return events;
   },
 
   async writeEvent(
