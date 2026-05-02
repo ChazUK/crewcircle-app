@@ -37,7 +37,8 @@ MAX_ITER="${RALPH_MAX_ITER:-20}"        # Max issues per agent before it self-te
 SANDBOX="${RALPH_SANDBOX:-0}"           # 1 = wrap each claude invocation in Docker
 PRD_NUMBER="${RALPH_PRD_NUMBER:-}"      # GitHub issue # that contains the PRD (optional)
 AGENT_TIMEOUT="${RALPH_TIMEOUT:-3600}"  # Seconds before killing a hung claude process
-CLAUDE_MODEL="${RALPH_MODEL:-claude-sonnet-4-6}" # Model passed to --model flag
+CLAUDE_MODEL="${RALPH_MODEL:-claude-opus-4-7}" # Model passed to --model flag
+CLAUDE_EFFORT="${RALPH_EFFORT:-xhigh}" # Effort passed to --max-tokens flag
 
 CLAIMED_LABEL="ralph-in-progress"
 BLOCKED_LABEL="blocked"
@@ -551,7 +552,7 @@ run_claude() {
 set -euo pipefail
 # Read prompt into a variable — avoids re-expansion of special chars when passing to -p
 prompt=\$(cat .ralph-prompt.txt)
-exec claude --dangerously-skip-permissions --verbose --output-format stream-json --model "${CLAUDE_MODEL}" --effort xhigh -p "\$prompt"
+exec claude --dangerously-skip-permissions --verbose --output-format stream-json --model "${CLAUDE_MODEL}" --effort "${CLAUDE_EFFORT}" -p "\$prompt"
 RUNNER
     chmod +x "$worktree/.ralph-run.sh"
 
@@ -570,6 +571,7 @@ RUNNER
       timeout "$AGENT_TIMEOUT" \
         claude --dangerously-skip-permissions --verbose --output-format stream-json \
           --model "$CLAUDE_MODEL" \
+          --effort "$CLAUDE_EFFORT" \
           -p "$prompt" \
         > "$log_file" 2>&1
     )
@@ -760,6 +762,7 @@ main() {
   info "  agents:    $NUM_AGENTS"
   info "  max iter:  $MAX_ITER issues/agent"
   info "  model:     $CLAUDE_MODEL"
+  info "  effort:    $CLAUDE_EFFORT"
   info "  sandbox:   $([ "$SANDBOX" == "1" ] && echo "Docker" || echo "local")"
   [[ -n "$PRD_NUMBER" ]] && info "  PRD issue:  #$PRD_NUMBER"
   echo >&2
