@@ -937,3 +937,165 @@ describe("MicrosoftCalendarProvider.fetchEvents", () => {
     expect(events[0].endsAt).toBe(new Date(endIso).getTime());
   });
 });
+
+describe("MicrosoftCalendarProvider.listSubCalendars", () => {
+  beforeEach(() => {
+    vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  test("maps id, name, and isDefaultCalendar to SubCalendar fields", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 3_600_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [
+            { id: "cal-1", name: "Calendar", isDefaultCalendar: true },
+            { id: "cal-2", name: "Birthdays", isDefaultCalendar: false },
+          ],
+        }),
+      }),
+    );
+
+    const result = await t.action((ctx) =>
+      MicrosoftCalendarProvider.listSubCalendars!(ctx, connection!),
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({ id: "cal-1", label: "Calendar", primary: true });
+    expect(result[1]).toEqual({ id: "cal-2", label: "Birthdays", primary: false });
+  });
+
+  test("handles pagination by following @odata.nextLink until exhausted", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 3_600_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    const page2Url = "https://graph.microsoft.com/v1.0/me/calendars?$skiptoken=PAGE2";
+
+    const fetchSpy = vi.fn().mockImplementation((url: string) => {
+      if (url === page2Url) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            value: [{ id: "cal-2", name: "Birthdays", isDefaultCalendar: false }],
+          }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          value: [{ id: "cal-1", name: "Calendar", isDefaultCalendar: true }],
+          "@odata.nextLink": page2Url,
+        }),
+      });
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const result = await t.action((ctx) =>
+      MicrosoftCalendarProvider.listSubCalendars!(ctx, connection!),
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({ id: "cal-1", label: "Calendar" });
+    expect(result[1]).toMatchObject({ id: "cal-2", label: "Birthdays" });
+    expect(fetchSpy.mock.calls.filter((c) => String(c[0]).includes("/me/calendars"))).toHaveLength(
+      2,
+    );
+  });
+
+  test("returns empty array when no calendars exist", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 3_600_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ value: [] }) }),
+    );
+
+    const result = await t.action((ctx) =>
+      MicrosoftCalendarProvider.listSubCalendars!(ctx, connection!),
+    );
+
+    expect(result).toEqual([]);
+  });
+
+  test("throws auth error when oauthClientId is missing", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const connectionId = await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId,
+        provider: "microsoft",
+        label: "Work",
+        color: "#6366f1",
+        createdAt: 0,
+        syncErrorCount: 0,
+      }),
+    );
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    await expect(
+      t.action((ctx) => MicrosoftCalendarProvider.listSubCalendars!(ctx, connection!)),
+    ).rejects.toMatchObject({ kind: "auth" });
+  });
+
+  test("throws auth error when Microsoft API returns a non-ok status", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 3_600_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce({ ok: false, status: 401 }));
+
+    await expect(
+      t.action((ctx) => MicrosoftCalendarProvider.listSubCalendars!(ctx, connection!)),
+    ).rejects.toMatchObject({ kind: "auth" });
+  });
+});

@@ -291,6 +291,39 @@ export const MicrosoftCalendarProvider: CalendarProvider = {
   },
 
   async listSubCalendars(_ctx: unknown, _connection: unknown): Promise<SubCalendar[]> {
-    throw new Error("Not implemented: Microsoft Calendar is not yet supported");
+    const ctx = _ctx as ActionCtx;
+    const connection = _connection as Doc<"calendarConnections">;
+
+    if (!connection.oauthClientId) {
+      throwAuthError("Reconnect required");
+    }
+
+    const accessToken = await ensureAccessToken(ctx, connection, connection.oauthClientId);
+
+    const subCalendars: SubCalendar[] = [];
+    let nextUrl: string | undefined = "https://graph.microsoft.com/v1.0/me/calendars";
+
+    while (nextUrl) {
+      const response = await fetch(nextUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        throwAuthError(`Microsoft Graph /me/calendars fetch failed (${response.status})`);
+      }
+
+      const data = (await response.json()) as MicrosoftCalendarListResponse;
+      for (const item of data.value ?? []) {
+        subCalendars.push({
+          id: item.id,
+          label: item.name,
+          primary: item.isDefaultCalendar,
+        });
+      }
+
+      nextUrl = data["@odata.nextLink"];
+    }
+
+    return subCalendars;
   },
 };
