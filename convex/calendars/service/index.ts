@@ -86,11 +86,15 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
     },
 
     async setEnabledSubCalendars(
-      _ctx: ActionCtx,
-      _connectionId: Id<"calendarConnections">,
-      _subCalendarIds: string[],
+      ctx: ActionCtx,
+      connectionId: Id<"calendarConnections">,
+      selections: { externalId: string; label: string }[],
     ): Promise<void> {
-      throw new Error("Not implemented: service.setEnabledSubCalendars");
+      await requireOwnedConnection(ctx, connectionId);
+      await ctx.runMutation(internal.calendars.db.setEnabledSubCalendars.setEnabledSubCalendars, {
+        connectionId,
+        selections,
+      });
     },
   };
 }
