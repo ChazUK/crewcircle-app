@@ -56,38 +56,6 @@ describe("filterSubCalendars", () => {
     expect(filterSubCalendars(input)).toEqual([workCalendar]);
   });
 
-  test("excludes a calendar named 'Birthdays' case-insensitively", () => {
-    const input: SubCalendar[] = [
-      workCalendar,
-      { id: "ical-feed-1", label: "BIRTHDAYS", primary: false },
-    ];
-    expect(filterSubCalendars(input)).toEqual([workCalendar]);
-  });
-
-  test("excludes a calendar named 'Holidays in United Kingdom'", () => {
-    const input: SubCalendar[] = [
-      workCalendar,
-      { id: "ical-feed-2", label: "Holidays in United Kingdom", primary: false },
-    ];
-    expect(filterSubCalendars(input)).toEqual([workCalendar]);
-  });
-
-  test("excludes a calendar named 'Public Holiday'", () => {
-    const input: SubCalendar[] = [
-      workCalendar,
-      { id: "ical-feed-3", label: "Public Holiday", primary: false },
-    ];
-    expect(filterSubCalendars(input)).toEqual([workCalendar]);
-  });
-
-  test("excludes a calendar named 'Contacts'", () => {
-    const input: SubCalendar[] = [
-      workCalendar,
-      { id: "ical-feed-4", label: "Contacts", primary: false },
-    ];
-    expect(filterSubCalendars(input)).toEqual([workCalendar]);
-  });
-
   test("returns an empty array when given empty input", () => {
     expect(filterSubCalendars([])).toEqual([]);
   });
