@@ -18,6 +18,7 @@ import { internal } from "../../_generated/api";
 import type { Doc } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import { decryptJson, encryptJson } from "../domain/crypto";
+import { convertMicrosoftEvent, type MicrosoftGraphEvent } from "./convertMicrosoftEvent";
 
 export const microsoftCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: true,
@@ -223,9 +224,62 @@ export const MicrosoftCalendarProvider: CalendarProvider = {
   async fetchEvents(
     _ctx: unknown,
     _connection: unknown,
-    _window: SyncWindow,
+    window: SyncWindow,
   ): Promise<IncomingEvent[]> {
-    throw new Error("Not implemented: Microsoft Calendar is not yet supported");
+    const ctx = _ctx as ActionCtx;
+    const connection = _connection as Doc<"calendarConnections">;
+
+    if (!connection.oauthClientId) {
+      throwAuthError("Reconnect required");
+    }
+
+    const subCalendars = await ctx.runQuery(
+      internal.calendars.db.getSubCalendarsForConnection.getSubCalendarsForConnection,
+      { connectionId: connection._id },
+    );
+
+    const accessToken = await ensureAccessToken(ctx, connection, connection.oauthClientId);
+    const events: IncomingEvent[] = [];
+
+    const startDateTime = new Date(window.windowStartMs).toISOString();
+    const endDateTime = new Date(window.windowEndMs).toISOString();
+
+    for (const subCalendar of subCalendars) {
+      const calendarId = subCalendar.externalId;
+      const params = new URLSearchParams({ startDateTime, endDateTime });
+      let nextUrl: string | undefined =
+        `https://graph.microsoft.com/v1.0/me/calendars/${encodeURIComponent(calendarId)}/calendarView/delta?${params.toString()}`;
+
+      while (nextUrl) {
+        const response = await fetch(nextUrl, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Prefer: 'outlook.timezone="UTC"',
+          },
+        });
+
+        if (!response.ok) {
+          const text = await response.text().catch(() => String(response.status));
+          throw new Error(
+            `Microsoft Graph calendarView/delta failed for ${calendarId} (${response.status}): ${text}`,
+          );
+        }
+
+        const data = (await response.json()) as {
+          value?: MicrosoftGraphEvent[];
+          "@odata.nextLink"?: string;
+        };
+
+        for (const item of data.value ?? []) {
+          const event = convertMicrosoftEvent(item, calendarId);
+          if (event !== null) events.push(event);
+        }
+
+        nextUrl = data["@odata.nextLink"];
+      }
+    }
+
+    return events;
   },
 
   async writeEvent(
