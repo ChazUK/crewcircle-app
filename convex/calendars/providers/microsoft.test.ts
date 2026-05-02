@@ -1,9 +1,11 @@
 /// <reference types="vite/client" />
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import type { Id } from "../../_generated/dataModel";
 import schema from "../../schema";
-import { MicrosoftCalendarProvider } from "./microsoft";
+import { decryptJson, encryptJson } from "../domain/crypto";
+import { ensureAccessToken, MicrosoftCalendarProvider } from "./microsoft";
 
 const modules = import.meta.glob("/convex/**/*.ts");
 
@@ -265,5 +267,297 @@ describe("MicrosoftCalendarProvider.connect", () => {
     expect(body.get("client_id")).toBe("client-id");
     expect(body.get("redirect_uri")).toBe("https://app.example/callback");
     expect(body.get("client_secret")).toBeNull();
+  });
+});
+
+async function insertUser(t: TestConvex<typeof schema>) {
+  return t.run((ctx) =>
+    ctx.db.insert("users", {
+      externalAuthId: "owner",
+      email: "owner@example.com",
+      hasCompletedOnboarding: false,
+      isPublic: false,
+    }),
+  );
+}
+
+async function insertConnection(
+  t: TestConvex<typeof schema>,
+  userId: Id<"users">,
+  overrides: Partial<{
+    encryptedTokens: ArrayBuffer;
+    tokenExpiresAt: number;
+    refreshNonce: string;
+  }> = {},
+) {
+  return t.run((ctx) =>
+    ctx.db.insert("calendarConnections", {
+      userId,
+      provider: "microsoft",
+      label: "Work",
+      color: "#6366f1",
+      createdAt: 0,
+      syncErrorCount: 0,
+      oauthClientId: "test-client-id",
+      ...overrides,
+    }),
+  );
+}
+
+describe("ensureAccessToken", () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals();
+    vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  test("returns existing access token without refresh when expiry is more than 60s away", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "valid-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 120_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const token = await t.action((ctx) => ensureAccessToken(ctx, connection!, "client-id"));
+
+    expect(token).toBe("valid-token");
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("refreshes and returns new token when within 60 seconds of expiry", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "old-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 30_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          access_token: "new-token",
+          expires_in: 3600,
+          token_type: "Bearer",
+        }),
+      }),
+    );
+
+    const token = await t.action((ctx) => ensureAccessToken(ctx, connection!, "client-id"));
+
+    expect(token).toBe("new-token");
+    const updated = await t.run((ctx) => ctx.db.get(connectionId));
+    expect(updated?.tokenExpiresAt).toBeGreaterThan(Date.now() + 3_500_000);
+    expect(updated?.refreshNonce).toBeTypeOf("string");
+  });
+
+  test("also refreshes when tokenExpiresAt is not set", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "old-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          access_token: "new-token",
+          expires_in: 3600,
+          token_type: "Bearer",
+        }),
+      }),
+    );
+
+    const token = await t.action((ctx) => ensureAccessToken(ctx, connection!, "client-id"));
+    expect(token).toBe("new-token");
+  });
+
+  test("throws auth SyncError when no refresh token and token is expiring", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "old-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 30_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    await expect(
+      t.action((ctx) => ensureAccessToken(ctx, connection!, "client-id")),
+    ).rejects.toMatchObject({ kind: "auth" });
+  });
+
+  test("throws auth SyncError when token refresh HTTP request fails", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "old-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 30_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: async () => "Unauthorized",
+      }),
+    );
+
+    await expect(
+      t.action((ctx) => ensureAccessToken(ctx, connection!, "client-id")),
+    ).rejects.toMatchObject({ kind: "auth" });
+  });
+
+  test("refresh POST targets Microsoft token endpoint without client_secret", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "old-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 30_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    const fetchSpy = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        access_token: "new-token",
+        expires_in: 3600,
+        token_type: "Bearer",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await t.action((ctx) => ensureAccessToken(ctx, connection!, "client-id"));
+
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://login.microsoftonline.com/common/oauth2/v2.0/token");
+    expect(init.method).toBe("POST");
+    const body = new URLSearchParams(init.body as string);
+    expect(body.get("grant_type")).toBe("refresh_token");
+    expect(body.get("refresh_token")).toBe("refresh-token");
+    expect(body.get("client_id")).toBe("client-id");
+    expect(body.get("client_secret")).toBeNull();
+  });
+
+  test("returns concurrent winner's token when nonce does not match", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+
+    const staleTokens = await encryptJson({
+      accessToken: "stale-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const concurrentTokens = await encryptJson({
+      accessToken: "concurrent-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens: staleTokens,
+      tokenExpiresAt: Date.now() + 30_000,
+    });
+
+    const staleConnection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    await t.run((ctx) =>
+      ctx.db.patch(connectionId, {
+        refreshNonce: "concurrent-winner-nonce",
+        encryptedTokens: concurrentTokens,
+        tokenExpiresAt: Date.now() + 3_600_000,
+      }),
+    );
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          access_token: "our-new-token",
+          expires_in: 3600,
+          token_type: "Bearer",
+        }),
+      }),
+    );
+
+    const token = await t.action((ctx) => ensureAccessToken(ctx, staleConnection!, "client-id"));
+    expect(token).toBe("concurrent-token");
+  });
+
+  test("preserves existing refresh token when Microsoft does not return a new one", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "old-token",
+      refreshToken: "long-lived-refresh",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 30_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          access_token: "new-access",
+          expires_in: 3600,
+          token_type: "Bearer",
+        }),
+      }),
+    );
+
+    await t.action((ctx) => ensureAccessToken(ctx, connection!, "client-id"));
+
+    const updated = await t.run((ctx) => ctx.db.get(connectionId));
+    const stored = await decryptJson(updated!.encryptedTokens!);
+    expect(stored.refreshToken).toBe("long-lived-refresh");
   });
 });

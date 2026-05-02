@@ -14,7 +14,10 @@ import type {
   WriteSuccess,
 } from "@shared/calendars";
 
-import { encryptJson } from "../domain/crypto";
+import { internal } from "../../_generated/api";
+import type { Doc } from "../../_generated/dataModel";
+import type { ActionCtx } from "../../_generated/server";
+import { decryptJson, encryptJson } from "../domain/crypto";
 
 export const microsoftCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: true,
@@ -48,6 +51,83 @@ type MicrosoftCalendarListResponse = {
 
 function throwAuthError(message: string): never {
   throw Object.assign(new Error(message), { kind: "auth" as const });
+}
+
+// Ensures a valid access token is available for the given connection, refreshing
+// via the Microsoft OAuth token endpoint if the current token is within 60 seconds
+// of expiry. Uses a nonce-based optimistic lock to prevent concurrent refresh races.
+// Microsoft is a public client — no client_secret is sent.
+export async function ensureAccessToken(
+  ctx: ActionCtx,
+  connection: Doc<"calendarConnections">,
+  clientId: string,
+): Promise<string> {
+  if (!connection.encryptedTokens) {
+    throwAuthError("Reconnect required");
+  }
+
+  const { accessToken, refreshToken } = await decryptJson(connection.encryptedTokens);
+
+  if (connection.tokenExpiresAt && connection.tokenExpiresAt > Date.now() + 60_000) {
+    return accessToken;
+  }
+
+  if (!refreshToken) {
+    throwAuthError("Reconnect required");
+  }
+
+  const tokenResponse = await fetch("https://login.microsoftonline.com/common/oauth2/v2.0/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: clientId,
+    }).toString(),
+  });
+
+  if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text().catch(() => String(tokenResponse.status));
+    throwAuthError(`Microsoft token refresh failed (${tokenResponse.status}): ${errorText}`);
+  }
+
+  const tokenData = (await tokenResponse.json()) as MicrosoftTokenResponse;
+  const newAccessToken = tokenData.access_token;
+  const newExpiresAt = Date.now() + tokenData.expires_in * 1000;
+
+  const newEncryptedTokens = await encryptJson({
+    accessToken: newAccessToken,
+    refreshToken: tokenData.refresh_token ?? refreshToken,
+    tokenType: tokenData.token_type,
+  });
+
+  const expectedNonce = connection.refreshNonce;
+  const newNonce = globalThis.crypto.randomUUID();
+
+  const wrote: boolean = await ctx.runMutation(
+    internal.calendars.db.updateTokensIfNonce.updateTokensIfNonce,
+    {
+      connectionId: connection._id,
+      expectedNonce,
+      encryptedTokens: newEncryptedTokens,
+      tokenExpiresAt: newExpiresAt,
+      newNonce,
+    },
+  );
+
+  if (!wrote) {
+    const fresh = await ctx.runQuery(
+      internal.calendars.db.getConnectionInternal.getConnectionInternal,
+      { connectionId: connection._id },
+    );
+    if (!fresh?.encryptedTokens) {
+      throwAuthError("Reconnect required");
+    }
+    const freshTokens = await decryptJson(fresh.encryptedTokens);
+    return freshTokens.accessToken;
+  }
+
+  return newAccessToken;
 }
 
 export const MicrosoftCalendarProvider: CalendarProvider = {
