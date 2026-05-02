@@ -1,5 +1,7 @@
 import type { IncomingEvent } from "@shared/calendars";
 
+import { parseGraphDateTimeAsUtc } from "./parseGraphDateTimeAsUtc";
+
 type MicrosoftEventDate = {
   dateTime: string;
   timeZone: string;
@@ -45,8 +47,8 @@ export function convertMicrosoftEvent(
     return null;
   }
 
-  const startsAt = event.start?.dateTime ? new Date(event.start.dateTime).getTime() : 0;
-  const endsAt = event.end?.dateTime ? new Date(event.end.dateTime).getTime() : 0;
+  const startsAt = event.start?.dateTime ? parseGraphDateTimeAsUtc(event.start.dateTime) : 0;
+  const endsAt = event.end?.dateTime ? parseGraphDateTimeAsUtc(event.end.dateTime) : 0;
   const isAllDay = event.isAllDay ?? false;
 
   return {
