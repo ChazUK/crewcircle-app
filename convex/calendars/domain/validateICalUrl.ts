@@ -41,7 +41,14 @@ export async function validateICalUrl(url: string): Promise<ICalValidationResult
     };
   }
 
-  const body = await response.text();
+  let body: string;
+  try {
+    body = await response.text();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to read response body";
+    return { valid: false, reason: "unreachable", message };
+  }
+
   if (!body.includes(ICAL_HEADER)) {
     return { valid: false, reason: "invalid", message: "Response is not a valid iCal feed" };
   }
