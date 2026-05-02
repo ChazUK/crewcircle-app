@@ -13,7 +13,16 @@ export function expandRecurrence(
   const { rrule, ...seed } = event;
   const durationMs = seed.endsAt - seed.startsAt;
   const tzid = seed.originalTimezone ?? "UTC";
-  const dtstart = Temporal.Instant.fromEpochMilliseconds(seed.startsAt).toZonedDateTimeISO(tzid);
+
+  // toZonedDateTimeISO throws RangeError for non-IANA strings (e.g. Windows
+  // timezone names like "Eastern Standard Time" or abbreviations like "EST").
+  // Fall back to UTC so a bad TZID on one event doesn't abort all expansions.
+  let dtstart: Temporal.ZonedDateTime;
+  try {
+    dtstart = Temporal.Instant.fromEpochMilliseconds(seed.startsAt).toZonedDateTimeISO(tzid);
+  } catch {
+    dtstart = Temporal.Instant.fromEpochMilliseconds(seed.startsAt).toZonedDateTimeISO("UTC");
+  }
 
   const rule = new RRuleTemporal({ rruleString: rrule, dtstart });
   const occurrences = rule.between(

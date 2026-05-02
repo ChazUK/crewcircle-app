@@ -91,6 +91,16 @@ describe("expandRecurrence", () => {
     }
   });
 
+  test("falls back to UTC and still expands when originalTimezone is an invalid IANA string", () => {
+    const recurringEvent = {
+      ...baseEvent,
+      originalTimezone: "Eastern Standard Time", // Windows timezone name, not IANA
+      rrule: "FREQ=WEEKLY;COUNT=2",
+    };
+    expect(() => expandRecurrence(recurringEvent, fourWeekWindow)).not.toThrow();
+    expect(expandRecurrence(recurringEvent, fourWeekWindow)).toHaveLength(2);
+  });
+
   test("does not include the rrule field on expanded instances", () => {
     const recurringEvent = { ...baseEvent, rrule: "FREQ=WEEKLY;COUNT=2" };
     const result = expandRecurrence(recurringEvent, fourWeekWindow);
