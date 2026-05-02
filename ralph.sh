@@ -36,9 +36,9 @@ NUM_AGENTS="${RALPH_AGENTS:-5}"
 MAX_ITER="${RALPH_MAX_ITER:-20}"        # Max issues per agent before it self-terminates
 SANDBOX="${RALPH_SANDBOX:-0}"           # 1 = wrap each claude invocation in Docker
 PRD_NUMBER="${RALPH_PRD_NUMBER:-}"      # GitHub issue # that contains the PRD (optional)
-AGENT_TIMEOUT="${RALPH_TIMEOUT:-3600}"  # Seconds before killing a hung claude process
-CLAUDE_MODEL="${RALPH_MODEL:-claude-opus-4-7}" # Model passed to --model flag
-CLAUDE_EFFORT="${RALPH_EFFORT:-xhigh}" # Effort passed to --max-tokens flag
+AGENT_TIMEOUT="${RALPH_TIMEOUT:-600}"   # Seconds before killing a hung claude process
+CLAUDE_MODEL="${RALPH_MODEL:-claude-sonnet-4-6}" # Model passed to --model flag
+CLAUDE_EFFORT="${RALPH_EFFORT:-high}" # Effort passed to --max-tokens flag
 
 CLAIMED_LABEL="ralph-in-progress"
 BLOCKED_LABEL="blocked"
