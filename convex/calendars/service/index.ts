@@ -13,6 +13,7 @@ import { requireOwnedConnection } from "../auth/requireOwnedConnection";
 import { assignPaletteColour } from "../domain/assignPaletteColour";
 import { expandRecurrence } from "../domain/expandRecurrence";
 import { filterSubCalendars } from "../domain/filterSubCalendars";
+import { syncAfterConnect } from "../syncAfterConnect";
 
 export function currentSyncWindow(): SyncWindow {
   return {
@@ -66,7 +67,7 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
       // two-mutation flow (provider wrote the connection row, service
       // wrote the sub-calendar) which could orphan an iCal connection
       // without its synthetic Sub-Calendar on partial failure.
-      return ctx.runMutation(
+      const connectionId: Id<"calendarConnections"> = await ctx.runMutation(
         internal.calendars.db.insertCalendarConnection.insertCalendarConnection,
         {
           userId: user._id,
@@ -77,6 +78,17 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
           subCalendars: result.subCalendars,
         },
       );
+
+      // Kick off an immediate sync so the user sees their events without
+      // waiting for the cron sweep. Native connections sync from the
+      // device, not the server — scheduling a server-side sync there
+      // would just hit the "native syncs from the device" guard and burn
+      // through the retry budget.
+      if (params.provider !== "native") {
+        await syncAfterConnect(ctx, connectionId);
+      }
+
+      return connectionId;
     },
 
     async disconnect(ctx: ActionCtx, connectionId: Id<"calendarConnections">): Promise<void> {
