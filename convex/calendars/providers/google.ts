@@ -14,7 +14,10 @@ import type {
   WriteSuccess,
 } from "@shared/calendars";
 
-import { encryptJson } from "../domain/crypto";
+import { internal } from "../../_generated/api";
+import type { Doc } from "../../_generated/dataModel";
+import type { ActionCtx } from "../../_generated/server";
+import { decryptJson, encryptJson } from "../domain/crypto";
 
 export const googleCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: true,
@@ -46,6 +49,92 @@ type GoogleCalendarListResponse = {
 
 function throwAuthError(message: string): never {
   throw Object.assign(new Error(message), { kind: "auth" as const });
+}
+
+// Ensures a valid access token is available for the given connection, refreshing
+// via the OAuth token endpoint if the current token is within 60 seconds of expiry.
+// Uses a nonce-based optimistic lock so that two concurrent cron jobs refreshing the
+// same connection do not overwrite each other — only the first writer wins; the second
+// reads the freshly written token instead.
+export async function ensureAccessToken(
+  ctx: ActionCtx,
+  connection: Doc<"calendarConnections">,
+  clientId: string,
+): Promise<string> {
+  if (!connection.encryptedTokens) {
+    throwAuthError("Reconnect required");
+  }
+
+  const { accessToken, refreshToken } = await decryptJson(connection.encryptedTokens);
+
+  // Return existing token if more than 60 seconds remain before expiry.
+  if (connection.tokenExpiresAt && connection.tokenExpiresAt > Date.now() + 60_000) {
+    return accessToken;
+  }
+
+  if (!refreshToken) {
+    throwAuthError("Reconnect required");
+  }
+
+  const tokenBody: Record<string, string> = {
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+    client_id: clientId,
+  };
+  const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET;
+  if (clientSecret) {
+    tokenBody.client_secret = clientSecret;
+  }
+
+  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(tokenBody).toString(),
+  });
+
+  if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text().catch(() => String(tokenResponse.status));
+    throwAuthError(`Google token refresh failed (${tokenResponse.status}): ${errorText}`);
+  }
+
+  const tokenData = (await tokenResponse.json()) as GoogleTokenResponse;
+  const newAccessToken = tokenData.access_token;
+  const newExpiresAt = Date.now() + tokenData.expires_in * 1000;
+
+  const newEncryptedTokens = await encryptJson({
+    accessToken: newAccessToken,
+    refreshToken: tokenData.refresh_token ?? refreshToken,
+    tokenType: tokenData.token_type,
+  });
+
+  const expectedNonce = connection.refreshNonce;
+  const newNonce = globalThis.crypto.randomUUID();
+
+  const wrote: boolean = await ctx.runMutation(
+    internal.calendars.db.updateTokensIfNonce.updateTokensIfNonce,
+    {
+      connectionId: connection._id,
+      expectedNonce,
+      encryptedTokens: newEncryptedTokens,
+      tokenExpiresAt: newExpiresAt,
+      newNonce,
+    },
+  );
+
+  if (!wrote) {
+    // A concurrent action already refreshed. Re-read and return its token.
+    const fresh = await ctx.runQuery(
+      internal.calendars.db.getConnectionInternal.getConnectionInternal,
+      { connectionId: connection._id },
+    );
+    if (!fresh?.encryptedTokens) {
+      throwAuthError("Reconnect required");
+    }
+    const freshTokens = await decryptJson(fresh.encryptedTokens);
+    return freshTokens.accessToken;
+  }
+
+  return newAccessToken;
 }
 
 export const GoogleCalendarProvider: CalendarProvider = {
