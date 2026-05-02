@@ -48,13 +48,15 @@ export const deleteConnection = internalMutation({
 });
 
 // Discover one cycle of sub-calendar IDs for a connection and fan them out
-// for parallel deletion. For each sub-calendar discovered, schedule its
-// events deletion. Partition the IDs themselves into shards and schedule
-// each shard as an independent worker so up to FAN_OUT row deletions run
-// concurrently. If the discovery returned a full page, schedule a
-// continuation with the pagination cursor — the cursor positions the next
-// discovery past the IDs the parallel shards are about to delete, so they
-// don't collide. Otherwise, schedule the final connection-row deletion.
+// for parallel deletion. Partition the IDs into shards and schedule each
+// shard as an independent worker (deleteSubCalendarsByIds) — that worker
+// owns both the row delete and scheduling its events deletion, which
+// keeps this mutation's schedule count bounded by FAN_OUT rather than
+// DISCOVERY_LIMIT (Convex caps scheduled functions per mutation at 1000).
+// If the discovery returned a full page, schedule a continuation with
+// the pagination cursor — the cursor positions the next discovery past
+// the IDs the parallel shards are about to delete, so they don't
+// collide. Otherwise, schedule the final connection-row deletion.
 export const deleteConnectionSubCalendars = internalMutation({
   args: { connectionId: v.id("calendarConnections"), cursor: cursorArg },
   handler: async (ctx, { connectionId, cursor }) => {
@@ -65,14 +67,6 @@ export const deleteConnectionSubCalendars = internalMutation({
 
     const subCalendarIds = result.page.map((sc) => sc._id);
     const work: Promise<unknown>[] = [];
-
-    for (const subCalendarId of subCalendarIds) {
-      work.push(
-        ctx.scheduler.runAfter(0, internal.calendars.db.cascadeDelete.deleteConnectionEvents, {
-          subCalendarId,
-        }),
-      );
-    }
 
     for (let i = 0; i < subCalendarIds.length; i += SHARD_SIZE) {
       const ids = subCalendarIds.slice(i, i + SHARD_SIZE);
@@ -152,11 +146,23 @@ export const deleteEventsByIds = internalMutation({
   },
 });
 
-// Worker — delete an explicit list of sub-calendar rows in parallel.
+// Worker — for each sub-calendar in the shard, schedule its events
+// deletion and delete the row itself. Combining the two in one worker
+// keeps the discovery mutation's schedule count bounded by FAN_OUT
+// instead of DISCOVERY_LIMIT, so we stay under Convex's per-mutation
+// scheduling cap (1000). With SHARD_SIZE = 200 each shard schedules at
+// most 200 events-deletions, also well under the cap.
 export const deleteSubCalendarsByIds = internalMutation({
   args: { ids: v.array(v.id("calendarSubCalendars")) },
   handler: async (ctx, { ids }) => {
-    await Promise.all(ids.map((id) => ctx.db.delete(id)));
+    await Promise.all([
+      ...ids.map((id) =>
+        ctx.scheduler.runAfter(0, internal.calendars.db.cascadeDelete.deleteConnectionEvents, {
+          subCalendarId: id,
+        }),
+      ),
+      ...ids.map((id) => ctx.db.delete(id)),
+    ]);
   },
 });
 
