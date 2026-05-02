@@ -100,7 +100,7 @@ export type CalendarConnectionBlueprint = {
   localCalendarId?: string;
   scope?: string;
   oauthClientId?: string;
-  encryptedTokens?: Uint8Array;
+  encryptedTokens?: ArrayBuffer;
   tokenExpiresAt?: number;
 };
 
