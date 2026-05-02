@@ -5,7 +5,7 @@ import type {
   CalendarProviderRegistry,
 } from "@shared/calendars";
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { Id } from "../../_generated/dataModel";
 import schema from "../../schema";
@@ -105,6 +105,14 @@ async function insertEvent(
 }
 
 describe("CalendarService.disconnect", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test("deletes the connection and its events when the caller owns it", async () => {
     const t = convexTest(schema, modules);
     const { owner, connectionId } = await seed(t);
@@ -114,6 +122,8 @@ describe("CalendarService.disconnect", () => {
     await t.withIdentity(ownerIdentity).action(async (ctx) => {
       await service.disconnect(ctx, connectionId);
     });
+    // disconnect schedules cascadeDelete; let the scheduled chain drain.
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
 
     const remainingConnection = await t.run((ctx) => ctx.db.get(connectionId));
     const remainingEvents = await t.run((ctx) =>

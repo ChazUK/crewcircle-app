@@ -82,7 +82,7 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
         { connectionId, userId: user._id },
       );
       if (!connection) throw new Error("Calendar connection not found");
-      await ctx.runMutation(internal.calendars.mutations.deleteConnection, { connectionId });
+      await ctx.runMutation(internal.calendars.db.cascadeDelete.deleteConnection, { connectionId });
     },
 
     async sync(_ctx: ActionCtx, _connectionId: Id<"calendarConnections">): Promise<void> {
