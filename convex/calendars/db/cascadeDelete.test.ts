@@ -204,9 +204,9 @@ describe("deleteConnection", () => {
     const userId = await insertUser(t, "huge");
     const connectionId = await insertConnection(t, userId, "Huge");
     const subCalendarId = await insertSubCalendar(t, connectionId);
-    // Schedule 250 events — more than one page (200) so we exercise the
-    // self-continuation branch of deleteConnectionEvents.
-    for (let i = 0; i < 250; i++) {
+    // Schedule 1,200 events — more than one discovery cycle (1,000) so we
+    // exercise the cursor-based continuation branch of deleteConnectionEvents.
+    for (let i = 0; i < 1200; i++) {
       await insertEvent(t, userId, connectionId, subCalendarId, `evt-${i}`);
     }
 
@@ -255,12 +255,12 @@ describe("deleteConnectionEvents", () => {
     expect(events.map((e) => e.externalId)).toEqual(["other-1"]);
   });
 
-  test("paginates with self-continuations for sub-calendars exceeding one page", async () => {
+  test("paginates with cursor continuations for sub-calendars exceeding one discovery cycle", async () => {
     const t = convexTest(schema, modules);
     const userId = await insertUser(t, "owner");
     const connectionId = await insertConnection(t, userId, "Feed");
     const subCalendarId = await insertSubCalendar(t, connectionId);
-    for (let i = 0; i < 250; i++) {
+    for (let i = 0; i < 1200; i++) {
       await insertEvent(t, userId, connectionId, subCalendarId, `evt-${i}`);
     }
 
