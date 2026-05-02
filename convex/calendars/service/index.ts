@@ -1,12 +1,14 @@
 import type {
   CalendarConnectParams,
   CalendarProviderRegistry,
+  SubCalendar,
   SyncWindow,
 } from "@shared/calendars";
 
 import { api, internal } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
+import type { Doc, Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
+import { filterSubCalendars } from "../domain/filterSubCalendars";
 
 export function currentSyncWindow(): SyncWindow {
   return {
@@ -15,7 +17,7 @@ export function currentSyncWindow(): SyncWindow {
   };
 }
 
-export function createCalendarService(_providers: CalendarProviderRegistry) {
+export function createCalendarService(providers: CalendarProviderRegistry) {
   return {
     async connect(_ctx: ActionCtx, _params: CalendarConnectParams): Promise<void> {
       throw new Error("Not implemented: service.connect");
@@ -44,10 +46,26 @@ export function createCalendarService(_providers: CalendarProviderRegistry) {
     },
 
     async listSubCalendars(
-      _ctx: ActionCtx,
-      _connectionId: Id<"calendarConnections">,
-    ): Promise<void> {
-      throw new Error("Not implemented: service.listSubCalendars");
+      ctx: ActionCtx,
+      connectionId: Id<"calendarConnections">,
+    ): Promise<SubCalendar[]> {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) throw new Error("Not authenticated");
+
+      const user: Doc<"users"> | null = await ctx.runQuery(api.users.queries.getCurrentUser, {});
+      if (!user) throw new Error("User not found");
+
+      const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
+        internal.calendars.actionHelpers.getConnectionForOwner,
+        { connectionId, userId: user._id },
+      );
+      if (!connection) throw new Error("Connection not found");
+
+      const provider = providers[connection.provider];
+      if (!provider.listSubCalendars) return [];
+
+      const raw = await provider.listSubCalendars(ctx, connection);
+      return filterSubCalendars(raw);
     },
 
     async setEnabledSubCalendars(
