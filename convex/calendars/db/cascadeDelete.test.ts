@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import schema from "../../schema";
 import { scheduleDeleteUserCalendarData } from "./cascadeDelete";
@@ -68,14 +69,20 @@ async function insertEvent(
 }
 
 describe("scheduleDeleteUserCalendarData", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test("does nothing for a user with no connections", async () => {
     const t = convexTest(schema, modules);
     const userId = await insertUser(t, "lone");
     await t.run((ctx) => scheduleDeleteUserCalendarData(ctx, userId));
-    await new Promise((r) => setTimeout(r, 0));
-    await t.finishAllScheduledFunctions(() => {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
     const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
-    // Every scheduled run has completed (or none were enqueued).
     expect(scheduled.every((s) => s.state.kind !== "pending")).toBe(true);
   });
 
@@ -91,12 +98,13 @@ describe("scheduleDeleteUserCalendarData", () => {
     await insertEvent(t, userId, connectionB, subCalB, "b1");
 
     await t.run((ctx) => scheduleDeleteUserCalendarData(ctx, userId));
-    await new Promise((r) => setTimeout(r, 0));
-    await t.finishAllScheduledFunctions(() => {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
 
     const connections = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
+    const subCalendars = await t.run((ctx) => ctx.db.query("calendarSubCalendars").collect());
     const events = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
     expect(connections).toEqual([]);
+    expect(subCalendars).toEqual([]);
     expect(events).toEqual([]);
   });
 
@@ -110,12 +118,178 @@ describe("scheduleDeleteUserCalendarData", () => {
     await insertEvent(t, bystander, keepConnection, keepSubCal, "keep-evt");
 
     await t.run((ctx) => scheduleDeleteUserCalendarData(ctx, target));
-    await new Promise((r) => setTimeout(r, 0));
-    await t.finishAllScheduledFunctions(() => {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
 
     const connections = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
     const events = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
     expect(connections.map((c) => c.label)).toEqual(["keep"]);
     expect(events.map((e) => e.externalId)).toEqual(["keep-evt"]);
+  });
+});
+
+describe("deleteConnection", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("schedules the cascade without performing any deletions itself", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, "owner");
+    const connectionId = await insertConnection(t, userId, "Feed");
+    const subCalendarId = await insertSubCalendar(t, connectionId);
+    await insertEvent(t, userId, connectionId, subCalendarId, "evt-1");
+
+    await t.mutation(internal.calendars.db.cascadeDelete.deleteConnection, { connectionId });
+
+    // Before any scheduled work runs, nothing has been deleted.
+    const connectionsBefore = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
+    const subCalsBefore = await t.run((ctx) => ctx.db.query("calendarSubCalendars").collect());
+    const eventsBefore = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
+    expect(connectionsBefore).toHaveLength(1);
+    expect(subCalsBefore).toHaveLength(1);
+    expect(eventsBefore).toHaveLength(1);
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    const connectionsAfter = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
+    const subCalsAfter = await t.run((ctx) => ctx.db.query("calendarSubCalendars").collect());
+    const eventsAfter = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
+    expect(connectionsAfter).toEqual([]);
+    expect(subCalsAfter).toEqual([]);
+    expect(eventsAfter).toEqual([]);
+  });
+
+  test("removes the connection row when there are no sub-calendars", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, "empty");
+    const connectionId = await insertConnection(t, userId, "Empty");
+
+    await t.mutation(internal.calendars.db.cascadeDelete.deleteConnection, { connectionId });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    const connections = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
+    expect(connections).toEqual([]);
+  });
+
+  test("does not affect events from other connections", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, "shared");
+    const targetConnection = await insertConnection(t, userId, "Target");
+    const otherConnection = await insertConnection(t, userId, "Other");
+    const targetSubCal = await insertSubCalendar(t, targetConnection);
+    const otherSubCal = await insertSubCalendar(t, otherConnection);
+    await insertEvent(t, userId, targetConnection, targetSubCal, "tgt-1");
+    await insertEvent(t, userId, otherConnection, otherSubCal, "other-1");
+    await insertEvent(t, userId, otherConnection, otherSubCal, "other-2");
+
+    await t.mutation(internal.calendars.db.cascadeDelete.deleteConnection, {
+      connectionId: targetConnection,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    const remainingEvents = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
+    const remainingConnections = await t.run((ctx) =>
+      ctx.db.query("calendarConnections").collect(),
+    );
+    expect(remainingConnections.map((c) => c.label)).toEqual(["Other"]);
+    expect(remainingEvents.map((e) => e.externalId).sort()).toEqual(["other-1", "other-2"]);
+  });
+
+  test("paginates event deletion across multiple scheduled runs for large sub-calendars", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, "huge");
+    const connectionId = await insertConnection(t, userId, "Huge");
+    const subCalendarId = await insertSubCalendar(t, connectionId);
+    // Schedule 250 events — more than one page (200) so we exercise the
+    // self-continuation branch of deleteConnectionEvents.
+    for (let i = 0; i < 250; i++) {
+      await insertEvent(t, userId, connectionId, subCalendarId, `evt-${i}`);
+    }
+
+    await t.mutation(internal.calendars.db.cascadeDelete.deleteConnection, { connectionId });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    const events = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
+    const connections = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
+    expect(events).toEqual([]);
+    expect(connections).toEqual([]);
+  });
+});
+
+describe("deleteConnectionEvents", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("deletes events for a sub-calendar without touching others", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, "owner");
+    const connectionId = await insertConnection(t, userId, "Feed");
+    const targetSubCal = await insertSubCalendar(t, connectionId);
+    const otherSubCal = await t.run((ctx) =>
+      ctx.db.insert("calendarSubCalendars", {
+        connectionId,
+        externalId: "secondary",
+        label: "Secondary",
+        showAsBusy: true,
+      }),
+    );
+    await insertEvent(t, userId, connectionId, targetSubCal, "tgt-1");
+    await insertEvent(t, userId, connectionId, targetSubCal, "tgt-2");
+    await insertEvent(t, userId, connectionId, otherSubCal, "other-1");
+
+    await t.mutation(internal.calendars.db.cascadeDelete.deleteConnectionEvents, {
+      subCalendarId: targetSubCal,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    const events = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
+    expect(events.map((e) => e.externalId)).toEqual(["other-1"]);
+  });
+
+  test("paginates with self-continuations for sub-calendars exceeding one page", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, "owner");
+    const connectionId = await insertConnection(t, userId, "Feed");
+    const subCalendarId = await insertSubCalendar(t, connectionId);
+    for (let i = 0; i < 250; i++) {
+      await insertEvent(t, userId, connectionId, subCalendarId, `evt-${i}`);
+    }
+
+    await t.mutation(internal.calendars.db.cascadeDelete.deleteConnectionEvents, {
+      subCalendarId,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    const events = await t.run((ctx) =>
+      ctx.db
+        .query("calendarEvents")
+        .withIndex("bySubCalendar", (q) => q.eq("subCalendarId", subCalendarId))
+        .collect(),
+    );
+    expect(events).toEqual([]);
+  });
+
+  test("does nothing when the sub-calendar has no events", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, "owner");
+    const connectionId = await insertConnection(t, userId, "Feed");
+    const subCalendarId = await insertSubCalendar(t, connectionId);
+
+    await t.mutation(internal.calendars.db.cascadeDelete.deleteConnectionEvents, {
+      subCalendarId,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    const events = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
+    expect(events).toEqual([]);
   });
 });

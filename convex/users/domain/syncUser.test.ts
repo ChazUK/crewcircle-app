@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import schema from "../../schema";
 import { createUser, deleteUser, updateUser } from "./syncUser";
@@ -68,6 +68,14 @@ describe("updateUser", () => {
 });
 
 describe("deleteUser", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test("removes the user from the database", async () => {
     const t = convexTest(schema, modules);
     const externalAuthId = "clerk_del_1";
@@ -127,8 +135,7 @@ describe("deleteUser", () => {
     );
 
     await t.run((ctx) => deleteUser(ctx, { externalAuthId }));
-    await new Promise((r) => setTimeout(r, 0));
-    await t.finishAllScheduledFunctions(() => {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
 
     const connections = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
     const events = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
@@ -153,8 +160,7 @@ describe("deleteUser", () => {
       }),
     );
     await t.run((ctx) => deleteUser(ctx, { externalAuthId: "nope" }));
-    await new Promise((r) => setTimeout(r, 0));
-    await t.finishAllScheduledFunctions(() => {});
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
     const connections = await t.run((ctx) => ctx.db.query("calendarConnections").collect());
     expect(connections.map((c) => c.label)).toEqual(["Untouched"]);
   });
