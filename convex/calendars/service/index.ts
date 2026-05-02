@@ -23,8 +23,15 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
       throw new Error("Not implemented: service.connect");
     },
 
-    async disconnect(_ctx: ActionCtx, _connectionId: Id<"calendarConnections">): Promise<void> {
-      throw new Error("Not implemented: service.disconnect");
+    async disconnect(ctx: ActionCtx, connectionId: Id<"calendarConnections">): Promise<void> {
+      const user = await ctx.runQuery(api.users.queries.getCurrentUser, {});
+      if (!user) throw new Error("Not authenticated");
+      const connection = await ctx.runQuery(
+        internal.calendars.actionHelpers.getConnectionForOwner,
+        { connectionId, userId: user._id },
+      );
+      if (!connection) throw new Error("Calendar connection not found");
+      await ctx.runMutation(internal.calendars.mutations.deleteConnection, { connectionId });
     },
 
     async sync(_ctx: ActionCtx, _connectionId: Id<"calendarConnections">): Promise<void> {
