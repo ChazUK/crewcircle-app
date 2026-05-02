@@ -39,12 +39,24 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
       const connectionId = connectionIdString as Id<"calendarConnections">;
 
       if (params.provider === "ical") {
-        await ctx.runMutation(internal.calendars.mutations.insertSubCalendar, {
-          connectionId,
-          externalId: connectionId,
-          label: params.label,
-          showAsBusy: true,
-        });
+        try {
+          await ctx.runMutation(internal.calendars.mutations.insertSubCalendar, {
+            connectionId,
+            externalId: connectionId,
+            label: params.label,
+            showAsBusy: true,
+          });
+        } catch (error) {
+          // The connection row was created in a prior mutation; the synthetic
+          // sub-calendar in this one. An iCal connection without its
+          // sub-calendar can never sync, so schedule a cascade-delete to tear
+          // it down before re-throwing — failing closed beats leaving the
+          // user with a half-created connection they can't fix.
+          await ctx.runMutation(internal.calendars.db.cascadeDelete.deleteConnection, {
+            connectionId,
+          });
+          throw error;
+        }
       }
 
       return connectionId;
