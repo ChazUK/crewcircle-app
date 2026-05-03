@@ -135,13 +135,21 @@ export function SubCalendarPicker({
   const listSubCalendarsAction = useAction(api.calendars.actions.listSubCalendars);
 
   useEffect(() => {
+    let cancelled = false;
     setSubCalendars(undefined);
     setError(null);
     listSubCalendarsAction({ connectionId })
-      .then(setSubCalendars)
+      .then((result) => {
+        if (cancelled) return;
+        setSubCalendars(result);
+      })
       .catch((err: unknown) => {
+        if (cancelled) return;
         setError(err instanceof Error ? err.message : "Failed to load calendars");
       });
+    return () => {
+      cancelled = true;
+    };
   }, [connectionId, listSubCalendarsAction]);
 
   if (error !== null) {
