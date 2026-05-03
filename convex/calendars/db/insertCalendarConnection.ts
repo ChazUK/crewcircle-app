@@ -22,7 +22,7 @@ export const insertCalendarConnection = internalMutation({
     color: v.string(),
     blueprint: v.object({
       externalAccountId: v.optional(v.string()),
-      icalUrl: v.optional(v.string()),
+      icalUrl: v.optional(v.bytes()),
       localCalendarId: v.optional(v.string()),
       scope: v.optional(v.string()),
       oauthClientId: v.optional(v.string()),

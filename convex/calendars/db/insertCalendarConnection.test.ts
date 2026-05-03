@@ -1,11 +1,14 @@
 /// <reference types="vite/client" />
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { internal } from "../../_generated/api";
 import schema from "../../schema";
+import { encryptJson } from "../domain/crypto";
 
 const modules = import.meta.glob("/convex/**/*.ts");
+
+const TEST_KEY = btoa(String.fromCharCode(...new Array(32).fill(1)));
 
 async function insertUser(t: TestConvex<typeof schema>, externalAuthId: string) {
   return t.run((ctx) =>
@@ -19,9 +22,18 @@ async function insertUser(t: TestConvex<typeof schema>, externalAuthId: string) 
 }
 
 describe("insertCalendarConnection", () => {
+  beforeEach(() => {
+    vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   test("inserts the connection row with service-owned and blueprint fields merged", async () => {
     const t = convexTest(schema, modules);
     const userId = await insertUser(t, "user1");
+    const encryptedUrl = await encryptJson("https://example.com/cal.ics");
 
     const connectionId = await t.mutation(
       internal.calendars.db.insertCalendarConnection.insertCalendarConnection,
@@ -30,7 +42,7 @@ describe("insertCalendarConnection", () => {
         provider: "ical",
         label: "Family iCloud",
         color: "#6366f1",
-        blueprint: { icalUrl: "https://example.com/cal.ics" },
+        blueprint: { icalUrl: encryptedUrl },
         subCalendars: [],
       },
     );
@@ -47,9 +59,9 @@ describe("insertCalendarConnection", () => {
       provider: "ical",
       label: "Family iCloud",
       color: "#6366f1",
-      icalUrl: "https://example.com/cal.ics",
       syncErrorCount: 0,
     });
+    expect(row?.icalUrl).toBeInstanceOf(ArrayBuffer);
     expect(row?.createdAt).toBeTypeOf("number");
   });
 

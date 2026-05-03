@@ -11,9 +11,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { Id } from "../../_generated/dataModel";
 import schema from "../../schema";
+import { encryptJson } from "../domain/crypto";
 import { createCalendarService } from "./index";
 
 const modules = import.meta.glob("/convex/**/*.ts");
+
+const TEST_KEY = btoa(String.fromCharCode(...new Array(32).fill(1)));
 
 const identity = {
   subject: "clerk_user_42",
@@ -97,10 +100,12 @@ describe("CalendarService.connect", () => {
   // restored in afterEach without firing the queued callbacks.
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.stubEnv("CALENDAR_ENCRYPTION_KEY", TEST_KEY);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllEnvs();
   });
 
   test("throws when the caller is not authenticated", async () => {
@@ -170,11 +175,12 @@ describe("CalendarService.connect", () => {
     const t = convexTest(schema, modules);
     await insertUser(t, identity.subject);
 
+    const encryptedUrl = await encryptJson("https://example.com/cal.ics");
     const calls: StubCall[] = [];
     const service = createCalendarService(
       buildRegistry(
         () => ({
-          connection: { icalUrl: "https://example.com/cal.ics" },
+          connection: { icalUrl: encryptedUrl },
           subCalendars: [{ externalId: "default", label: "Family iCloud", showAsBusy: true }],
         }),
         calls,

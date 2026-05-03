@@ -96,7 +96,7 @@ export type CalendarConnectContext = {
 // Google sets oauth tokens; Native sets localCalendarId).
 export type CalendarConnectionBlueprint = {
   externalAccountId?: string;
-  icalUrl?: string;
+  icalUrl?: ArrayBuffer;
   localCalendarId?: string;
   scope?: string;
   oauthClientId?: string;

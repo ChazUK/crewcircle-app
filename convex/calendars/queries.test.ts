@@ -36,7 +36,7 @@ async function insertConnection(
     scope?: string;
     oauthClientId?: string;
     refreshNonce?: string;
-    icalUrl?: string;
+    icalUrl?: ArrayBuffer;
     lastSyncedAt?: number;
     lastSyncError?: string;
     syncErrorCount?: number;
@@ -136,7 +136,7 @@ describe("getConnections", () => {
       scope: "https://www.googleapis.com/auth/calendar.readonly",
       oauthClientId: "client-123",
       refreshNonce: "nonce-abc",
-      icalUrl: "https://example.com/ical",
+      icalUrl: new ArrayBuffer(8),
       lastSyncedAt: 1_700_000_000_000,
       lastSyncError: "boom",
       syncErrorCount: 2,

@@ -15,8 +15,8 @@ export const CalendarConnection = {
   label: v.string(),
   // Provider-side identifier (Google email/sub, Outlook UPN, Apple localCalendarId, etc.)
   externalAccountId: v.optional(v.string()),
-  // For provider="ical" — the subscription URL (stored encrypted at the application layer)
-  icalUrl: v.optional(v.string()),
+  // For provider="ical" — the subscription URL (stored as encrypted bytes at the application layer)
+  icalUrl: v.optional(v.bytes()),
   // For provider="native" — the on-device calendar id from expo-calendar
   localCalendarId: v.optional(v.string()),
   // For provider="google" / "microsoft" — OAuth scope granted

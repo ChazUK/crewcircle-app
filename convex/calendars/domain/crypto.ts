@@ -29,7 +29,7 @@ export async function encryptJson(data: unknown): Promise<ArrayBuffer> {
   return result.buffer;
 }
 
-export async function decryptJson(buffer: ArrayBuffer): Promise<DecryptedTokens> {
+export async function decryptJson<T = DecryptedTokens>(buffer: ArrayBuffer): Promise<T> {
   const key = await importKey("decrypt");
   const bytes = new Uint8Array(buffer);
   const iv = bytes.slice(0, 12);
@@ -40,5 +40,5 @@ export async function decryptJson(buffer: ArrayBuffer): Promise<DecryptedTokens>
   combined.set(ciphertext, 0);
   combined.set(authTag, ciphertext.length);
   const decrypted = await globalThis.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, combined);
-  return JSON.parse(new TextDecoder().decode(decrypted)) as DecryptedTokens;
+  return JSON.parse(new TextDecoder().decode(decrypted)) as T;
 }
