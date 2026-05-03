@@ -12,11 +12,13 @@ import type {
   WriteError,
   WriteSuccess,
 } from "@shared/calendars";
+import ICAL from "ical.js";
 
 import { internal } from "../../_generated/api";
 import type { Doc } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import { decryptJson, encryptJson } from "../domain/crypto";
+import { convertICalEvent } from "./convertICalEvent";
 
 export const icalCapabilities: CalendarProviderCapabilities = {
   serverSidePullable: true,
@@ -113,9 +115,38 @@ export const ICalProvider: CalendarProvider = {
   async fetchEvents(
     _ctx: unknown,
     _connection: unknown,
-    _window: SyncWindow,
+    window: SyncWindow,
   ): Promise<IncomingEvent[]> {
-    throw new Error("Not implemented: iCal Calendar is not yet supported");
+    const ctx = _ctx as ActionCtx;
+    const connection = _connection as Doc<"calendarConnections">;
+
+    const result = await fetchICalFeed(ctx, connection);
+    if (result.unchanged) return [];
+
+    const parsed = ICAL.parse(result.text);
+    const comp = new ICAL.Component(parsed);
+    const vevents = comp.getAllSubcomponents("vevent");
+
+    const events: IncomingEvent[] = [];
+
+    for (const vevent of vevents) {
+      const event = convertICalEvent(vevent, ICAL_SYNTHETIC_SUB_CALENDAR_EXTERNAL_ID);
+      if (!event) continue;
+
+      // Non-recurring events outside the sync window are skipped.
+      // Recurring events are always included — the service layer expands
+      // them via expandRecurrence and filters to the window.
+      if (
+        !event.rrule &&
+        (event.startsAt < window.windowStartMs || event.startsAt > window.windowEndMs)
+      ) {
+        continue;
+      }
+
+      events.push(event);
+    }
+
+    return events;
   },
 
   async writeEvent(
