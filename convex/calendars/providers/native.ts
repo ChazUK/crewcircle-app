@@ -22,10 +22,24 @@ export const NativeCalendarProvider: CalendarProvider = {
 
   async connect(
     _ctx: unknown,
-    _params: CalendarConnectParams,
+    params: CalendarConnectParams,
     _context: CalendarConnectContext,
   ): Promise<CalendarConnectResult> {
-    throw new Error("Not implemented: Native Calendar connect");
+    if (params.provider !== "native") {
+      throw new Error("NativeCalendarProvider.connect called with non-native params");
+    }
+    return {
+      connection: {
+        localCalendarId: params.deviceCalendarId,
+      },
+      subCalendars: [
+        {
+          externalId: params.deviceCalendarId,
+          label: params.label,
+          showAsBusy: true,
+        },
+      ],
+    };
   },
 
   async fetchEvents(
@@ -33,7 +47,7 @@ export const NativeCalendarProvider: CalendarProvider = {
     _connection: unknown,
     _window: SyncWindow,
   ): Promise<IncomingEvent[]> {
-    throw new Error("Not implemented: Native Calendar is not yet supported");
+    throw new Error("Native provider cannot be called server-side");
   },
 
   async writeEvent(
@@ -41,10 +55,10 @@ export const NativeCalendarProvider: CalendarProvider = {
     _connection: unknown,
     _event: IncomingEvent,
   ): Promise<WriteSuccess | WriteError> {
-    throw new Error("Not implemented: Native Calendar is not yet supported");
+    throw new Error("Native provider cannot be called server-side");
   },
 
   async listSubCalendars(_ctx: unknown, _connection: unknown): Promise<SubCalendar[]> {
-    throw new Error("Not implemented: Native Calendar is not yet supported");
+    throw new Error("Native provider cannot be called server-side");
   },
 };
