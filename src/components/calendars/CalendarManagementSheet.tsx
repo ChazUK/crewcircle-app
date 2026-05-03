@@ -9,6 +9,11 @@ import { Text, View } from "react-native";
 
 import { fetchNativeEvents } from "@/lib/calendars/fetchNativeEvents";
 
+import { GoogleCalendarConnectFlow } from "./GoogleCalendarConnectFlow";
+import { ICalConnectFlow } from "./ICalConnectFlow";
+import { MicrosoftCalendarConnectFlow } from "./MicrosoftCalendarConnectFlow";
+import { NativeCalendarConnectFlow } from "./NativeCalendarConnectFlow";
+
 export type ConnectionRow = {
   _id: Id<"calendarConnections">;
   provider: string;
@@ -20,6 +25,8 @@ export type ConnectionRow = {
   subCalendarCount: number;
   nativeCalendarIds?: string[];
 };
+
+export type ActiveStep = "google" | "microsoft" | "ical" | "native";
 
 type Props = {
   isOpen: boolean;
@@ -135,6 +142,66 @@ export function CalendarConnectionList({
   );
 }
 
+type CalendarAddSectionProps = {
+  onSelectProvider: (step: ActiveStep) => void;
+};
+
+// Exported for Storybook — renders provider buttons without Convex
+export function CalendarAddSection({ onSelectProvider }: CalendarAddSectionProps) {
+  return (
+    <View className="mt-6 gap-3">
+      <Text className="px-1 text-sm font-semibold text-foreground">Add Calendar</Text>
+      <View className="gap-2">
+        <Button
+          variant="secondary"
+          onPress={() => onSelectProvider("google")}
+          accessibilityLabel="Connect Google Calendar"
+          className="w-full"
+        >
+          Google Calendar
+        </Button>
+        <Button
+          variant="secondary"
+          onPress={() => onSelectProvider("microsoft")}
+          accessibilityLabel="Connect Microsoft Calendar"
+          className="w-full"
+        >
+          Microsoft Calendar
+        </Button>
+        <Button
+          variant="secondary"
+          onPress={() => onSelectProvider("ical")}
+          accessibilityLabel="Connect iCal or Webcal calendar"
+          className="w-full"
+        >
+          iCal / Webcal
+        </Button>
+        <Button
+          variant="secondary"
+          onPress={() => onSelectProvider("native")}
+          accessibilityLabel="Connect device calendar"
+          className="w-full"
+        >
+          Device Calendar
+        </Button>
+      </View>
+    </View>
+  );
+}
+
+function renderConnectFlow(step: ActiveStep, onBack: () => void) {
+  switch (step) {
+    case "google":
+      return <GoogleCalendarConnectFlow onBack={onBack} />;
+    case "microsoft":
+      return <MicrosoftCalendarConnectFlow onBack={onBack} />;
+    case "ical":
+      return <ICalConnectFlow onBack={onBack} />;
+    case "native":
+      return <NativeCalendarConnectFlow onBack={onBack} />;
+  }
+}
+
 export function CalendarManagementSheet({ isOpen, onClose }: Props) {
   const connections = useQuery(api.calendars.queries.getConnections);
   const [pendingDisconnect, setPendingDisconnect] = useState<Id<"calendarConnections"> | null>(
@@ -143,10 +210,13 @@ export function CalendarManagementSheet({ isOpen, onClose }: Props) {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
+  const [activeStep, setActiveStep] = useState<ActiveStep | null>(null);
 
   const disconnectAction = useAction(api.calendars.actions.disconnect);
   const syncNowAction = useAction(api.calendars.actions.syncNow);
   const uploadNativeEventsAction = useAction(api.calendars.uploadNativeEvents);
+
+  const handleBack = () => setActiveStep(null);
 
   const handleSync = async (connection: ConnectionRow) => {
     setSyncingIds((prev) => new Set([...prev, connection._id]));
@@ -192,25 +262,46 @@ export function CalendarManagementSheet({ isOpen, onClose }: Props) {
     setDisconnectError(null);
   };
 
+  const handleSheetOpenChange = (open: boolean) => {
+    if (!open) {
+      if (activeStep !== null) {
+        // During a connect flow, closing gesture navigates back rather than dismissing the sheet
+        setActiveStep(null);
+      } else {
+        onClose();
+      }
+    }
+  };
+
   return (
     <>
-      <BottomSheet isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <BottomSheet isOpen={isOpen} onOpenChange={handleSheetOpenChange}>
         <BottomSheet.Portal disableFullWindowOverlay>
           <BottomSheet.Overlay />
-          <BottomSheet.Content snapPoints={["55%", "85%"]}>
+          <BottomSheet.Content
+            snapPoints={["55%", "85%"]}
+            enablePanDownToClose={activeStep === null}
+          >
             <BottomSheetScrollView contentContainerStyle={{ paddingBottom: 16 }}>
-              <View className="mb-4 gap-1.5 px-1">
-                <BottomSheet.Title>Connected Calendars</BottomSheet.Title>
-              </View>
-              <CalendarConnectionList
-                connections={connections}
-                syncingIds={syncingIds}
-                onSync={handleSync}
-                onDisconnect={(id) => {
-                  setDisconnectError(null);
-                  setPendingDisconnect(id);
-                }}
-              />
+              {activeStep !== null ? (
+                renderConnectFlow(activeStep, handleBack)
+              ) : (
+                <>
+                  <View className="mb-4 gap-1.5 px-1">
+                    <BottomSheet.Title>Connected Calendars</BottomSheet.Title>
+                  </View>
+                  <CalendarConnectionList
+                    connections={connections}
+                    syncingIds={syncingIds}
+                    onSync={handleSync}
+                    onDisconnect={(id) => {
+                      setDisconnectError(null);
+                      setPendingDisconnect(id);
+                    }}
+                  />
+                  <CalendarAddSection onSelectProvider={setActiveStep} />
+                </>
+              )}
             </BottomSheetScrollView>
           </BottomSheet.Content>
         </BottomSheet.Portal>
