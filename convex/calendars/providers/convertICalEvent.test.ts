@@ -53,6 +53,20 @@ END:VCALENDAR`);
     expect(convertICalEvent(vevent, SUB_CAL_ID)).toBeNull();
   });
 
+  test("returns null for lowercase transparent (case-insensitive per RFC 5545)", () => {
+    const vevent = parseVevent(`BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:transparent-lower@example.com
+DTSTART:20250601T100000Z
+DTEND:20250601T110000Z
+SUMMARY:Lowercase transparent
+TRANSP:transparent
+END:VEVENT
+END:VCALENDAR`);
+
+    expect(convertICalEvent(vevent, SUB_CAL_ID)).toBeNull();
+  });
+
   test("includes OPAQUE events", () => {
     const vevent = parseVevent(`BEGIN:VCALENDAR
 BEGIN:VEVENT

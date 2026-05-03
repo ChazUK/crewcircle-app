@@ -8,7 +8,7 @@ export function convertICalEvent(
   subCalendarId: string,
 ): IncomingEvent | null {
   const transp = vevent.getFirstPropertyValue("transp");
-  if (transp === "TRANSPARENT") return null;
+  if (typeof transp === "string" && transp.toUpperCase() === "TRANSPARENT") return null;
 
   const event = new ICAL.Event(vevent);
   const uid = event.uid;
