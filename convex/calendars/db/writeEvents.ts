@@ -28,6 +28,12 @@ export const writeEvents = internalMutation({
     }),
     events: v.array(incomingEventValidator),
     deletedExternalIds: v.optional(v.array(v.string())),
+    // Caller-supplied superset of external IDs that should survive the
+    // window-prune. Required when chunking a sub-calendar's events across
+    // multiple writeEvents calls — otherwise the second chunk would prune
+    // the first chunk's upserts. When omitted, the prune set defaults to
+    // this call's `events` (single-call semantics).
+    pruneAllowlist: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     if (args.events.length > MAX_EVENTS_PER_CALL) {
@@ -43,9 +49,7 @@ export const writeEvents = internalMutation({
     const userId = connection.userId;
     const now = Date.now();
 
-    const incomingExternalIds = new Set<string>();
     for (const event of args.events) {
-      incomingExternalIds.add(event.externalId);
       const existing = await ctx.db
         .query("calendarEvents")
         .withIndex("byConnectionExternal", (q) =>
@@ -76,6 +80,9 @@ export const writeEvents = internalMutation({
       }
     }
 
+    const pruneSet = new Set<string>(
+      args.pruneAllowlist ?? args.events.map((event) => event.externalId),
+    );
     const subCalendarRows = await ctx.db
       .query("calendarEvents")
       .withIndex("bySubCalendar", (q) => q.eq("subCalendarId", args.subCalendarId))
@@ -84,7 +91,7 @@ export const writeEvents = internalMutation({
       const inWindow =
         row.startsAt >= args.syncWindow.windowStartMs &&
         row.startsAt <= args.syncWindow.windowEndMs;
-      if (inWindow && !incomingExternalIds.has(row.externalId)) {
+      if (inWindow && !pruneSet.has(row.externalId)) {
         await ctx.db.delete(row._id);
       }
     }
