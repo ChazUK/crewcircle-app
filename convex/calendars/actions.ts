@@ -24,3 +24,10 @@ export const syncNow = action({
     await runSyncWithRetry(ctx, args.connectionId, calendarService.sync);
   },
 });
+
+export const listSubCalendars = action({
+  args: { connectionId: v.id("calendarConnections") },
+  handler: async (ctx, args) => {
+    return await calendarService.listSubCalendars(ctx, args.connectionId);
+  },
+});
