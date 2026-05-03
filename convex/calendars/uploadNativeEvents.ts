@@ -18,13 +18,22 @@ const incomingEventValidator = v.object({
   originalTimezone: v.optional(v.string()),
 });
 
+// Must match writeEvents' MAX_EVENTS_PER_CALL — kept in sync by the test
+// `throws when called with more than 200 events` in writeEvents.test.ts.
+const WRITE_EVENTS_CHUNK_SIZE = 200;
+
 export const uploadNativeEvents = action({
   args: {
     connectionId: v.id("calendarConnections"),
     events: v.array(incomingEventValidator),
   },
   handler: async (ctx, args) => {
-    await requireOwnedConnection(ctx, args.connectionId);
+    const { connection } = await requireOwnedConnection(ctx, args.connectionId);
+    if (connection.provider !== "native") {
+      throw new Error(
+        `uploadNativeEvents only accepts connections with provider="native" (got "${connection.provider}")`,
+      );
+    }
 
     const window = currentSyncWindow();
 
@@ -45,21 +54,29 @@ export const uploadNativeEvents = action({
       const subCalendar = subCalendarsByExternalId.get(externalSubCalendarId);
       if (!subCalendar) continue;
 
-      await ctx.runMutation(internal.calendars.db.writeEvents.writeEvents, {
-        connectionId: args.connectionId,
-        subCalendarId: subCalendar._id,
-        syncWindow: window,
-        events: eventsInGroup.map((e) => ({
-          externalId: e.externalId,
-          title: e.title,
-          description: e.description,
-          location: e.location,
-          startsAt: e.startsAt,
-          endsAt: e.endsAt,
-          isAllDay: e.isAllDay,
-          originalTimezone: e.originalTimezone,
-        })),
-      });
+      // Same allowlist on every chunk so writeEvents' window-prune doesn't
+      // delete events that live in a sibling chunk for this sub-calendar.
+      const pruneAllowlist = eventsInGroup.map((event) => event.externalId);
+
+      for (let i = 0; i < eventsInGroup.length; i += WRITE_EVENTS_CHUNK_SIZE) {
+        const chunk = eventsInGroup.slice(i, i + WRITE_EVENTS_CHUNK_SIZE);
+        await ctx.runMutation(internal.calendars.db.writeEvents.writeEvents, {
+          connectionId: args.connectionId,
+          subCalendarId: subCalendar._id,
+          syncWindow: window,
+          events: chunk.map((e) => ({
+            externalId: e.externalId,
+            title: e.title,
+            description: e.description,
+            location: e.location,
+            startsAt: e.startsAt,
+            endsAt: e.endsAt,
+            isAllDay: e.isAllDay,
+            originalTimezone: e.originalTimezone,
+          })),
+          pruneAllowlist,
+        });
+      }
     }
 
     await ctx.runMutation(internal.calendars.db.markConnectionSynced.markConnectionSynced, {

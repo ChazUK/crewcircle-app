@@ -178,4 +178,56 @@ describe("uploadNativeEvents", () => {
       }),
     ).resolves.not.toThrow();
   });
+
+  test("rejects connections whose provider is not native", async () => {
+    const t = convexTest(schema, modules);
+    const owner = await t.run((ctx) =>
+      ctx.db.insert("users", {
+        externalAuthId: ownerIdentity.subject,
+        email: "owner@example.com",
+        hasCompletedOnboarding: false,
+        isPublic: false,
+      }),
+    );
+    const icalConnectionId = await t.run((ctx) =>
+      ctx.db.insert("calendarConnections", {
+        userId: owner,
+        provider: "ical",
+        label: "Subscribed feed",
+        createdAt: Date.now(),
+        color: "#6366f1",
+        syncErrorCount: 0,
+      }),
+    );
+
+    await expect(
+      t.withIdentity(ownerIdentity).action(api.calendars.uploadNativeEvents.uploadNativeEvents, {
+        connectionId: icalConnectionId,
+        events: [],
+      }),
+    ).rejects.toThrow(/provider="native"/);
+  });
+
+  test("uploads more than 200 events for a single sub-calendar without prune-induced loss", async () => {
+    const t = convexTest(schema, modules);
+    const { connectionId } = await seed(t);
+    const events = Array.from({ length: 350 }, (_, i) => ({
+      externalId: `evt-${i}`,
+      subCalendarId: "device-cal-1",
+      title: `Event ${i}`,
+      startsAt: Date.now() + i * 1_000,
+      endsAt: Date.now() + i * 1_000 + 60_000,
+      isAllDay: false,
+    }));
+
+    await t
+      .withIdentity(ownerIdentity)
+      .action(api.calendars.uploadNativeEvents.uploadNativeEvents, {
+        connectionId,
+        events,
+      });
+
+    const stored = await t.run((ctx) => ctx.db.query("calendarEvents").collect());
+    expect(stored).toHaveLength(350);
+  });
 });
