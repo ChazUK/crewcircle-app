@@ -36,6 +36,8 @@ export const getConnections = query({
           lastSyncError: connection.lastSyncError,
           syncErrorCount: connection.syncErrorCount,
           subCalendarCount: subCalendars.length,
+          nativeCalendarIds:
+            connection.provider === "native" ? subCalendars.map((sc) => sc.externalId) : undefined,
         };
       }),
     );
