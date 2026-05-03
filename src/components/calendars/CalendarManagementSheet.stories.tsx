@@ -35,6 +35,7 @@ const mockConnections: ConnectionRow[] = [
     lastSyncedAt: now - 30 * 60 * 1000,
     syncErrorCount: 0,
     subCalendarCount: 2,
+    nativeCalendarIds: ["cal_default", "cal_birthdays"],
   },
 ];
 
@@ -66,6 +67,9 @@ const meta = {
   tags: ["autodocs"],
   args: {
     connections: mockConnections,
+    syncingIds: new Set<string>(),
+    onSync: () => {},
+    onDisconnect: () => {},
   },
 } satisfies Meta<typeof CalendarConnectionList>;
 
@@ -112,5 +116,26 @@ export const NeverSynced: Story = {
         subCalendarCount: 0,
       },
     ],
+  },
+};
+
+export const Syncing: Story = {
+  args: {
+    connections: mockConnections,
+    syncingIds: new Set(["conn_ical_1"]),
+  },
+};
+
+export const SyncingNative: Story = {
+  args: {
+    connections: mockConnections,
+    syncingIds: new Set(["conn_native_1"]),
+  },
+};
+
+export const SyncingMultiple: Story = {
+  args: {
+    connections: mockConnections,
+    syncingIds: new Set(["conn_google_1", "conn_native_1"]),
   },
 };
