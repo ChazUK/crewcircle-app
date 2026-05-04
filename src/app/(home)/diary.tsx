@@ -1,4 +1,6 @@
-import { format, startOfMonth } from "date-fns";
+import { api } from "@convex/_generated/api";
+import { useQuery } from "convex/react";
+import { format, endOfMonth, startOfMonth } from "date-fns";
 import { useThemeColor } from "heroui-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -13,9 +15,7 @@ export default function Diary() {
   const today = new Date();
   const todayIso = format(today, "yyyy-MM-dd");
   const [selectedDate, setSelectedDate] = useState<string>(todayIso);
-  const [_visibleMonth, setVisibleMonth] = useState<string>(() => {
-    return format(startOfMonth(new Date()), "yyyy-MM-dd");
-  });
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => startOfMonth(new Date()));
   const [isManagementSheetOpen, setIsManagementSheetOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -25,6 +25,47 @@ export default function Diary() {
     "foreground",
     "muted",
   ]);
+
+  const connections = useQuery(api.calendars.queries.getConnections, {});
+
+  const startMs = visibleMonth.getTime();
+  const endMs = endOfMonth(visibleMonth).getTime() + 1;
+
+  const events = useQuery(api.calendars.queries.getEventsForDateRange, { startMs, endMs });
+
+  const eventDots: Record<string, { dots: { key: string; color: string }[] }> = {};
+  if (events) {
+    for (const event of events) {
+      const dateKey = format(new Date(event.startsAt), "yyyy-MM-dd");
+      if (!eventDots[dateKey]) {
+        eventDots[dateKey] = { dots: [] };
+      }
+      const existing = eventDots[dateKey]!;
+      const connectionId = event.connectionId as string;
+      if (!existing.dots.some((d) => d.key === connectionId)) {
+        existing.dots.push({ key: connectionId, color: event.color });
+      }
+    }
+  }
+
+  const selectedMarking = {
+    selected: true,
+    selectedColor: accent,
+  };
+
+  const mergedMarkedDates: Record<string, object> = {};
+  for (const [date, dotData] of Object.entries(eventDots)) {
+    if (date === selectedDate) {
+      mergedMarkedDates[date] = { ...dotData, ...selectedMarking };
+    } else {
+      mergedMarkedDates[date] = dotData;
+    }
+  }
+  if (!mergedMarkedDates[selectedDate]) {
+    mergedMarkedDates[selectedDate] = selectedMarking;
+  }
+
+  const hasNoConnections = connections !== undefined && connections.length === 0;
 
   return (
     <>
@@ -46,7 +87,9 @@ export default function Diary() {
           <Calendar
             current={todayIso}
             onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
-            onMonthChange={(m: DateData) => setVisibleMonth(m.dateString)}
+            onMonthChange={(m: DateData) => setVisibleMonth(startOfMonth(new Date(m.dateString)))}
+            markedDates={mergedMarkedDates}
+            markingType="multi-dot"
             theme={{
               backgroundColor: "transparent",
               calendarBackground: "transparent",
@@ -65,6 +108,19 @@ export default function Diary() {
             }}
             style={{ marginHorizontal: 8 }}
           />
+
+          {hasNoConnections && (
+            <Pressable
+              onPress={() => setIsManagementSheetOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Connect a calendar to see your events"
+              className="mx-4 mt-2 items-center rounded-lg border border-foreground/20 py-3"
+            >
+              <Text className="text-sm text-foreground/60">
+                Connect a calendar to see your events
+              </Text>
+            </Pressable>
+          )}
 
           <View className="mt-4 px-4">
             <Text className="text-sm text-foreground/60">{format(selectedDate, "EEEE")}</Text>
