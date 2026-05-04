@@ -9,8 +9,8 @@ import { Text, View } from "react-native";
 
 import { fetchNativeEvents } from "@/lib/calendars/fetchNativeEvents";
 
+import { ICalConnectFlow } from "./connect/ICalConnectFlow";
 import { GoogleCalendarConnectFlow } from "./GoogleCalendarConnectFlow";
-import { ICalConnectFlow } from "./ICalConnectFlow";
 import { MicrosoftCalendarConnectFlow } from "./MicrosoftCalendarConnectFlow";
 import { NativeCalendarConnectFlow } from "./NativeCalendarConnectFlow";
 
