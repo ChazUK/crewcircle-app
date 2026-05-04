@@ -18,8 +18,16 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
   try {
     switch (event.type) {
       case "user.created": {
-        const { id, email_addresses, primary_email_address_id, first_name, last_name, image_url } =
-          event.data;
+        const {
+          id,
+          email_addresses,
+          primary_email_address_id,
+          first_name,
+          last_name,
+          image_url,
+          phone_numbers,
+          primary_phone_number_id,
+        } = event.data;
 
         const email = resolvePrimaryEmail(email_addresses, primary_email_address_id);
         if (!email) {
@@ -35,12 +43,21 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
           firstName: first_name ?? undefined,
           lastName: last_name ?? undefined,
           profilePictureUrl: image_url ?? undefined,
+          phone: resolvePrimaryPhone(phone_numbers ?? [], primary_phone_number_id ?? null),
         });
         break;
       }
       case "user.updated": {
-        const { id, email_addresses, primary_email_address_id, first_name, last_name, image_url } =
-          event.data;
+        const {
+          id,
+          email_addresses,
+          primary_email_address_id,
+          first_name,
+          last_name,
+          image_url,
+          phone_numbers,
+          primary_phone_number_id,
+        } = event.data;
 
         await ctx.runMutation(internal.users.webhooks.userUpdated, {
           externalAuthId: id,
@@ -48,6 +65,7 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
           firstName: first_name ?? undefined,
           lastName: last_name ?? undefined,
           profilePictureUrl: image_url ?? undefined,
+          phone: resolvePrimaryPhone(phone_numbers ?? [], primary_phone_number_id ?? null),
         });
         break;
       }
@@ -74,4 +92,15 @@ function resolvePrimaryEmail(
   primary_email_address_id: string | null,
 ): string | undefined {
   return email_addresses.find((e) => e.id === primary_email_address_id)?.email_address;
+}
+
+function resolvePrimaryPhone(
+  phone_numbers: { id: string; phone_number: string; verification: { status: string } | null }[],
+  primary_phone_number_id: string | null,
+): string {
+  const primary = phone_numbers.find((p) => p.id === primary_phone_number_id);
+  if (primary?.verification?.status === "verified") {
+    return primary.phone_number;
+  }
+  return "";
 }

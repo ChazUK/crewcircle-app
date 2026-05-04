@@ -104,6 +104,7 @@ describe("handleClerkWebhook", () => {
         firstName: "Alice",
         lastName: "Smith",
         profilePictureUrl: "https://example.com/pic.jpg",
+        phone: "",
       });
     });
 
@@ -120,6 +121,26 @@ describe("handleClerkWebhook", () => {
       );
       expect(response.status).toBe(200);
       expect(ctx.runMutation).not.toHaveBeenCalled();
+    });
+
+    test("calls userCreated with verified primary phone as E.164 string", async () => {
+      const withPhonePayload = {
+        ...userPayload,
+        phone_numbers: [
+          { id: "phone_1", phone_number: "+447700900000", verification: { status: "verified" } },
+        ],
+        primary_phone_number_id: "phone_1",
+      };
+      mockVerifyWebhook.mockResolvedValue({ type: "user.created", data: withPhonePayload });
+      const response = await handler(
+        ctx,
+        makeRequest(JSON.stringify({ type: "user.created", data: withPhonePayload })),
+      );
+      expect(response.status).toBe(200);
+      expect(ctx.runMutation).toHaveBeenCalledWith(
+        "users:webhooks:userCreated",
+        expect.objectContaining({ phone: "+447700900000" }),
+      );
     });
   });
 
@@ -157,6 +178,64 @@ describe("handleClerkWebhook", () => {
       expect(ctx.runMutation).toHaveBeenCalledWith(
         "users:webhooks:userUpdated",
         expect.objectContaining({ externalAuthId: "user_abc", email: undefined }),
+      );
+    });
+
+    test("calls userUpdated with verified primary phone as E.164 string", async () => {
+      const withPhonePayload = {
+        ...userPayload,
+        phone_numbers: [
+          { id: "phone_1", phone_number: "+447700900001", verification: { status: "verified" } },
+        ],
+        primary_phone_number_id: "phone_1",
+      };
+      mockVerifyWebhook.mockResolvedValue({ type: "user.updated", data: withPhonePayload });
+      const response = await handler(
+        ctx,
+        makeRequest(JSON.stringify({ type: "user.updated", data: withPhonePayload })),
+      );
+      expect(response.status).toBe(200);
+      expect(ctx.runMutation).toHaveBeenCalledWith(
+        "users:webhooks:userUpdated",
+        expect.objectContaining({ phone: "+447700900001" }),
+      );
+    });
+
+    test("calls userUpdated with phone '' when primary_phone_number_id is null", async () => {
+      const noPhonePayload = {
+        ...userPayload,
+        phone_numbers: [],
+        primary_phone_number_id: null,
+      };
+      mockVerifyWebhook.mockResolvedValue({ type: "user.updated", data: noPhonePayload });
+      const response = await handler(
+        ctx,
+        makeRequest(JSON.stringify({ type: "user.updated", data: noPhonePayload })),
+      );
+      expect(response.status).toBe(200);
+      expect(ctx.runMutation).toHaveBeenCalledWith(
+        "users:webhooks:userUpdated",
+        expect.objectContaining({ phone: "" }),
+      );
+    });
+
+    test("calls userUpdated with phone '' when primary phone verification is not verified", async () => {
+      const unverifiedPhonePayload = {
+        ...userPayload,
+        phone_numbers: [
+          { id: "phone_1", phone_number: "+447700900002", verification: { status: "unverified" } },
+        ],
+        primary_phone_number_id: "phone_1",
+      };
+      mockVerifyWebhook.mockResolvedValue({ type: "user.updated", data: unverifiedPhonePayload });
+      const response = await handler(
+        ctx,
+        makeRequest(JSON.stringify({ type: "user.updated", data: unverifiedPhonePayload })),
+      );
+      expect(response.status).toBe(200);
+      expect(ctx.runMutation).toHaveBeenCalledWith(
+        "users:webhooks:userUpdated",
+        expect.objectContaining({ phone: "" }),
       );
     });
   });
