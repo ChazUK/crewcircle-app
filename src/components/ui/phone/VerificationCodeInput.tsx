@@ -7,6 +7,7 @@ type Props = {
   onComplete?: (code: string) => void;
   autoFocus?: boolean;
   disabled?: boolean;
+  isInvalid?: boolean;
 };
 
 export function VerificationCodeInput({
@@ -15,16 +16,18 @@ export function VerificationCodeInput({
   onComplete,
   autoFocus = true,
   disabled = false,
+  isInvalid,
 }: Props) {
-  const lastCompleted = useRef<string | null>(null);
+  const wasComplete = useRef(false);
 
   function handleChangeText(text: string) {
     const cleaned = text.replace(/\D/g, "").slice(0, 6);
     onChange(cleaned);
-    if (cleaned.length === 6 && cleaned !== lastCompleted.current) {
-      lastCompleted.current = cleaned;
+    const isComplete = cleaned.length === 6;
+    if (isComplete && !wasComplete.current) {
       onComplete?.(cleaned);
     }
+    wasComplete.current = isComplete;
   }
 
   return (
@@ -37,6 +40,7 @@ export function VerificationCodeInput({
       maxLength={6}
       autoFocus={autoFocus}
       editable={!disabled}
+      isInvalid={isInvalid}
     />
   );
 }

@@ -46,6 +46,7 @@ export function VerifyCodeScreen({
             onChange={onChange}
             onComplete={onSubmit}
             disabled={isDisabled}
+            isInvalid={!!error}
             autoFocus
           />
         </Card.Body>
