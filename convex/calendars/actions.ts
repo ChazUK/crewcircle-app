@@ -9,6 +9,25 @@ import { requireOwnedConnection } from "./auth/requireOwnedConnection";
 import { calendarService } from "./service/registry";
 import { runSyncWithRetry } from "./syncWithRetry";
 
+export const connectNative = action({
+  args: { label: v.string() },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ connectionId: Id<"calendarConnections">; color: string }> => {
+    const connectionId: Id<"calendarConnections"> = await calendarService.connect(ctx, {
+      provider: "native",
+      deviceCalendarId: "",
+      label: args.label,
+    });
+    const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
+      internal.calendars.db.getConnectionInternal.getConnectionInternal,
+      { connectionId },
+    );
+    return { connectionId, color: connection?.color ?? "#6366f1" };
+  },
+});
+
 export const connectGoogle = action({
   args: {
     authCode: v.string(),
