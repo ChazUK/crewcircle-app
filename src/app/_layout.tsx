@@ -2,7 +2,7 @@ import "../global.css";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { api } from "@convex/_generated/api";
-import { ConvexReactClient, useConvexAuth } from "convex/react";
+import { ConvexReactClient, useAction, useConvexAuth } from "convex/react";
 import { useMutation, useQuery } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
@@ -12,6 +12,8 @@ import { useEffect, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AppErrorBoundary } from "@/components/ui/AppErrorBoundary";
+import { registerBackgroundSync } from "@/lib/calendars/backgroundSync";
+import { syncNativeConnections } from "@/lib/calendars/syncNativeConnections";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 if (!publishableKey) throw new Error("Add your Clerk Publishable Key to the .env file");
@@ -50,6 +52,8 @@ function RootNavigator() {
   const { isSignedIn, signOut } = useAuth();
   const upsertUser = useMutation(api.users.mutations.upsertUser);
   const currentUser = useQuery(api.users.queries.getCurrentUser, isAuthenticated ? {} : "skip");
+  const syncNativeOnOpenAction = useAction(api.calendars.actions.syncNativeOnOpen);
+  const uploadNativeEventsAction = useAction(api.calendars.uploadNativeEvents);
 
   const [isUserReady, setIsUserReady] = useState(false);
 
@@ -88,6 +92,32 @@ function RootNavigator() {
       SplashScreen.hide();
     }
   }, [isLoading, isAuthenticated, isUserReady, currentUser]);
+
+  // Refresh native (on-device) calendar connections whenever the app comes
+  // back to the foreground. The server-side debounce in `syncNativeOnOpen`
+  // skips connections synced within the last 60 seconds, so quick app
+  // re-opens don't hammer the device store.
+  useEffect(() => {
+    if (!isUserReady) return;
+    syncNativeOnOpenAction({})
+      .then((connections) =>
+        syncNativeConnections(connections, async (connectionId, events) => {
+          await uploadNativeEventsAction({ connectionId, events });
+        }),
+      )
+      .catch((err) => console.error("[RootNavigator] native on-open sync failed", err));
+  }, [isUserReady, syncNativeOnOpenAction, uploadNativeEventsAction]);
+
+  // The background-fetch cron is opt-in: opening the app already triggers a
+  // sync, so the cron is only valuable when the app is killed for long
+  // stretches. Gate it behind an env flag so it can be disabled per-build.
+  useEffect(() => {
+    if (!isUserReady) return;
+    if (process.env.EXPO_PUBLIC_ENABLE_NATIVE_BACKGROUND_SYNC !== "true") return;
+    registerBackgroundSync().catch((err) =>
+      console.error("[RootNavigator] failed to register background sync", err),
+    );
+  }, [isUserReady]);
 
   if (isLoading || (isAuthenticated && (!isUserReady || currentUser == null))) return null;
 

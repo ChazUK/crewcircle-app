@@ -11,6 +11,25 @@ import { validateICalUrl } from "./domain/validateICalUrl";
 import { calendarService } from "./service/registry";
 import { runSyncWithRetry } from "./syncWithRetry";
 
+export const connectNative = action({
+  args: { label: v.string() },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ connectionId: Id<"calendarConnections">; color: string }> => {
+    const connectionId: Id<"calendarConnections"> = await calendarService.connect(ctx, {
+      provider: "native",
+      deviceCalendarId: "",
+      label: args.label,
+    });
+    const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
+      internal.calendars.db.getConnectionInternal.getConnectionInternal,
+      { connectionId },
+    );
+    return { connectionId, color: connection?.color ?? "#6366f1" };
+  },
+});
+
 export const connectGoogle = action({
   args: {
     authCode: v.string(),
@@ -92,6 +111,7 @@ export const listSubCalendars = action({
   },
 });
 
+<<<<<<< feat/150-feat-calendars---ical-connect-flow-ui
 export const setEnabledSubCalendars = action({
   args: {
     connectionId: v.id("calendarConnections"),
@@ -134,5 +154,23 @@ export const connectIcal = action({
       label: args.label,
     });
     return { connectionId };
+=======
+export const syncNativeOnOpen = action({
+  args: {},
+  handler: async (
+    ctx,
+  ): Promise<{ connectionId: Id<"calendarConnections">; nativeCalendarIds: string[] }[]> => {
+    return await calendarService.syncNativeOnOpen(ctx);
+  },
+});
+
+export const setEnabledSubCalendars = action({
+  args: {
+    connectionId: v.id("calendarConnections"),
+    selections: v.array(v.object({ externalId: v.string(), label: v.string() })),
+  },
+  handler: async (ctx, args) => {
+    await calendarService.setEnabledSubCalendars(ctx, args.connectionId, args.selections);
+>>>>>>> main
   },
 });

@@ -186,11 +186,26 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
       });
     },
 
+    // Returns the native calendar connections that need to be re-synced from
+    // the device. The actual fetch + upload runs on the client (the server
+    // has no access to the device's calendar store) — this method only
+    // applies the 60-second debounce so the client doesn't repeatedly hit
+    // the device store when the app is opened in quick succession.
     async syncNativeOnOpen(
-      _ctx: ActionCtx,
-      _connectionId: Id<"calendarConnections">,
-    ): Promise<void> {
-      throw new Error("Not implemented: service.syncNativeOnOpen");
+      ctx: ActionCtx,
+    ): Promise<{ connectionId: Id<"calendarConnections">; nativeCalendarIds: string[] }[]> {
+      const connections = await ctx.runQuery(api.calendars.queries.getConnections, {});
+      const now = Date.now();
+      return connections
+        .filter((connection) => connection.provider === "native")
+        .filter(
+          (connection) =>
+            connection.lastSyncedAt == null || now - connection.lastSyncedAt >= 60_000,
+        )
+        .map((connection) => ({
+          connectionId: connection._id,
+          nativeCalendarIds: connection.nativeCalendarIds ?? [],
+        }));
     },
 
     async listSubCalendars(
