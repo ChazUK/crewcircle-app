@@ -55,6 +55,7 @@
     "expo-web-browser": "~55.0.14",
     "heroui-native": "^1.0.1",
     "ical.js": "^2.2.1",
+    "libphonenumber-js": "^1.12.42",
     "lucide-react-native": "^1.14.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
