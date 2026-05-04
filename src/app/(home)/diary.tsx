@@ -1,6 +1,6 @@
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
-import { format, endOfMonth, startOfMonth } from "date-fns";
+import { format, endOfMonth } from "date-fns";
 import { useThemeColor } from "heroui-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -15,7 +15,10 @@ export default function Diary() {
   const today = new Date();
   const todayIso = format(today, "yyyy-MM-dd");
   const [selectedDate, setSelectedDate] = useState<string>(todayIso);
-  const [visibleMonth, setVisibleMonth] = useState<Date>(() => startOfMonth(new Date()));
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [isManagementSheetOpen, setIsManagementSheetOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -87,7 +90,7 @@ export default function Diary() {
           <Calendar
             current={todayIso}
             onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
-            onMonthChange={(m: DateData) => setVisibleMonth(startOfMonth(new Date(m.dateString)))}
+            onMonthChange={(m: DateData) => setVisibleMonth(new Date(m.year, m.month - 1, 1))}
             markedDates={mergedMarkedDates}
             markingType="multi-dot"
             theme={{
