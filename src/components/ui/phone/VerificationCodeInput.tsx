@@ -1,5 +1,4 @@
-import { Input } from "heroui-native";
-import { useRef } from "react";
+import { InputOTP, REGEXP_ONLY_DIGITS } from "heroui-native";
 
 type Props = {
   value: string;
@@ -18,28 +17,32 @@ export function VerificationCodeInput({
   disabled = false,
   isInvalid,
 }: Props) {
-  const lastCompleted = useRef<string | null>(null);
-
-  function handleChangeText(text: string) {
-    const cleaned = text.replace(/\D/g, "").slice(0, 6);
-    onChange(cleaned);
-    if (cleaned.length === 6 && cleaned !== lastCompleted.current) {
-      lastCompleted.current = cleaned;
-      onComplete?.(cleaned);
-    }
-  }
-
   return (
-    <Input
+    <InputOTP
       value={value}
-      onChangeText={handleChangeText}
-      keyboardType="number-pad"
-      textContentType="oneTimeCode"
-      autoComplete="sms-otp"
+      onChange={onChange}
+      onComplete={onComplete}
       maxLength={6}
-      autoFocus={autoFocus}
-      editable={!disabled}
+      pattern={REGEXP_ONLY_DIGITS}
+      isDisabled={disabled}
       isInvalid={isInvalid}
-    />
+      textInputProps={{
+        autoFocus,
+        textContentType: "oneTimeCode",
+        autoComplete: "sms-otp",
+      }}
+    >
+      <InputOTP.Group>
+        <InputOTP.Slot index={0} />
+        <InputOTP.Slot index={1} />
+        <InputOTP.Slot index={2} />
+      </InputOTP.Group>
+      <InputOTP.Separator />
+      <InputOTP.Group>
+        <InputOTP.Slot index={3} />
+        <InputOTP.Slot index={4} />
+        <InputOTP.Slot index={5} />
+      </InputOTP.Group>
+    </InputOTP>
   );
 }
