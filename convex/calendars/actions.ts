@@ -37,13 +37,31 @@ export const connectGoogle = action({
   },
 });
 
-export const setEnabledSubCalendars = action({
+export const connectMicrosoft = action({
   args: {
-    connectionId: v.id("calendarConnections"),
-    selections: v.array(v.object({ externalId: v.string(), label: v.string() })),
+    authCode: v.string(),
+    codeVerifier: v.string(),
+    clientId: v.string(),
+    redirectUri: v.string(),
+    label: v.string(),
   },
-  handler: async (ctx, args) => {
-    await calendarService.setEnabledSubCalendars(ctx, args.connectionId, args.selections);
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ connectionId: Id<"calendarConnections">; color: string }> => {
+    const connectionId: Id<"calendarConnections"> = await calendarService.connect(ctx, {
+      provider: "microsoft",
+      authCode: args.authCode,
+      codeVerifier: args.codeVerifier,
+      clientId: args.clientId,
+      redirectUri: args.redirectUri,
+      label: args.label,
+    });
+    const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
+      internal.calendars.db.getConnectionInternal.getConnectionInternal,
+      { connectionId },
+    );
+    return { connectionId, color: connection?.color ?? "#0078d4" };
   },
 });
 
