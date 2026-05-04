@@ -18,16 +18,15 @@ export function VerificationCodeInput({
   disabled = false,
   isInvalid,
 }: Props) {
-  const wasComplete = useRef(false);
+  const lastCompleted = useRef<string | null>(null);
 
   function handleChangeText(text: string) {
     const cleaned = text.replace(/\D/g, "").slice(0, 6);
     onChange(cleaned);
-    const isComplete = cleaned.length === 6;
-    if (isComplete && !wasComplete.current) {
+    if (cleaned.length === 6 && cleaned !== lastCompleted.current) {
+      lastCompleted.current = cleaned;
       onComplete?.(cleaned);
     }
-    wasComplete.current = isComplete;
   }
 
   return (
