@@ -19,6 +19,7 @@ type Props = {
 export function EnterCodeView({ phoneE164, onVerified, onEditNumber }: Props) {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendCooldown, startResendCooldown] = useCountdown(30);
 
@@ -57,18 +58,24 @@ export function EnterCodeView({ phoneE164, onVerified, onEditNumber }: Props) {
   }
 
   async function handleResend() {
+    if (resending) return;
     if (!user) {
       setError("You must be signed in.");
       return;
     }
 
+    setResending(true);
     setError(null);
-    const result = await addAndStartVerification({ user, phoneNumber: phoneE164 });
-    if (!result.ok) {
-      setError(result.message);
-      return;
+    try {
+      const result = await addAndStartVerification({ user, phoneNumber: phoneE164 });
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      startResendCooldown(30);
+    } finally {
+      setResending(false);
     }
-    startResendCooldown(30);
   }
 
   return (
@@ -109,15 +116,21 @@ export function EnterCodeView({ phoneE164, onVerified, onEditNumber }: Props) {
         <Button
           variant="ghost"
           size="sm"
-          isDisabled={resendCooldown > 0}
+          isDisabled={resendCooldown > 0 || resending}
           onPress={handleResend}
           accessibilityLabel={
             resendCooldown > 0
               ? `Resend code available in ${resendCooldown} seconds`
-              : "Resend code"
+              : resending
+                ? "Resending code"
+                : "Resend code"
           }
         >
-          {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : "Resend code"}
+          {resending
+            ? "Resending..."
+            : resendCooldown > 0
+              ? `Resend code (${resendCooldown}s)`
+              : "Resend code"}
         </Button>
 
         <Button
