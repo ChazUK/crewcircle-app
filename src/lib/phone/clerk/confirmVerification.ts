@@ -10,7 +10,7 @@ export async function confirmVerification(params: {
   try {
     const { user, code } = params;
 
-    const pending = user.phoneNumbers.filter((p) => p.verification?.status !== "verified");
+    const pending = user.phoneNumbers.filter((p) => p.verification?.status === "unverified");
     const pendingPhone = pending[pending.length - 1];
 
     if (!pendingPhone) {
