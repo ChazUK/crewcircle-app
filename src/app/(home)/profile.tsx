@@ -39,7 +39,9 @@ export default function Profile() {
         <View className="flex-row items-center justify-between px-4 py-4">
           <Text className="text-base">Phone number</Text>
           <View className="flex-row items-center gap-1">
-            <Text className="text-base text-default-500">{formatPhone(currentUser?.phone)}</Text>
+            <Text className="text-base text-default-500">
+              {currentUser === undefined ? "" : formatPhone(currentUser?.phone)}
+            </Text>
             <Text className="text-default-400 text-lg">›</Text>
           </View>
         </View>
