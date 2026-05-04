@@ -1,7 +1,7 @@
 import { useUser } from "@clerk/expo";
 import { api } from "@convex/_generated/api";
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Button } from "heroui-native";
 import { useState } from "react";
 import { View } from "react-native";
@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { withUniwind } from "uniwind";
 
 import { DepartmentStep } from "@/components/onboarding/DepartmentStep";
+import { PhoneVerificationStep } from "@/components/onboarding/phone/PhoneVerificationStep";
 import { UseCaseStep, type UseCase } from "@/components/onboarding/UseCaseStep";
 import { BackButton } from "@/components/ui/BackButton";
 import { ProgressIndicator } from "@/components/ui/ProgressIndicator";
@@ -21,6 +22,7 @@ export default function OnboardingPage() {
 
   const { user: clerkUser } = useUser();
   const completeOnboarding = useMutation(api.users.mutations.completeOnboarding);
+  const convexUser = useQuery(api.users.queries.getCurrentUser);
 
   const form = useForm({
     defaultValues: {
@@ -72,6 +74,20 @@ export default function OnboardingPage() {
       default:
         return null;
     }
+  }
+
+  if (convexUser === undefined) return null;
+
+  if (!convexUser?.phone) {
+    return (
+      <StyledSafeAreaView className="flex-1">
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          <View className="flex-1 gap-6 py-2">
+            <PhoneVerificationStep onComplete={() => {}} />
+          </View>
+        </ScrollView>
+      </StyledSafeAreaView>
+    );
   }
 
   return (
