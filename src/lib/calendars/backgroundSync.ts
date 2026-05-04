@@ -34,7 +34,10 @@ TaskManager.defineTask(CALENDAR_BACKGROUND_SYNC_TASK, async () => {
     }
 
     await syncNativeConnections(connections, async (connectionId, events) => {
-      await convex.action(api.calendars.uploadNativeEvents, { connectionId, events });
+      await convex.action(api.calendars.uploadNativeEvents.uploadNativeEvents, {
+        connectionId,
+        events,
+      });
     });
 
     return BackgroundFetch.BackgroundFetchResult.NewData;

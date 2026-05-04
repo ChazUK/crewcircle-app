@@ -214,7 +214,7 @@ export function CalendarManagementSheet({ isOpen, onClose }: Props) {
 
   const disconnectAction = useAction(api.calendars.actions.disconnect);
   const syncNowAction = useAction(api.calendars.actions.syncNow);
-  const uploadNativeEventsAction = useAction(api.calendars.uploadNativeEvents);
+  const uploadNativeEventsAction = useAction(api.calendars.uploadNativeEvents.uploadNativeEvents);
 
   const handleBack = () => setActiveStep(null);
 

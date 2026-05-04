@@ -34,15 +34,15 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <HeroUINativeProvider config={config}>
-        <AppErrorBoundary>
-          <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-            <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+      <AppErrorBoundary>
+        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+          <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+            <HeroUINativeProvider config={config}>
               <RootNavigator />
-            </ConvexProviderWithClerk>
-          </ClerkProvider>
-        </AppErrorBoundary>
-      </HeroUINativeProvider>
+            </HeroUINativeProvider>
+          </ConvexProviderWithClerk>
+        </ClerkProvider>
+      </AppErrorBoundary>
     </GestureHandlerRootView>
   );
 }
@@ -53,7 +53,7 @@ function RootNavigator() {
   const upsertUser = useMutation(api.users.mutations.upsertUser);
   const currentUser = useQuery(api.users.queries.getCurrentUser, isAuthenticated ? {} : "skip");
   const syncNativeOnOpenAction = useAction(api.calendars.actions.syncNativeOnOpen);
-  const uploadNativeEventsAction = useAction(api.calendars.uploadNativeEvents);
+  const uploadNativeEventsAction = useAction(api.calendars.uploadNativeEvents.uploadNativeEvents);
 
   const [isUserReady, setIsUserReady] = useState(false);
 
@@ -133,9 +133,6 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="(auth)" />
-      </Stack.Protected>
-      <Stack.Protected guard={__DEV__}>
-        <Stack.Screen name="storybook" />
       </Stack.Protected>
     </Stack>
   );
