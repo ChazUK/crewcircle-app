@@ -4,6 +4,9 @@ import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { Spinner } from "heroui-native";
 import { Text, View } from "react-native";
 
+import { ClockIcon } from "@/components/ui/icons/ClockIcon";
+import { PinIcon } from "@/components/ui/icons/PinIcon";
+
 export type DiaryEvent = {
   _id: string;
   title: string;
@@ -11,11 +14,56 @@ export type DiaryEvent = {
   endsAt: number;
   isAllDay: boolean;
   color: string;
+  provider: string;
+  connectionLabel: string;
+  location?: string;
 };
 
 type ContentProps = {
   events: DiaryEvent[] | undefined;
 };
+
+function formatTimeRange(startsAt: number, endsAt: number) {
+  return `${format(new Date(startsAt), "H:mm")}–${format(new Date(endsAt), "H:mm")}`;
+}
+
+function DiaryEventRow({ event }: { event: DiaryEvent }) {
+  const heading = `${event.provider} — ${event.connectionLabel}`.toUpperCase();
+
+  return (
+    <View className="flex-row overflow-hidden rounded-xl bg-surface">
+      <View style={{ width: 4, backgroundColor: event.color }} />
+      <View className="flex-1 px-4 py-3">
+        <Text
+          numberOfLines={1}
+          style={{ color: event.color }}
+          className="text-xs font-semibold tracking-wider"
+        >
+          {heading}
+        </Text>
+        <Text numberOfLines={1} className="mt-0.5 text-base font-semibold text-foreground">
+          {event.title}
+        </Text>
+        <View className="mt-1 flex-row items-center gap-4">
+          <View className="flex-row items-center gap-1.5">
+            <ClockIcon size={14} color="#9ca3af" />
+            <Text className="text-xs text-muted">
+              {event.isAllDay ? "All day" : formatTimeRange(event.startsAt, event.endsAt)}
+            </Text>
+          </View>
+          {event.location ? (
+            <View className="flex-1 flex-row items-center gap-1.5">
+              <PinIcon size={14} color="#9ca3af" />
+              <Text numberOfLines={1} className="flex-1 text-xs text-muted">
+                {event.location}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
+}
 
 export function DiaryEventListContent({ events }: ContentProps) {
   if (events === undefined) {
@@ -29,43 +77,15 @@ export function DiaryEventListContent({ events }: ContentProps) {
   if (events.length === 0) {
     return (
       <View className="items-center py-8">
-        <Text className="text-sm text-foreground/60">No events</Text>
+        <Text className="text-sm text-muted">No events</Text>
       </View>
     );
   }
 
   return (
-    <View className="gap-1">
+    <View className="gap-2 px-4">
       {events.map((event) => (
-        <View key={event._id} className="flex-row items-start gap-3 px-4 py-2">
-          <View
-            style={{
-              backgroundColor: event.color,
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              marginTop: 5,
-              flexShrink: 0,
-            }}
-            accessibilityLabel={`Calendar colour indicator`}
-          />
-          <View className="flex-1">
-            {event.isAllDay ? (
-              <>
-                <Text className="text-xs text-foreground/60">All day</Text>
-                <Text className="text-sm text-foreground">{event.title}</Text>
-              </>
-            ) : (
-              <>
-                <Text className="text-xs text-foreground/60">
-                  {format(new Date(event.startsAt), "h:mm a")} –{" "}
-                  {format(new Date(event.endsAt), "h:mm a")}
-                </Text>
-                <Text className="text-sm text-foreground">{event.title}</Text>
-              </>
-            )}
-          </View>
-        </View>
+        <DiaryEventRow key={event._id} event={event} />
       ))}
     </View>
   );

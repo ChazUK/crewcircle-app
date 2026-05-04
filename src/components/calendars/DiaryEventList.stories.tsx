@@ -15,33 +15,43 @@ const allDayEvent: DiaryEvent = {
   endsAt: todayNoonMs + 86_400_000,
   isAllDay: true,
   color: "#6366f1",
+  provider: "google",
+  connectionLabel: "jordan@gmail.com",
 };
 
 const morningEvent: DiaryEvent = {
   _id: "evt_timed_1",
-  title: "Crew Call — Set Dressing",
-  startsAt: todayNoonMs - 3 * 3600_000, // 9:00 AM
-  endsAt: todayNoonMs - 3 * 3600_000 + 90 * 60_000, // 10:30 AM
+  title: "Kit service — Panavision",
+  startsAt: todayNoonMs - 1 * 3600_000, // 11:00
+  endsAt: todayNoonMs + 30 * 60_000, // 12:30
   isAllDay: false,
-  color: "#22c55e",
+  color: "#3b82f6",
+  provider: "google",
+  connectionLabel: "jordan@gmail.com",
+  location: "Greenford",
 };
 
 const afternoonEvent: DiaryEvent = {
   _id: "evt_timed_2",
   title: "Director's Prep Meeting",
-  startsAt: todayNoonMs + 2 * 3600_000, // 2:00 PM
-  endsAt: todayNoonMs + 3 * 3600_000, // 3:00 PM
+  startsAt: todayNoonMs + 2 * 3600_000, // 14:00
+  endsAt: todayNoonMs + 3 * 3600_000, // 15:00
   isAllDay: false,
   color: "#f59e0b",
+  provider: "microsoft",
+  connectionLabel: "jordan@studio.com",
+  location: "Soho — Edit Suite 3",
 };
 
 const eveningEvent: DiaryEvent = {
   _id: "evt_timed_3",
   title: "Wrap Party",
-  startsAt: todayNoonMs + 6 * 3600_000, // 6:00 PM
-  endsAt: todayNoonMs + 9 * 3600_000, // 9:00 PM
+  startsAt: todayNoonMs + 6 * 3600_000, // 18:00
+  endsAt: todayNoonMs + 9 * 3600_000, // 21:00
   isAllDay: false,
   color: "#ef4444",
+  provider: "ical",
+  connectionLabel: "Crew Social",
 };
 
 const decorator = (Story: React.ComponentType) => (
@@ -108,6 +118,8 @@ export const MultipleAllDay: Story = {
         endsAt: now + 86_400_000,
         isAllDay: true,
         color: "#8b5cf6",
+        provider: "ical",
+        connectionLabel: "UK Holidays",
       },
     ],
   },
