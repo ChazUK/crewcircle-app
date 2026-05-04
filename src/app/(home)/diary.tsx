@@ -2,6 +2,7 @@ import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { format, endOfMonth } from "date-fns";
 import { useThemeColor } from "heroui-native";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
@@ -110,6 +111,9 @@ export default function Diary() {
               dotColor: accent,
               selectedDotColor: accentForeground,
             }}
+            renderArrow={(direction) =>
+              direction === "left" ? <ChevronLeft size={24} /> : <ChevronRight size={24} />
+            }
             style={{ marginHorizontal: 8 }}
           />
 
