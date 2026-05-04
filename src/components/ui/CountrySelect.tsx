@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ScrollShadow, Select, useThemeColor } from "heroui-native";
 import { useMemo, useState } from "react";
 
-import { COUNTRIES } from "@/data/countries";
+import { COUNTRIES } from "@/lib/countries/countries";
 
 import { BottomSheetSearchField } from "./BottomSheetSearchField";
 

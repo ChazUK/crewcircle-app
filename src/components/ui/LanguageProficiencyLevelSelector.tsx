@@ -7,8 +7,8 @@ import { View } from "react-native";
 import {
   LANGUAGE_PROFICIENCY_LEVELS,
   type LanguageProficiencyLevel,
-} from "@/data/language-proficiency-levels";
-import { type Language, LANGUAGES } from "@/data/languages";
+} from "@/lib/languages/language-proficiency-levels";
+import { type Language, LANGUAGES } from "@/lib/languages/languages";
 
 import { BottomSheetSearchField } from "./BottomSheetSearchField";
 import { RemovableChip } from "./RemovableChip";
