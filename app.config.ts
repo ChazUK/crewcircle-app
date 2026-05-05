@@ -67,6 +67,14 @@ export default {
           imageWidth: 200,
         },
       ],
+      [
+        "@sentry/react-native/expo",
+        {
+          url: "https://sentry.io/",
+          project: "react-native",
+          organization: "crewcircle",
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

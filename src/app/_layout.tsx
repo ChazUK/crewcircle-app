@@ -2,10 +2,12 @@ import "../global.css";
 import { ClerkProvider, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { api } from "@convex/_generated/api";
+import * as Sentry from "@sentry/react-native";
 import { ConvexReactClient, useAction, useConvexAuth } from "convex/react";
 import { useMutation, useQuery } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { Stack } from "expo-router";
+import { isRunningInExpoGo } from "expo";
+import { Stack, useNavigationContainerRef } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { HeroUINativeConfig, HeroUINativeProvider } from "heroui-native";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,6 +17,21 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppErrorBoundary } from "@/components/ui/AppErrorBoundary";
 import { registerBackgroundSync } from "@/lib/calendars/backgroundSync";
 import { syncNativeConnections } from "@/lib/calendars/syncNativeConnections";
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+  // Enable Logs
+  enableLogs: true,
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
+
+const navigationIntegration = Sentry.reactNavigationIntegration({
+  enableTimeToInitialDisplay: !isRunningInExpoGo(),
+});
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 if (!publishableKey) throw new Error("Add your Clerk Publishable Key to the .env file");
@@ -32,7 +49,9 @@ const config: HeroUINativeConfig = {
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+export default Sentry.wrap(RootLayout);
+
+function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppErrorBoundary>
@@ -49,14 +68,21 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
+  const ref = useNavigationContainerRef();
   const { isLoading, isAuthenticated } = useConvexAuth();
   const { isSignedIn, signOut } = useAuth();
   const upsertUser = useMutation(api.users.mutations.upsertUser);
   const currentUser = useQuery(api.users.queries.getCurrentUser, isAuthenticated ? {} : "skip");
   const syncNativeOnOpenAction = useAction(api.calendars.actions.syncNativeOnOpen);
   const uploadNativeEventsAction = useAction(api.calendars.uploadNativeEvents.uploadNativeEvents);
-
   const [isUserReady, setIsUserReady] = useState(false);
+  const initialDesyncCheckDone = useRef(false);
+
+  useEffect(() => {
+    if (ref) {
+      navigationIntegration.registerNavigationContainer(ref);
+    }
+  }, [ref]);
 
   // Clerk persists its token in SecureStore across relaunches. If Clerk has a
   // session but Convex doesn't recognise it (e.g. the backend was reset), sign
@@ -64,7 +90,6 @@ function RootNavigator() {
   // Only check once — when isLoading first settles to false. Checking on every
   // change would incorrectly sign out a user mid-sign-up because isSignedIn
   // (Clerk) flips true before isAuthenticated (Convex) catches up.
-  const initialDesyncCheckDone = useRef(false);
   useEffect(() => {
     if (!isLoading && !initialDesyncCheckDone.current) {
       initialDesyncCheckDone.current = true;
