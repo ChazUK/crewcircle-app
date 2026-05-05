@@ -54,7 +54,12 @@ export default function Page() {
   const verifyForm = useForm({
     defaultValues: { code: "" },
     onSubmit: async ({ value }) => {
-      await signUp.verifications.verifyEmailCode({ code: value.code });
+      const { error } = await signUp.verifications.verifyEmailCode({ code: value.code });
+
+      if (error) {
+        console.error("Verification error:", error);
+        return;
+      }
 
       if (signUp.status === "complete") {
         // Use setActive directly instead of finalize() — finalize triggers Clerk's
@@ -81,7 +86,7 @@ export default function Page() {
                   {([canSubmit, isSubmitting]) => (
                     <VerifyCodeScreen
                       title="Verify your email"
-                      subtitle="Enter the 6-digit code sent to your email"
+                      subtitle={`We've sent a 6-digit code to ${signUpForm.state.values.emailAddress}.\nEnter it below to continue.`}
                       value={field.state.value}
                       onChange={field.handleChange}
                       onSubmit={() => verifyForm.handleSubmit()}

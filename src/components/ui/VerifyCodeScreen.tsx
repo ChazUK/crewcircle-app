@@ -10,7 +10,8 @@ type Props = {
   subtitle: string;
   value: string;
   onChange: (value: string) => void;
-  onSubmit: () => void;
+  /** Called when the user submits — either by pressing the button (no arg) or by completing the code (with the completed code). */
+  onSubmit: (code?: string) => void;
   isLoading: boolean;
   isDisabled: boolean;
   error?: string | null;
@@ -54,7 +55,12 @@ export function VerifyCodeScreen({
         <Card.Footer className="gap-3 flex-col">
           <FieldError isInvalid={!!error}>{error}</FieldError>
 
-          <Button variant="primary" onPress={onSubmit} isDisabled={isDisabled} className="w-full">
+          <Button
+            variant="primary"
+            onPress={() => onSubmit()}
+            isDisabled={isDisabled}
+            className="w-full"
+          >
             {isLoading ? "Verifying..." : "Verify"}
           </Button>
         </Card.Footer>

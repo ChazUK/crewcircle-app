@@ -1,4 +1,5 @@
 import { InputOTP, REGEXP_ONLY_DIGITS } from "heroui-native";
+import { useEffect, useRef } from "react";
 
 type Props = {
   value: string;
@@ -17,6 +18,17 @@ export function VerificationCodeInput({
   disabled = false,
   isInvalid,
 }: Props) {
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+
+  useEffect(() => {
+    return () => {
+      onChangeRef.current("");
+    };
+  }, []);
+
   return (
     <InputOTP
       value={value}
