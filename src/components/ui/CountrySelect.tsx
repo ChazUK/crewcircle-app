@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import { COUNTRIES } from "@/lib/countries/countries";
 
-import { BottomSheetSearchField } from "./BottomSheetSearchField";
+import { Search } from "../form/Search";
 
 const COUNTRY_OPTIONS = COUNTRIES.map(({ code, name }) => ({
   value: code,
@@ -52,11 +52,7 @@ export const CountrySelect = ({
           enableOverDrag={false}
           contentContainerClassName="flex-1 h-full"
         >
-          <BottomSheetSearchField
-            value={searchValue}
-            onChange={setSearchValue}
-            placeholder="Search countries..."
-          />
+          <Search value={searchValue} onChange={setSearchValue} placeholder="Search countries..." />
 
           <ScrollShadow LinearGradientComponent={LinearGradient} color={themeColorOverlay}>
             <BottomSheetScrollView

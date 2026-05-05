@@ -42,8 +42,6 @@ const meta = {
   tags: ["autodocs"],
   args: {
     options: FRUITS,
-    placeholder: "Choose a fruit",
-    accessibilityLabel: "Select a fruit",
     onChange: () => {},
   },
 } satisfies Meta<typeof BottomSheetSelect<FruitOption>>;
@@ -77,12 +75,12 @@ export const CustomTrigger: Story = {
     renderTriggerValue: (selected) =>
       selected ? (
         <View className="flex-row items-center gap-2 flex-1">
-          <Text style={{ fontSize: 20 }}>{selected.emoji}</Text>
-          <Text style={{ fontWeight: "600" }}>{selected.label}</Text>
+          <Text className="text-2xl">{selected.emoji}</Text>
+          <Text>{selected.label}</Text>
         </View>
       ) : (
         <View className="flex-1">
-          <Text style={{ color: "#888" }}>Pick your favourite fruit…</Text>
+          <Text className="text-gray-500">Pick your favourite fruit…</Text>
         </View>
       ),
   },
