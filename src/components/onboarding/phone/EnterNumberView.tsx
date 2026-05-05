@@ -63,6 +63,7 @@ export function EnterNumberView({ onCodeSent }: Props) {
           error={error ?? undefined}
         />
         <Text className="text-sm text-muted">{DISCLOSURE}</Text>
+        <Text>{JSON.stringify(normalized)}</Text>
       </View>
       <Button
         variant="primary"

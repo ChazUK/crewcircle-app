@@ -32,13 +32,16 @@ globalThis.STORIES = normalizedStories;
 
 module?.hot?.accept?.();
 
+const options = {};
+
 if (!globalThis.view) {
   globalThis.view = start({
     annotations,
     storyEntries: normalizedStories,
+    options,
   });
 } else {
-  updateView(globalThis.view, annotations, normalizedStories);
+  updateView(globalThis.view, annotations, normalizedStories, options);
 }
 
 export const view: View = globalThis.view;
