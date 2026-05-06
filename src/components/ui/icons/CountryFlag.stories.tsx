@@ -4,7 +4,7 @@ import { View } from "react-native";
 import { CountryFlag } from "./CountryFlag";
 
 const meta = {
-  title: "UI/Phone/CountryFlag",
+  title: "UI/Icons/CountryFlag",
   component: CountryFlag,
   decorators: [
     (Story) => (
@@ -35,28 +35,26 @@ export const Default: Story = {};
 
 export const Small: Story = {
   args: {
-    iso2: "US",
+    iso2: "FR",
     size: 16,
   },
 };
 
 export const Large: Story = {
   args: {
-    iso2: "FR",
+    iso2: "DE",
     size: 48,
   },
 };
 
 export const LowercaseInput: Story = {
   args: {
-    iso2: "de",
-    size: 32,
+    iso2: "es",
   },
 };
 
 export const UnknownCode: Story = {
   args: {
     iso2: "XX",
-    size: 24,
   },
 };

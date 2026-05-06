@@ -4,7 +4,7 @@ import { Button, Spinner } from "heroui-native";
 import { View, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { PhoneNumberInput } from "@/components/ui/phone/PhoneNumberInput";
+import { PhoneNumberInput } from "@/components/form/PhoneNumberInput";
 
 import { EnterNumberView } from "./EnterNumberView";
 

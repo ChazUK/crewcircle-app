@@ -24,6 +24,7 @@ type BottomSheetSelectProps<T extends SelectOption> = {
   accessibilityLabel?: string;
   searchable?: boolean;
   searchPlaceholder?: string;
+  variant?: "default" | "unstyled";
   /**
    * Predicate used to filter options against the search query.
    *
@@ -81,6 +82,7 @@ export const BottomSheetSelect = <T extends SelectOption>({
   accessibilityLabel,
   searchable = false,
   searchPlaceholder = "Search...",
+  variant = "default",
   filterOption = defaultFilterOption,
   onChange,
   renderTriggerValue,
@@ -127,21 +129,23 @@ export const BottomSheetSelect = <T extends SelectOption>({
 
   return (
     <Select
+      presentation="bottom-sheet"
+      isDisabled={disabled}
+      accessibilityLabel={accessibilityLabel}
       value={selectedOption}
       onValueChange={(option) => {
         if (option) onChange?.(option.value);
       }}
-      isDisabled={disabled}
-      presentation="bottom-sheet"
-      accessibilityLabel={accessibilityLabel}
     >
-      <Select.Trigger>
+      <Select.Trigger variant={variant}>
         {renderTriggerValue ? (
           renderTriggerValue(selectedOption)
         ) : (
-          <Select.Value placeholder={placeholder} />
+          <>
+            <Select.Value placeholder={placeholder} />
+            <Select.TriggerIndicator />
+          </>
         )}
-        <Select.TriggerIndicator />
       </Select.Trigger>
       <Select.Portal>
         <Select.Overlay className="bg-black/50" />

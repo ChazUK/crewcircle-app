@@ -95,17 +95,21 @@ export const CustomTrigger: Story = {
   render: InteractiveRender,
   args: {
     value: "mango",
-    renderTriggerValue: (selected) =>
-      selected ? (
-        <View className="flex-row items-center gap-2 flex-1">
-          <Text className="text-2xl">{selected.emoji}</Text>
-          <Text>{selected.label}</Text>
-        </View>
-      ) : (
-        <View className="flex-1">
-          <Text className="text-gray-500">Pick your favourite fruit…</Text>
-        </View>
-      ),
+    renderTriggerValue: (selected) => (
+      <>
+        {selected ? (
+          <View className="flex-row items-center gap-2 flex-1">
+            <Text className="text-base">{selected.emoji}</Text>
+            <Text className="text-base">{selected.label}</Text>
+          </View>
+        ) : (
+          <View className="flex-1">
+            <Text className="text-gray-500 text-base">Pick your favourite fruit…</Text>
+          </View>
+        )}
+        <Select.TriggerIndicator />
+      </>
+    ),
   },
 };
 
@@ -124,7 +128,7 @@ export const CustomOptionContent: Story = {
             }}
           />
           <Select.ItemLabel />
-          <Text style={{ fontSize: 18 }}>{option.emoji}</Text>
+          <Text className="text-base">{option.emoji}</Text>
         </View>
         <Select.ItemIndicator />
       </>

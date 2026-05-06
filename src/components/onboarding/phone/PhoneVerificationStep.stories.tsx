@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { PhoneNumberInput } from "@/components/ui/phone/PhoneNumberInput";
+import { PhoneNumberInput } from "@/components/form/PhoneNumberInput";
 import { VerificationCodeInput } from "@/components/ui/phone/VerificationCodeInput";
 
 import { PhoneVerificationStep } from "./PhoneVerificationStep";

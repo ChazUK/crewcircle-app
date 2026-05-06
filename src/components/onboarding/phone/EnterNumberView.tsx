@@ -3,7 +3,7 @@ import { Button, Spinner } from "heroui-native";
 import { useState } from "react";
 import { Text, View } from "react-native";
 
-import { PhoneNumberInput } from "@/components/ui/phone/PhoneNumberInput";
+import { PhoneNumberInput } from "@/components/form/PhoneNumberInput";
 import { addAndStartVerification } from "@/lib/phone/clerk/addAndStartVerification";
 
 const DISCLOSURE =
