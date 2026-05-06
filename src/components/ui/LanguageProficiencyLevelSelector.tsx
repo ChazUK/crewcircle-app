@@ -10,7 +10,7 @@ import {
 } from "@/lib/languages/language-proficiency-levels";
 import { type Language, LANGUAGES } from "@/lib/languages/languages";
 
-import { Search } from "../form/Search";
+import { BottomSheetSearch } from "../form/BottomSheetSearch";
 import { RemovableChip } from "./RemovableChip";
 
 export type LanguageProficiencyEntry = {
@@ -163,7 +163,11 @@ const LanguageSelectSheet = ({
           enableOverDrag={false}
           contentContainerClassName="flex-1 h-full"
         >
-          <Search value={searchValue} onChange={setSearchValue} placeholder="Search languages..." />
+          <BottomSheetSearch
+            value={searchValue}
+            onChange={setSearchValue}
+            placeholder="Search languages..."
+          />
 
           <ScrollShadow LinearGradientComponent={LinearGradient} color={themeColorOverlay}>
             <BottomSheetScrollView

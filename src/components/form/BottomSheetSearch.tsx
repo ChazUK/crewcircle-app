@@ -7,7 +7,7 @@ type SearchProps = {
   className?: string;
 };
 
-export const Search = ({ value, onChange, placeholder, className }: SearchProps) => {
+export const BottomSheetSearch = ({ value, onChange, placeholder, className }: SearchProps) => {
   const { onFocus, onBlur } = useBottomSheetAwareHandlers();
 
   return (

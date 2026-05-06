@@ -9,7 +9,7 @@ import { memo, ReactNode, useCallback, useMemo, useState } from "react";
 import { ListRenderItem, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Search } from "./Search";
+import { BottomSheetSearch } from "./BottomSheetSearch";
 
 export type SelectOption = {
   value: string;
@@ -60,8 +60,9 @@ const FooterSearch = memo(function FooterSearch({
   placeholder?: string;
 }) {
   const [value, setValue] = useState("");
+
   return (
-    <Search
+    <BottomSheetSearch
       value={value}
       onChange={(next) => {
         setValue(next);
