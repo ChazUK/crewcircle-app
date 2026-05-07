@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { CountrySelect } from "./CountrySelect";
 
 const meta = {
-  title: "UI/CountrySelect",
+  title: "Form/CountrySelect",
   component: CountrySelect,
   decorators: [
     (Story) => (

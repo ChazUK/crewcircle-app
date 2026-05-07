@@ -3,6 +3,8 @@ import { useRouter } from "expo-router";
 import { Button } from "heroui-native";
 import { Alert, Platform } from "react-native";
 
+import { GoogleIcon } from "../ui/icons/Google";
+
 type Props = {
   onSignInComplete?: () => void;
 };
@@ -40,6 +42,7 @@ export function SignInWithGoogleButton({ onSignInComplete }: Props) {
 
   return (
     <Button variant="outline" className="w-full" onPress={handleGoogleSignIn}>
+      <GoogleIcon size={24} />
       <Button.Label>Sign in with Google</Button.Label>
     </Button>
   );
