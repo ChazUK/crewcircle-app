@@ -37,6 +37,22 @@ const DIAL_CODES: DialCodeOption[] = COUNTRIES.map((country) => ({
 const DEFAULT_DIAL_CODE =
   DIAL_CODES.find((option) => option.code === getDeviceCountry()) ?? DIAL_CODES[0];
 
+/**
+ * Tiebreakers for shared calling codes when libphonenumber can't pin a specific
+ * country (e.g. Ofcom test ranges, fake example numbers). Only consulted when
+ * `parsed.country` is undefined — real numbers are disambiguated by the library.
+ */
+const PREFERRED_COUNTRY_BY_CALLING_CODE: Record<string, string> = {
+  "1": "US",
+  "7": "RU",
+  "44": "GB",
+  "61": "AU",
+  "212": "MA",
+  "262": "RE",
+  "590": "GP",
+  "599": "CW",
+};
+
 export const PhoneNumberInput = ({ value, onChange, onBlur, isInvalid }: Props) => {
   const initial = useMemo(() => parseInitial(value), []);
   const [national, setNational] = useState(initial.national);
@@ -60,6 +76,13 @@ export const PhoneNumberInput = ({ value, onChange, onBlur, isInvalid }: Props) 
 
   const handleNationalChange = useCallback(
     (next: string) => {
+      const detected = next.startsWith("+") ? detectDialCode(next) : null;
+      if (detected) {
+        setDialCode(detected.dialCode);
+        setNational(detected.national);
+        emit(detected.national, detected.dialCode.code as CountryCode);
+        return;
+      }
       setNational(next);
       emit(next, dialCode.code as CountryCode);
     },
@@ -181,9 +204,52 @@ const FooterSearch = memo(function FooterSearch({
 function parseInitial(value: string | null): { national: string; dialCode: DialCodeOption } {
   if (!value) return { national: "", dialCode: DEFAULT_DIAL_CODE };
   const parsed = parsePhoneNumberFromString(value);
-  if (!parsed?.country) return { national: "", dialCode: DEFAULT_DIAL_CODE };
-  const dialCode = DIAL_CODES.find((d) => d.code === parsed.country) ?? DEFAULT_DIAL_CODE;
+  if (!parsed) return { national: "", dialCode: DEFAULT_DIAL_CODE };
+  const dialCode = resolveDialCode(parsed.country, parsed.countryCallingCode);
   return { national: parsed.formatNational(), dialCode };
+}
+
+function resolveDialCode(
+  country: string | undefined,
+  callingCode: string | undefined,
+): DialCodeOption {
+  if (country) {
+    const match = DIAL_CODES.find((d) => d.code === country);
+    if (match) return match;
+  }
+  return (callingCode && findByCallingCode(callingCode)) || DEFAULT_DIAL_CODE;
+}
+
+function findByCallingCode(callingCode: string): DialCodeOption | null {
+  const preferred = PREFERRED_COUNTRY_BY_CALLING_CODE[callingCode];
+  if (preferred) {
+    const match = DIAL_CODES.find((d) => d.code === preferred);
+    if (match) return match;
+  }
+  return DIAL_CODES.find((d) => d.dialCode === `+${callingCode}`) ?? null;
+}
+
+/**
+ * Detects a leading `+`-prefixed calling code in user input. Handles two cases:
+ * - Full E.164 paste (`+447988509614`) — libphonenumber parses and formats it.
+ * - Partial typing (`+44`, `+447`) — match longest leading 1–3 digit prefix
+ *   against known calling codes, strip it, keep the remainder as national.
+ */
+function detectDialCode(input: string): { dialCode: DialCodeOption; national: string } | null {
+  const parsed = parsePhoneNumberFromString(input);
+  if (parsed?.countryCallingCode) {
+    return {
+      dialCode: resolveDialCode(parsed.country, parsed.countryCallingCode),
+      national: parsed.formatNational(),
+    };
+  }
+  const digits = input.slice(1).replace(/\D/g, "");
+  if (!digits) return null;
+  for (let len = Math.min(3, digits.length); len >= 1; len--) {
+    const match = findByCallingCode(digits.slice(0, len));
+    if (match) return { dialCode: match, national: digits.slice(len) };
+  }
+  return null;
 }
 
 function toE164(national: string, country: CountryCode): string | null {
