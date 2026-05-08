@@ -125,7 +125,7 @@ function SyncingState({ onBack }: { onBack: () => void }) {
 const decorator = (Story: React.ComponentType) => (
   <GestureHandlerRootView style={{ flex: 1 }}>
     <BottomSheetModalProvider>
-      <View style={{ flex: 1, padding: 16, backgroundColor: "#f9f9f9" }}>
+      <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
         <Story />
       </View>
     </BottomSheetModalProvider>

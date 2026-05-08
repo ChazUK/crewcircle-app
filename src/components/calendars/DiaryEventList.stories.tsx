@@ -55,7 +55,7 @@ const eveningEvent: DiaryEvent = {
 };
 
 const decorator = (Story: React.ComponentType) => (
-  <View style={{ flex: 1, padding: 16, backgroundColor: "#ffffff" }}>
+  <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
     <Story />
   </View>
 );

@@ -8,7 +8,7 @@ import { View } from "react-native";
 
 function AppleButtonVisual() {
   return (
-    <View style={{ padding: 16, gap: 16 }}>
+    <View style={{ gap: 16 }}>
       <AppleAuthentication.AppleAuthenticationButton
         buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
         buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE}
@@ -25,7 +25,7 @@ const meta = {
   component: AppleButtonVisual,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 16, backgroundColor: "#f9f9f9" }}>
+      <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
         <Story />
       </View>
     ),

@@ -11,7 +11,7 @@ const meta = {
   component: TagInput,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 16, backgroundColor: "#f9f9f9" }}>
+      <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
         <Story />
       </View>
     ),

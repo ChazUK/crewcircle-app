@@ -8,7 +8,7 @@ const meta = {
   component: VerificationCodeInput,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, justifyContent: "center", padding: 16 }}>
+      <View style={{ flex: 1, justifyContent: "center" }}>
         <Story />
       </View>
     ),

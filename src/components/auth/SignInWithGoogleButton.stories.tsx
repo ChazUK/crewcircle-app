@@ -10,7 +10,7 @@ import { GoogleIcon } from "../ui/icons/Google";
 
 function GoogleButtonVisual() {
   return (
-    <View style={{ padding: 16, gap: 16 }}>
+    <View style={{ gap: 16 }}>
       <Button variant="outline" className="w-full" onPress={() => {}}>
         <GoogleIcon size={24} />
         <Button.Label>Sign in with Google</Button.Label>
@@ -24,7 +24,7 @@ const meta = {
   component: GoogleButtonVisual,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 16, backgroundColor: "#f9f9f9" }}>
+      <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
         <Story />
       </View>
     ),
