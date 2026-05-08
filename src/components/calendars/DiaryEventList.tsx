@@ -1,6 +1,4 @@
-import { api } from "@convex/_generated/api";
-import { useQuery } from "convex/react";
-import { addDays, format, parseISO, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { Spinner, Surface } from "heroui-native";
 import { ClockIcon, PinIcon } from "lucide-react-native";
 import { Text, View } from "react-native";
@@ -17,7 +15,7 @@ export type DiaryEvent = {
   location?: string;
 };
 
-type ContentProps = {
+type Props = {
   events: DiaryEvent[] | undefined;
 };
 
@@ -63,42 +61,26 @@ function DiaryEventRow({ event }: { event: DiaryEvent }) {
   );
 }
 
-export function DiaryEventListContent({ events }: ContentProps) {
-  if (events === undefined) {
+export function DiaryEventList({ events }: Props) {
+  if (events === undefined)
     return (
       <View className="items-center py-8">
         <Spinner />
       </View>
     );
-  }
 
-  if (events.length === 0) {
+  if (events.length === 0)
     return (
       <View className="items-center py-8">
         <Text className="text-sm text-muted">No events</Text>
       </View>
     );
-  }
 
   return (
-    <View className="gap-2 px-4">
+    <View className="gap-2">
       {events.map((event) => (
         <DiaryEventRow key={event._id} event={event} />
       ))}
     </View>
   );
-}
-
-type Props = {
-  selectedDate: string;
-};
-
-export function DiaryEventList({ selectedDate }: Props) {
-  const dayStart = startOfDay(parseISO(selectedDate));
-  const startMs = dayStart.getTime();
-  const endMs = addDays(dayStart, 1).getTime();
-
-  const events = useQuery(api.calendars.queries.getEventsForDate, { startMs, endMs });
-
-  return <DiaryEventListContent events={events} />;
 }

@@ -1,6 +1,6 @@
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
-import { format, endOfMonth } from "date-fns";
+import { addDays, endOfMonth, format, parseISO, startOfDay } from "date-fns";
 import { useThemeColor } from "heroui-native";
 import { ChevronLeft, ChevronRight, CogIcon } from "lucide-react-native";
 import { useState } from "react";
@@ -36,6 +36,13 @@ export default function Diary() {
   const endMs = endOfMonth(visibleMonth).getTime() + 1;
 
   const events = useQuery(api.calendars.queries.getEventsForDateRange, { startMs, endMs });
+
+  const dayStartMs = startOfDay(parseISO(selectedDate)).getTime();
+  const dayEndMs = addDays(dayStartMs, 1).getTime();
+  const dayEvents = useQuery(api.calendars.queries.getEventsForDate, {
+    startMs: dayStartMs,
+    endMs: dayEndMs,
+  });
 
   const eventDots: Record<string, { dots: { key: string; color: string }[] }> = {};
   if (events) {
@@ -130,7 +137,7 @@ export default function Diary() {
           )}
 
           <View className="mt-4">
-            <DiaryEventList selectedDate={selectedDate} />
+            <DiaryEventList events={dayEvents} />
           </View>
         </View>
       </ScrollView>

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { DiaryEventListContent, type DiaryEvent } from "./DiaryEventList";
+import { DiaryEventList, type DiaryEvent } from "./DiaryEventList";
 
 const now = Date.now();
 const todayNoon = new Date();
@@ -55,17 +55,17 @@ const eveningEvent: DiaryEvent = {
 };
 
 const decorator = (Story: React.ComponentType) => (
-  <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
+  <View style={{ padding: 16 }}>
     <Story />
   </View>
 );
 
 const meta = {
   title: "Calendars/DiaryEventList",
-  component: DiaryEventListContent,
+  component: DiaryEventList,
   decorators: [decorator],
   tags: ["autodocs"],
-} satisfies Meta<typeof DiaryEventListContent>;
+} satisfies Meta<typeof DiaryEventList>;
 
 export default meta;
 
