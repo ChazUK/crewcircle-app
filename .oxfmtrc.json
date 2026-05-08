@@ -3,5 +3,10 @@
   "sortImports": {
     "enabled": true
   },
+  "sortTailwindcss": {
+    "stylesheet": "./app/global.css",
+    "functions": ["cn"],
+    "preserveWhitespace": true
+  },
   "ignorePatterns": ["convex/_generated/**/*"]
 }

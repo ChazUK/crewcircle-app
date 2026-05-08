@@ -1,16 +1,55 @@
 import { Platform } from "react-native";
 
-import { PermissionDeniedDialog } from "./PermissionDeniedDialog";
+import {
+  PermissionDeniedDialog,
+  StepHighlight,
+  StepTitle,
+  type PermissionStep,
+} from "./PermissionDeniedDialog";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-const steps =
+const steps: PermissionStep[] =
   Platform.OS === "ios"
-    ? ["Tap Notifications", "Turn on Allow Notifications"]
-    : ["Tap Notifications", "Turn on All notifications"];
+    ? [
+        {
+          title: (
+            <StepTitle>
+              Tap <StepHighlight>Notifications</StepHighlight>
+            </StepTitle>
+          ),
+          description: "Look for the Notifications row in the CrewCircle list.",
+        },
+        {
+          title: (
+            <StepTitle>
+              Turn on<StepHighlight>Allow Notifications</StepHighlight>
+            </StepTitle>
+          ),
+          description: "Toggle Allow Notifications so CrewCircle can reach you.",
+        },
+      ]
+    : [
+        {
+          title: (
+            <StepTitle>
+              Tap <StepHighlight>Notifcations</StepHighlight>
+            </StepTitle>
+          ),
+          description: "Open the Notifications section in CrewCircle's app info.",
+        },
+        {
+          title: (
+            <StepTitle>
+              Turn on <StepHighlight>all Notifications</StepHighlight>
+            </StepTitle>
+          ),
+          description: "Enable All notifications so CrewCircle can reach you.",
+        },
+      ];
 
 export function NotificationsPermissionDeniedDialog({ isOpen, onClose }: Props) {
   return (

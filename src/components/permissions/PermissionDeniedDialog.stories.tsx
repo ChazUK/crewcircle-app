@@ -21,7 +21,16 @@ const meta = {
     onClose: () => {},
     title: "Permission required",
     reason: "CrewCircle needs this permission to provide the feature.",
-    steps: ["Tap the feature", "Allow access"],
+    steps: [
+      {
+        title: "Tap the feature",
+        description: "Find the feature row in the CrewCircle list.",
+      },
+      {
+        title: "Allow access",
+        description: "Toggle the permission on so CrewCircle can use it.",
+      },
+    ],
   },
   render: (args) => {
     const [isOpen, setIsOpen] = useState(args.isOpen);

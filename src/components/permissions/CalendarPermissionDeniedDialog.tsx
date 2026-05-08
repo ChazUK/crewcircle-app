@@ -1,16 +1,63 @@
 import { Platform } from "react-native";
 
-import { PermissionDeniedDialog } from "./PermissionDeniedDialog";
+import {
+  PermissionDeniedDialog,
+  StepHighlight,
+  StepTitle,
+  type PermissionStep,
+} from "./PermissionDeniedDialog";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-const steps =
+const steps: PermissionStep[] =
   Platform.OS === "ios"
-    ? ["Tap Calendars", "Select Full Access"]
-    : ["Tap Permissions", "Tap Calendar", "Select Allow"];
+    ? [
+        {
+          title: (
+            <StepTitle>
+              Tap <StepHighlight>Calendars</StepHighlight>
+            </StepTitle>
+          ),
+          description: "Look for the row labeled “Calendars” in the CrewCircle list.",
+        },
+        {
+          title: (
+            <StepTitle>
+              Select <StepHighlight>Full Access</StepHighlight>
+            </StepTitle>
+          ),
+          description: "Choose Full Access so CrewCircle can see and add events.",
+        },
+      ]
+    : [
+        {
+          title: (
+            <StepTitle>
+              Tap <StepHighlight>Permissions</StepHighlight>
+            </StepTitle>
+          ),
+          description: "Open the Permissions section in CrewCircle's app info.",
+        },
+        {
+          title: (
+            <StepTitle>
+              Tap <StepHighlight>Calendars</StepHighlight>
+            </StepTitle>
+          ),
+          description: "Find the Calendar permission entry.",
+        },
+        {
+          title: (
+            <StepTitle>
+              Select <StepHighlight>Allow</StepHighlight>
+            </StepTitle>
+          ),
+          description: "Switch the calendar permission to Allow.",
+        },
+      ];
 
 export function CalendarPermissionDeniedDialog({ isOpen, onClose }: Props) {
   return (
