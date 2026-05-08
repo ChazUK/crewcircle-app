@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react-native";
 import { useState } from "react";
 import { View } from "react-native";
 
+import { COUNTRIES } from "@/lib/countries/countries";
+
 import { TagInput } from "./TagInput";
 
 const meta = {
@@ -95,6 +97,25 @@ export const WithMaxTagsFull: Story = {
     placeholder: "Add a skill...",
     tags: ["Drone operator", "Underwater camera", "Steadicam"],
     maxTags: 3,
+  },
+  render: InteractiveRender,
+};
+
+const COUNTRY_NAMES = COUNTRIES.map((country) => country.name);
+
+export const WithAutoComplete: Story = {
+  args: {
+    label: "Countries",
+    placeholder: "Add a country...",
+    tags: [],
+    maxSuggestions: 5,
+    autoCompleteFn: (text, currentTags) => {
+      const used = new Set(currentTags.map((t) => t.toLowerCase()));
+      const query = text.toLowerCase();
+      return COUNTRY_NAMES.filter(
+        (name) => name.toLowerCase().includes(query) && !used.has(name.toLowerCase()),
+      );
+    },
   },
   render: InteractiveRender,
 };

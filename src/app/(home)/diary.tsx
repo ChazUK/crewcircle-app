@@ -2,7 +2,7 @@ import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { format, endOfMonth } from "date-fns";
 import { useThemeColor } from "heroui-native";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, CogIcon } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CalendarManagementSheet } from "@/components/calendars/CalendarManagementSheet";
 import { DiaryEventList } from "@/components/calendars/DiaryEventList";
-import { GearIcon } from "@/components/ui/icons/GearIcon";
 
 export default function Diary() {
   const today = new Date();
@@ -85,7 +84,7 @@ export default function Diary() {
               hitSlop={10}
               className="p-1"
             >
-              <GearIcon size={22} />
+              <CogIcon />
             </Pressable>
           </View>
 

@@ -2,10 +2,8 @@ import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { Spinner } from "heroui-native";
+import { ClockIcon, PinIcon } from "lucide-react-native";
 import { Text, View } from "react-native";
-
-import { ClockIcon } from "@/components/ui/icons/ClockIcon";
-import { PinIcon } from "@/components/ui/icons/PinIcon";
 
 export type DiaryEvent = {
   _id: string;
@@ -46,7 +44,7 @@ function DiaryEventRow({ event }: { event: DiaryEvent }) {
         </Text>
         <View className="mt-1 flex-row items-center gap-4">
           <View className="flex-row items-center gap-1.5">
-            <ClockIcon size={14} color="#9ca3af" />
+            <ClockIcon color="#9ca3af" />
             <Text className="text-xs text-muted">
               {event.isAllDay ? "All day" : formatTimeRange(event.startsAt, event.endsAt)}
             </Text>
