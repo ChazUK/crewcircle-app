@@ -26,7 +26,7 @@ const steps: PermissionStep[] =
         {
           title: (
             <StepTitle>
-              Turn on<StepHighlight>Allow Notifications</StepHighlight>
+              Turn on <StepHighlight>Allow Notifications</StepHighlight>
             </StepTitle>
           ),
           description: "Toggle Allow Notifications so CrewCircle can reach you.",

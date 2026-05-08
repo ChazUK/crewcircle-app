@@ -95,7 +95,7 @@ function StepRow({ number, title, description, visual, isLast }: StepRowProps) {
             description
           )
         ) : null}
-        {visual ? <View className="mt-2">{visual}</View> : null}
+        {visual ? <View>{visual}</View> : null}
       </View>
     </View>
   );
