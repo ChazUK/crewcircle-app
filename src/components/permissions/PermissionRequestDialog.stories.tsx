@@ -7,7 +7,7 @@ import { View } from "react-native";
 import { PermissionRequestDialog } from "./PermissionRequestDialog";
 
 const decorator = (Story: React.ComponentType) => (
-  <View style={{ flex: 1, padding: 16 }}>
+  <View style={{ padding: 16 }}>
     <Story />
   </View>
 );

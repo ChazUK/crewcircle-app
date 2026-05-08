@@ -6,7 +6,7 @@ import { View } from "react-native";
 import { PermissionDeniedDialog } from "./PermissionDeniedDialog";
 
 const decorator = (Story: React.ComponentType) => (
-  <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
+  <View style={{ padding: 16 }}>
     <Story />
   </View>
 );
