@@ -48,7 +48,7 @@ export const Default: Story = {};
 
 export const WithError: Story = {
   args: {
-    error: "Failed to disconnect — please try again.",
+    error: "Failed to disconnect – please try again.",
   },
 };
 

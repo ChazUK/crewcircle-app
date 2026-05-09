@@ -26,7 +26,7 @@ const meta = {
     benefits: [
       {
         title: "See when you're free",
-        description: "We'll only check your busy times — never read event details.",
+        description: "We'll only check your busy times – never read event details.",
         icon: CalendarIcon,
       },
       {
