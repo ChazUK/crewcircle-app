@@ -4,11 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import {
-  CalendarAddSection,
-  CalendarConnectionList,
-  type ConnectionRow,
-} from "./CalendarManagementSheet";
+import { CalendarConnectionList, type ConnectionRow } from "./CalendarConnectionList";
 
 const now = Date.now();
 
@@ -57,16 +53,14 @@ const errorConnection: ConnectionRow = {
 const decorator = (Story: React.ComponentType) => (
   <GestureHandlerRootView style={{ flex: 1 }}>
     <BottomSheetModalProvider>
-      <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
+      <View style={{ flex: 1, padding: 16 }}>
         <Story />
       </View>
     </BottomSheetModalProvider>
   </GestureHandlerRootView>
 );
 
-// ── CalendarConnectionList stories ──────────────────────────────────────────
-
-const connectionListMeta = {
+const meta = {
   title: "Calendars/CalendarConnectionList",
   component: CalendarConnectionList,
   decorators: [decorator],
@@ -79,37 +73,37 @@ const connectionListMeta = {
   },
 } satisfies Meta<typeof CalendarConnectionList>;
 
-export default connectionListMeta;
+export default meta;
 
-type ConnectionListStory = StoryObj<typeof connectionListMeta>;
+type Story = StoryObj<typeof meta>;
 
-export const Default: ConnectionListStory = {};
+export const Default: Story = {};
 
-export const Loading: ConnectionListStory = {
+export const Loading: Story = {
   args: {
     connections: undefined,
   },
 };
 
-export const Empty: ConnectionListStory = {
+export const Empty: Story = {
   args: {
     connections: [],
   },
 };
 
-export const WithError: ConnectionListStory = {
+export const WithError: Story = {
   args: {
     connections: [errorConnection, ...mockConnections],
   },
 };
 
-export const SingleConnection: ConnectionListStory = {
+export const SingleConnection: Story = {
   args: {
     connections: [mockConnections[0]!],
   },
 };
 
-export const NeverSynced: ConnectionListStory = {
+export const NeverSynced: Story = {
   args: {
     connections: [
       {
@@ -125,38 +119,23 @@ export const NeverSynced: ConnectionListStory = {
   },
 };
 
-export const Syncing: ConnectionListStory = {
+export const Syncing: Story = {
   args: {
     connections: mockConnections,
     syncingIds: new Set(["conn_ical_1"]),
   },
 };
 
-export const SyncingNative: ConnectionListStory = {
+export const SyncingNative: Story = {
   args: {
     connections: mockConnections,
     syncingIds: new Set(["conn_native_1"]),
   },
 };
 
-export const SyncingMultiple: ConnectionListStory = {
+export const SyncingMultiple: Story = {
   args: {
     connections: mockConnections,
     syncingIds: new Set(["conn_google_1", "conn_native_1"]),
   },
-};
-
-// ── CalendarAddSection stories ───────────────────────────────────────────────
-
-export const AddSectionDefault: StoryObj<typeof CalendarAddSection> = {
-  name: "AddSection/Default",
-  render: () => (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
-          <CalendarAddSection onSelectProvider={() => {}} />
-        </View>
-      </BottomSheetModalProvider>
-    </GestureHandlerRootView>
-  ),
 };

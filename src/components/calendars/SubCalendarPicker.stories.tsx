@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { SubCalendarList, type SubCalendarListProps } from "./SubCalendarPicker";
+import { SubCalendarList } from "./SubCalendarPicker";
 
 const mockSubCalendars = [
   { id: "primary", label: "Work Calendar", primary: true },
@@ -18,7 +18,7 @@ const meta = {
     (Story) => (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <BottomSheetModalProvider>
-          <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
+          <View style={{ flex: 1, padding: 16 }}>
             <Story />
           </View>
         </BottomSheetModalProvider>
@@ -32,7 +32,7 @@ const meta = {
     connectionColor: "#6366f1",
     onConfirm: () => {},
     onBack: () => {},
-  } satisfies SubCalendarListProps,
+  },
 } satisfies Meta<typeof SubCalendarList>;
 
 export default meta;

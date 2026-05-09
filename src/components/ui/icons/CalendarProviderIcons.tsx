@@ -5,7 +5,7 @@ type IconProps = {
   size?: number;
 };
 
-export function GoogleCalendarIcon({ size = 28 }: IconProps) {
+export function GoogleCalendarIcon({ size = 32 }: IconProps) {
   const s = size;
   return (
     <Svg width={s} height={s} viewBox="0 0 200 200">
@@ -53,7 +53,7 @@ export function GoogleCalendarIcon({ size = 28 }: IconProps) {
   );
 }
 
-export function AppleCalendarIcon({ size = 28 }: IconProps) {
+export function AppleCalendarIcon({ size = 32 }: IconProps) {
   const s = size;
   return (
     <Svg width={s} height={s} viewBox="0 0 2160 2160">
@@ -95,7 +95,7 @@ export function AppleCalendarIcon({ size = 28 }: IconProps) {
   );
 }
 
-export function OutlookCalendarIcon({ size = 28 }: IconProps) {
+export function MicrosoftCalendarIcon({ size = 32 }: IconProps) {
   const s = size;
   const uid = useId();
   const gradient1 = `outlook-gradient-1-${uid}`;
@@ -205,7 +205,7 @@ export function OutlookCalendarIcon({ size = 28 }: IconProps) {
   );
 }
 
-export function LinkCalendarIcon({ size = 28 }: IconProps) {
+export function LinkCalendarIcon({ size = 32 }: IconProps) {
   const s = size;
   return (
     <Svg width={s} height={s} viewBox="0 0 48 48" fill="none">
@@ -219,4 +219,24 @@ export function LinkCalendarIcon({ size = 28 }: IconProps) {
       />
     </Svg>
   );
+}
+
+type CalendarProviderIconProps = {
+  provider: string;
+  size?: number;
+};
+
+export function CalendarProviderIcon({ provider, size = 32 }: CalendarProviderIconProps) {
+  switch (provider) {
+    case "google":
+      return <GoogleCalendarIcon size={size} />;
+    case "microsoft":
+      return <MicrosoftCalendarIcon size={size} />;
+    case "ical":
+      return <AppleCalendarIcon size={size} />;
+    case "native":
+      return <AppleCalendarIcon size={size} />;
+    default:
+      return <LinkCalendarIcon size={size} />;
+  }
 }

@@ -5,7 +5,7 @@ import {
   AppleCalendarIcon,
   GoogleCalendarIcon,
   LinkCalendarIcon,
-  OutlookCalendarIcon,
+  MicrosoftCalendarIcon,
 } from "./CalendarProviderIcons";
 
 type ShowcaseProps = {
@@ -16,7 +16,7 @@ function AllProviders({ size }: ShowcaseProps) {
   const providers = [
     { label: "Google Calendar", Icon: GoogleCalendarIcon },
     { label: "Apple Calendar", Icon: AppleCalendarIcon },
-    { label: "Outlook", Icon: OutlookCalendarIcon },
+    { label: "Outlook", Icon: MicrosoftCalendarIcon },
     { label: "iCal URL", Icon: LinkCalendarIcon },
   ];
 
@@ -75,7 +75,7 @@ export const Apple: Story = {
 };
 
 export const Outlook: Story = {
-  render: ({ size }) => <OutlookCalendarIcon size={size} />,
+  render: ({ size }) => <MicrosoftCalendarIcon size={size} />,
 };
 
 export const Link: Story = {

@@ -111,12 +111,14 @@ export default function Diary() {
               textDisabledColor: muted,
               monthTextColor: foreground,
               arrowColor: accent,
+
               textDayFontWeight: "400",
               textMonthFontWeight: "600",
               textDayHeaderFontWeight: "500",
               dotColor: accent,
               selectedDotColor: accentForeground,
             }}
+            arrowsHitSlop={10}
             renderArrow={(direction) =>
               direction === "left" ? (
                 <ChevronLeft style={{ backgroundColor: "red" }} size={24} />

@@ -2,13 +2,23 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { SubCalendar } from "@shared/calendars";
 import { useAction } from "convex/react";
-import { Button, Separator, Spinner, Switch } from "heroui-native";
+import {
+  Button,
+  ControlField,
+  Description,
+  Label,
+  Separator,
+  Spinner,
+  Surface,
+} from "heroui-native";
 import { Fragment, useEffect, useState } from "react";
 import { Text, View } from "react-native";
 
+import { EmptyState } from "../ui/EmptyState";
+
 type Provider = "google" | "microsoft" | "ical" | "native";
 
-export type SubCalendarListProps = {
+type SubCalendarListProps = {
   subCalendars: SubCalendar[] | undefined;
   provider: Provider;
   connectionColor: string;
@@ -65,46 +75,47 @@ export function SubCalendarList({
   }
 
   return (
-    <View className="flex-1">
+    <View className="flex-1 gap-4">
       {subCalendars.length === 0 ? (
-        <View className="px-1 py-4">
-          <Text className="text-sm text-muted-foreground">
-            Your calendar is ready - tap Confirm to start syncing.
-          </Text>
-        </View>
+        <EmptyState size="sm">Your calendar is ready – tap Confirm to start syncing.</EmptyState>
       ) : (
-        <View className="rounded-xl bg-default-100/40 px-3 py-2">
+        <Surface className="gap-3">
           {subCalendars.map((cal, idx) => (
             <Fragment key={cal.id}>
               {idx > 0 && <Separator className="my-1" />}
-              <View className="flex-row items-center gap-3 py-3">
-                <View
-                  className="h-3 w-3 rounded-full"
-                  style={{ backgroundColor: connectionColor }}
-                />
-                <View className="flex-1">
-                  <Text className="text-sm text-foreground" numberOfLines={1}>
-                    {cal.label}
-                  </Text>
-                  {cal.hint != null ? (
-                    <Text className="text-xs text-muted-foreground" numberOfLines={1}>
-                      {cal.hint}
-                    </Text>
-                  ) : null}
+
+              <ControlField
+                hitSlop={10}
+                isSelected={selected.has(cal.id)}
+                onSelectedChange={() => toggle(cal.id)}
+              >
+                <View className="flex-1 flex-row items-center gap-3">
+                  <View
+                    className="size-3 rounded-full"
+                    style={{ backgroundColor: connectionColor }}
+                  />
+                  <View className="flex-1">
+                    <Label>
+                      <Label.Text className="text-sm text-foreground font-normal" numberOfLines={1}>
+                        {cal.label}
+                      </Label.Text>
+                    </Label>
+                    {cal.hint != null ? (
+                      <Description className="text-xs text-muted-foreground" numberOfLines={1}>
+                        {cal.hint}
+                      </Description>
+                    ) : null}
+                  </View>
                 </View>
-                <Switch
-                  isSelected={selected.has(cal.id)}
-                  onSelectedChange={() => toggle(cal.id)}
-                  accessibilityLabel={cal.label}
-                />
-              </View>
+                <ControlField.Indicator accessibilityLabel={cal.label} />
+              </ControlField>
             </Fragment>
           ))}
-        </View>
+        </Surface>
       )}
 
-      <View className="mt-6 flex-row items-center justify-between">
-        <Button variant="tertiary" size="sm" onPress={onBack}>
+      <View className="flex-row items-center justify-between">
+        <Button variant="ghost" size="sm" onPress={onBack}>
           Back
         </Button>
         <Button size="sm" onPress={handleConfirm}>
