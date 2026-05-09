@@ -1,8 +1,8 @@
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { addDays, endOfMonth, format, parseISO, startOfDay } from "date-fns";
-import { useThemeColor } from "heroui-native";
-import { ChevronLeft, ChevronRight, CogIcon } from "lucide-react-native";
+import { Button, useThemeColor } from "heroui-native";
+import { CogIcon } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
@@ -10,6 +10,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CalendarManagementSheet } from "@/components/calendars/CalendarManagementSheet";
+import { DiaryCalendarHeader } from "@/components/calendars/DiaryCalendarHeader";
 import { DiaryEventList } from "@/components/calendars/DiaryEventList";
 
 export default function Diary() {
@@ -111,40 +112,29 @@ export default function Diary() {
               textDisabledColor: muted,
               monthTextColor: foreground,
               arrowColor: accent,
-
               textDayFontWeight: "400",
               textMonthFontWeight: "600",
               textDayHeaderFontWeight: "500",
               dotColor: accent,
               selectedDotColor: accentForeground,
             }}
-            arrowsHitSlop={10}
-            renderArrow={(direction) =>
-              direction === "left" ? (
-                <ChevronLeft style={{ backgroundColor: "red" }} size={24} />
-              ) : (
-                <ChevronRight size={24} />
-              )
-            }
+            customHeader={DiaryCalendarHeader}
             style={{ marginHorizontal: 8 }}
           />
-
-          {hasNoConnections && (
-            <Pressable
-              onPress={() => setIsManagementSheetOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Connect a calendar to see your events"
-              className="mx-4 mt-2 items-center rounded-lg border border-foreground/20 py-3"
-            >
-              <Text className="text-sm text-foreground/60">
-                Connect a calendar to see your events
-              </Text>
-            </Pressable>
-          )}
 
           <View className="mt-4">
             <DiaryEventList events={dayEvents} />
           </View>
+
+          {hasNoConnections && (
+            <Button
+              className="text-sm font-medium"
+              variant="ghost"
+              onPress={() => setIsManagementSheetOpen(true)}
+            >
+              Connect a calendar to see your events
+            </Button>
+          )}
         </View>
       </ScrollView>
 
