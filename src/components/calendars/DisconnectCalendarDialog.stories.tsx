@@ -9,7 +9,7 @@ import { DisconnectCalendarDialog } from "./DisconnectCalendarDialog";
 const decorator = (Story: React.ComponentType) => (
   <GestureHandlerRootView style={{ flex: 1 }}>
     <BottomSheetModalProvider>
-      <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
+      <View>
         <Story />
       </View>
     </BottomSheetModalProvider>
