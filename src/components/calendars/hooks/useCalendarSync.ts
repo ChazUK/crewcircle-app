@@ -1,4 +1,5 @@
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { useAction } from "convex/react";
 import { useState } from "react";
 
@@ -14,19 +15,37 @@ export function useCalendarSync() {
   const syncNowAction = useAction(api.calendars.actions.syncNow);
   const uploadNativeEventsAction = useAction(api.calendars.uploadNativeEvents.uploadNativeEvents);
 
+  const syncNativeConnection = async (
+    connectionId: Id<"calendarConnections">,
+    nativeCalendarIds: string[],
+  ) => {
+    setSyncingIds((prev) => new Set([...prev, connectionId]));
+    try {
+      const syncWindow = {
+        windowStartMs: Date.now() - NATIVE_WINDOW_BACK_MS,
+        windowEndMs: Date.now() + NATIVE_WINDOW_FORWARD_MS,
+      };
+      const events = await fetchNativeEvents(nativeCalendarIds, syncWindow);
+      await uploadNativeEventsAction({ connectionId, events });
+    } catch (err) {
+      console.error("[useCalendarSync] native sync failed", err);
+    } finally {
+      setSyncingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(connectionId);
+        return next;
+      });
+    }
+  };
+
   const syncConnection = async (connection: ConnectionRow) => {
+    if (connection.provider === "native") {
+      await syncNativeConnection(connection._id, connection.nativeCalendarIds ?? []);
+      return;
+    }
     setSyncingIds((prev) => new Set([...prev, connection._id]));
     try {
-      if (connection.provider === "native") {
-        const syncWindow = {
-          windowStartMs: Date.now() - NATIVE_WINDOW_BACK_MS,
-          windowEndMs: Date.now() + NATIVE_WINDOW_FORWARD_MS,
-        };
-        const events = await fetchNativeEvents(connection.nativeCalendarIds ?? [], syncWindow);
-        await uploadNativeEventsAction({ connectionId: connection._id, events });
-      } else {
-        await syncNowAction({ connectionId: connection._id });
-      }
+      await syncNowAction({ connectionId: connection._id });
     } catch (err) {
       console.error("[useCalendarSync] sync failed", err);
     } finally {
@@ -38,5 +57,5 @@ export function useCalendarSync() {
     }
   };
 
-  return { syncingIds, syncConnection };
+  return { syncingIds, syncConnection, syncNativeConnection };
 }

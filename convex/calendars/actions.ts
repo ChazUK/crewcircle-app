@@ -9,6 +9,7 @@ import { requireOwnedConnection } from "./auth/requireOwnedConnection";
 import { normalizeICalUrl } from "./domain/normalizeICalUrl";
 import { validateICalUrl } from "./domain/validateICalUrl";
 import { calendarService } from "./service/registry";
+import { syncAfterConnect } from "./syncAfterConnect";
 import { runSyncWithRetry } from "./syncWithRetry";
 
 export const connectNative = action({
@@ -132,7 +133,16 @@ export const setEnabledSubCalendars = action({
     ),
   },
   handler: async (ctx, args) => {
+    const { connection } = await requireOwnedConnection(ctx, args.connectionId);
     await calendarService.setEnabledSubCalendars(ctx, args.connectionId, args.selections);
+    // Server-pulled providers can sync immediately so the user sees their
+    // picks reflected without waiting for the cron sweep. Native syncs
+    // from the device — the client kicks that off after the picker
+    // confirms, since the server has no access to the device's calendar
+    // store.
+    if (connection.provider !== "native") {
+      await syncAfterConnect(ctx, args.connectionId);
+    }
   },
 });
 

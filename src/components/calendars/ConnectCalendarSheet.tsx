@@ -18,6 +18,7 @@ import { CalendarPermissionDeniedDialog } from "../permissions/CalendarPermissio
 import { CalendarProviderIcon } from "../ui/icons/CalendarProviderIcons";
 import { ICalConnectForm } from "./connect/ICalConnectForm";
 import { ConnectCalendarErrorDialog } from "./ConnectCalendarErrorDialog";
+import { useCalendarSync } from "./hooks/useCalendarSync";
 import { SubCalendarList, SubCalendarPicker } from "./SubCalendarPicker";
 
 type Phase =
@@ -58,6 +59,7 @@ export function ConnectCalendarSheet({ isOpen, onClose }: Props) {
   const connectMicrosoft = useMicrosoftCalendarConnect();
   const connectNative = useNativeCalendarConnect();
   const connectIcal = useAction(api.calendars.actions.connectIcal);
+  const { syncNativeConnection } = useCalendarSync();
 
   const resetToButtons = () => {
     setPhase({ kind: "buttons" });
@@ -148,9 +150,21 @@ export function ConnectCalendarSheet({ isOpen, onClose }: Props) {
     }
   };
 
-  const handlePickerConfirm = async (selected: { externalId: string; label: string }[]) => {
+  const handlePickerConfirm = async (
+    selected: { externalId: string; label: string; color?: string }[],
+  ) => {
     try {
       await confirmSubCalendars(selected);
+      // Native sync runs from the device, not the server — kick it off
+      // here so events appear immediately. Server-pulled providers
+      // (google/microsoft/ical) are synced server-side from inside the
+      // setEnabledSubCalendars action.
+      if (phase.kind === "picking-native") {
+        void syncNativeConnection(
+          phase.connectionId,
+          selected.map((s) => s.externalId),
+        );
+      }
       closeAndReset();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save calendar selection");
