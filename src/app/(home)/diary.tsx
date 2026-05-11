@@ -2,14 +2,15 @@ import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { addDays, endOfMonth, format, parseISO, startOfDay } from "date-fns";
 import { Button, useThemeColor } from "heroui-native";
-import { CogIcon } from "lucide-react-native";
+import { CalendarPlus } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
 import { ScrollView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { CalendarManagementSheet } from "@/components/calendars/CalendarManagementSheet";
+import { CalendarConnectionList } from "@/components/calendars/CalendarConnectionList";
+import { ConnectCalendarSheet } from "@/components/calendars/ConnectCalendarSheet";
 import { DiaryCalendarHeader } from "@/components/calendars/DiaryCalendarHeader";
 import { DiaryEventList } from "@/components/calendars/DiaryEventList";
 
@@ -77,7 +78,7 @@ export default function Diary() {
     mergedMarkedDates[selectedDate] = selectedMarking;
   }
 
-  const hasNoConnections = connections !== undefined && connections.length === 0;
+  const hasConnections = connections && connections?.length > 0;
 
   return (
     <>
@@ -92,7 +93,7 @@ export default function Diary() {
               hitSlop={10}
               className="p-1"
             >
-              <CogIcon />
+              <CalendarPlus />
             </Pressable>
           </View>
 
@@ -126,7 +127,13 @@ export default function Diary() {
             <DiaryEventList events={dayEvents} />
           </View>
 
-          {hasNoConnections && (
+          {hasConnections ? (
+            <CalendarConnectionList
+              connections={connections}
+              onSync={() => {}}
+              onDisconnect={() => {}}
+            />
+          ) : (
             <Button
               className="text-sm font-medium"
               variant="ghost"
@@ -138,7 +145,7 @@ export default function Diary() {
         </View>
       </ScrollView>
 
-      <CalendarManagementSheet
+      <ConnectCalendarSheet
         isOpen={isManagementSheetOpen}
         onClose={() => setIsManagementSheetOpen(false)}
       />

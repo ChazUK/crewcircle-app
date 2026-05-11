@@ -1,8 +1,9 @@
-import type { ActiveStep } from "./CalendarAddSection";
 import { GoogleConnectFlow } from "./connect/GoogleConnectFlow";
 import { ICalConnectFlow } from "./connect/ICalConnectFlow";
 import { MicrosoftConnectFlow } from "./connect/MicrosoftConnectFlow";
 import { NativeConnectFlow } from "./connect/NativeConnectFlow";
+
+export type ActiveStep = "google" | "microsoft" | "ical" | "native";
 
 export function renderConnectFlow(step: ActiveStep, onBack: () => void) {
   switch (step) {
