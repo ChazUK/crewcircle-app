@@ -20,13 +20,13 @@ describe("listNativeSubCalendars", () => {
 
   test("maps device calendars to SubCalendar shape", async () => {
     mockGetCalendars.mockResolvedValue([
-      { id: "cal-1", title: "Personal", type: "local" } as never,
-      { id: "cal-2", title: "Work", type: "caldav" } as never,
+      { id: "cal-1", title: "Personal", type: "local", color: "#FF0000" } as never,
+      { id: "cal-2", title: "Work", type: "caldav", color: "#00FF00" } as never,
     ]);
     const result = await listNativeSubCalendars();
     expect(result).toEqual([
-      { id: "cal-1", label: "Personal", primary: false },
-      { id: "cal-2", label: "Work", primary: false },
+      { id: "cal-1", label: "Personal", primary: false, color: "#FF0000" },
+      { id: "cal-2", label: "Work", primary: false, color: "#00FF00" },
     ]);
   });
 
@@ -36,6 +36,14 @@ describe("listNativeSubCalendars", () => {
     ]);
     const result = await listNativeSubCalendars();
     expect(result[0].primary).toBe(false);
+  });
+
+  test("forwards the device calendar colour", async () => {
+    mockGetCalendars.mockResolvedValue([
+      { id: "cal-1", title: "Personal", color: "#1A2B3C" } as never,
+    ]);
+    const result = await listNativeSubCalendars();
+    expect(result[0].color).toBe("#1A2B3C");
   });
 
   test("requests only event calendars to avoid reminders permission on iOS", async () => {

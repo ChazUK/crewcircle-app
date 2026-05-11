@@ -222,7 +222,7 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
     async setEnabledSubCalendars(
       ctx: ActionCtx,
       connectionId: Id<"calendarConnections">,
-      selections: { externalId: string; label: string }[],
+      selections: { externalId: string; label: string; color?: string }[],
     ): Promise<void> {
       await requireOwnedConnection(ctx, connectionId);
       await ctx.runMutation(internal.calendars.db.setEnabledSubCalendars.setEnabledSubCalendars, {

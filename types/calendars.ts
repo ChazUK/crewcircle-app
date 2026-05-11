@@ -29,6 +29,8 @@ export type SubCalendar = {
   label: string;
   primary: boolean;
   hint?: string;
+  // Hex colour, when the source exposes one (native: per-device-calendar OS colour).
+  color?: string;
 };
 
 export type CalendarProviderCapabilities = {
@@ -145,3 +147,5 @@ export type CalendarProviderRegistry = {
   microsoft: CalendarProvider;
   native: CalendarProvider;
 };
+
+export type CalendarProviderType = "google" | "microsoft" | "ical" | "native";

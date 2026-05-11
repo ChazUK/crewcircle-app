@@ -17,6 +17,10 @@ export const setEnabledSubCalendars = internalMutation({
       v.object({
         externalId: v.string(),
         label: v.string(),
+        // Hex colour from the source (native: device calendar OS colour).
+        // Stored on the inserted calendarSubCalendars row so per-sub-calendar
+        // event dots can render in the source's colour.
+        color: v.optional(v.string()),
       }),
     ),
   },
@@ -47,6 +51,7 @@ export const setEnabledSubCalendars = internalMutation({
           externalId: sel.externalId,
           label: sel.label,
           showAsBusy: true,
+          color: sel.color,
         }),
       ),
       ...toRemove.flatMap((row) => [

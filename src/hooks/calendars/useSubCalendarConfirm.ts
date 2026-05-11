@@ -7,7 +7,7 @@ export function useSubCalendarConfirm(connectionId: Id<"calendarConnections"> | 
   const setEnabled = useAction(api.calendars.actions.setEnabledSubCalendars);
 
   return useCallback(
-    async (selected: { externalId: string; label: string }[]) => {
+    async (selected: { externalId: string; label: string; color?: string }[]) => {
       if (!connectionId) return;
       await setEnabled({ connectionId, selections: selected });
     },

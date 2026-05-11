@@ -7,5 +7,6 @@ export async function listNativeSubCalendars(): Promise<SubCalendar[]> {
     id: cal.id,
     label: cal.title,
     primary: false,
+    color: cal.color,
   }));
 }

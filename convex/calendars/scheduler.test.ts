@@ -1,3 +1,4 @@
+import { CalendarProviderType } from "@shared/calendars";
 /// <reference types="vite/client" />
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -7,8 +8,6 @@ import type { Id } from "../_generated/dataModel";
 import schema from "../schema";
 
 const modules = import.meta.glob("/convex/**/*.ts");
-
-type Provider = "google" | "microsoft" | "ical" | "native";
 
 async function insertUser(t: TestConvex<typeof schema>) {
   return t.run((ctx) =>
@@ -24,7 +23,7 @@ async function insertUser(t: TestConvex<typeof schema>) {
 async function insertConnection(
   t: TestConvex<typeof schema>,
   userId: Id<"users">,
-  provider: Provider,
+  provider: CalendarProviderType,
 ) {
   return t.run((ctx) =>
     ctx.db.insert("calendarConnections", {

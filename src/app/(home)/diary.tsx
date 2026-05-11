@@ -13,6 +13,9 @@ import { CalendarConnectionList } from "@/components/calendars/CalendarConnectio
 import { ConnectCalendarSheet } from "@/components/calendars/ConnectCalendarSheet";
 import { DiaryCalendarHeader } from "@/components/calendars/DiaryCalendarHeader";
 import { DiaryEventList } from "@/components/calendars/DiaryEventList";
+import { DisconnectCalendarDialog } from "@/components/calendars/DisconnectCalendarDialog";
+import { useCalendarSync } from "@/components/calendars/hooks/useCalendarSync";
+import { useDisconnectCalendar } from "@/components/calendars/hooks/useDisconnectCalendar";
 
 export default function Diary() {
   const today = new Date();
@@ -24,6 +27,16 @@ export default function Diary() {
   });
   const [isManagementSheetOpen, setIsManagementSheetOpen] = useState(false);
   const insets = useSafeAreaInsets();
+
+  const { syncingIds, syncConnection } = useCalendarSync();
+  const {
+    pendingId,
+    isDisconnecting,
+    error: disconnectError,
+    requestDisconnect,
+    confirm: confirmDisconnect,
+    cancel: cancelDisconnect,
+  } = useDisconnectCalendar();
 
   const [accent, accentForeground, foreground, muted] = useThemeColor([
     "accent",
@@ -130,8 +143,9 @@ export default function Diary() {
           {hasConnections ? (
             <CalendarConnectionList
               connections={connections}
-              onSync={() => {}}
-              onDisconnect={() => {}}
+              syncingIds={syncingIds}
+              onSync={syncConnection}
+              onDisconnect={requestDisconnect}
             />
           ) : (
             <Button
@@ -148,6 +162,14 @@ export default function Diary() {
       <ConnectCalendarSheet
         isOpen={isManagementSheetOpen}
         onClose={() => setIsManagementSheetOpen(false)}
+      />
+
+      <DisconnectCalendarDialog
+        isOpen={pendingId !== null}
+        isDisconnecting={isDisconnecting}
+        error={disconnectError}
+        onConfirm={confirmDisconnect}
+        onCancel={cancelDisconnect}
       />
     </>
   );

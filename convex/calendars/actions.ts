@@ -123,7 +123,13 @@ export const syncNativeOnOpen = action({
 export const setEnabledSubCalendars = action({
   args: {
     connectionId: v.id("calendarConnections"),
-    selections: v.array(v.object({ externalId: v.string(), label: v.string() })),
+    selections: v.array(
+      v.object({
+        externalId: v.string(),
+        label: v.string(),
+        color: v.optional(v.string()),
+      }),
+    ),
   },
   handler: async (ctx, args) => {
     await calendarService.setEnabledSubCalendars(ctx, args.connectionId, args.selections);

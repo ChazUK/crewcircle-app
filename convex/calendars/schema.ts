@@ -54,6 +54,10 @@ export const CalendarSubCalendar = {
   label: v.string(),
   // Controls future visibility to other CrewCircle users (does not affect the owner's diary)
   showAsBusy: v.boolean(),
+  // Hex colour for events from this sub-calendar. For native, this is the
+  // device calendar's OS colour; for other providers it may be unset and
+  // callers should fall back to the connection's colour.
+  color: v.optional(v.string()),
 };
 
 export const CalendarEvent = {

@@ -1,3 +1,4 @@
+import { CalendarProviderType } from "@shared/calendars";
 /// <reference types="vite/client" />
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
@@ -31,7 +32,7 @@ async function insertConnection(
   overrides: {
     label?: string;
     color?: string;
-    provider?: "google" | "microsoft" | "ical" | "native";
+    provider?: CalendarProviderType;
     encryptedTokens?: ArrayBuffer;
     scope?: string;
     oauthClientId?: string;

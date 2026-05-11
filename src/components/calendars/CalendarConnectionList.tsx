@@ -137,32 +137,34 @@ function CalendarConnectionItem({
 
   return (
     <View className="gap-1">
-      <PressableFeedback
-        className="flex-row items-center gap-3"
-        accessibilityRole="button"
-        onPress={onSync}
-      >
-        <View className="size-7 items-center justify-center">
-          {isSyncing ? (
-            <Spinner size="sm" />
-          ) : (
-            <Fragment>
-              <CalendarProviderIcon provider={provider} size={28} />
-              <View
-                className="size-2 rounded-full absolute -bottom-1 -right-1"
-                style={{ backgroundColor: color }}
-              ></View>
-            </Fragment>
-          )}
-        </View>
-        <View className="flex-1">
-          <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
-            {label}
-          </Text>
-          <Text className="text-xs text-muted" numberOfLines={1}>
-            {syncStatus}
-          </Text>
-        </View>
+      <View className="flex-row items-center gap-3">
+        <PressableFeedback
+          className="flex-1 flex-row items-center gap-3"
+          accessibilityRole="button"
+          onPress={onSync}
+        >
+          <View className="size-7 items-center justify-center">
+            {isSyncing ? (
+              <Spinner size="sm" />
+            ) : (
+              <Fragment>
+                <CalendarProviderIcon provider={provider} size={28} />
+                <View
+                  className="size-2 rounded-full absolute -bottom-1 -right-1"
+                  style={{ backgroundColor: color }}
+                ></View>
+              </Fragment>
+            )}
+          </View>
+          <View className="flex-1">
+            <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
+              {label}
+            </Text>
+            <Text className="text-xs text-muted" numberOfLines={1}>
+              {syncStatus}
+            </Text>
+          </View>
+        </PressableFeedback>
         {SHOW_SWITCH && <Switch isSelected />}
         {BUSY_SWITCH && <Switch isSelected />}
         {DISCONNECT && (
@@ -170,7 +172,7 @@ function CalendarConnectionItem({
             <XIcon size={16} />
           </Button>
         )}
-      </PressableFeedback>
+      </View>
       {syncErrorCount > 3 && (
         <View className="mt-2 rounded-lg bg-danger/10 px-3 py-2">
           <Text className="text-xs font-medium text-danger">Sync error</Text>

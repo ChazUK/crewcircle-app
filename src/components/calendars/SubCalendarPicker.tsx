@@ -1,6 +1,6 @@
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import type { SubCalendar } from "@shared/calendars";
+import type { CalendarProviderType, SubCalendar } from "@shared/calendars";
 import { useAction } from "convex/react";
 import {
   Button,
@@ -16,17 +16,18 @@ import { Text, View } from "react-native";
 
 import { EmptyState } from "../ui/EmptyState";
 
-type Provider = "google" | "microsoft" | "ical" | "native";
-
 type SubCalendarListProps = {
   subCalendars: SubCalendar[] | undefined;
-  provider: Provider;
+  provider: CalendarProviderType;
   connectionColor: string;
-  onConfirm: (selected: { externalId: string; label: string }[]) => void;
+  onConfirm: (selected: { externalId: string; label: string; color?: string }[]) => void;
   onBack: () => void;
 };
 
-function getInitialSelection(subCalendars: SubCalendar[], provider: Provider): Set<string> {
+function getInitialSelection(
+  subCalendars: SubCalendar[],
+  provider: CalendarProviderType,
+): Set<string> {
   if (provider === "google" || provider === "microsoft") {
     const primaryIds = subCalendars.filter((c) => c.primary).map((c) => c.id);
     return new Set(primaryIds.length > 0 ? primaryIds : subCalendars.map((c) => c.id));
@@ -62,7 +63,7 @@ export function SubCalendarList({
     onConfirm(
       subCalendars
         .filter((c) => selected.has(c.id))
-        .map((c) => ({ externalId: c.id, label: c.label })),
+        .map((c) => ({ externalId: c.id, label: c.label, color: c.color })),
     );
   };
 
@@ -92,7 +93,7 @@ export function SubCalendarList({
                 <View className="flex-1 flex-row items-center gap-3">
                   <View
                     className="size-3 rounded-full"
-                    style={{ backgroundColor: connectionColor }}
+                    style={{ backgroundColor: cal.color ?? connectionColor }}
                   />
                   <View className="flex-1">
                     <Label>
@@ -128,9 +129,9 @@ export function SubCalendarList({
 
 type SubCalendarPickerProps = {
   connectionId: Id<"calendarConnections">;
-  provider: Provider;
+  provider: CalendarProviderType;
   connectionColor: string;
-  onConfirm: (selected: { externalId: string; label: string }[]) => void;
+  onConfirm: (selected: { externalId: string; label: string; color?: string }[]) => void;
   onBack: () => void;
 };
 

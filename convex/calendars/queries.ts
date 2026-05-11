@@ -27,11 +27,15 @@ export const getConnections = query({
           .query("calendarSubCalendars")
           .withIndex("byConnection", (q) => q.eq("connectionId", connection._id))
           .collect();
+        const subCalendarColors = subCalendars
+          .map((sc) => sc.color)
+          .filter((c): c is string => c != null);
+
         return {
           _id: connection._id,
           provider: connection.provider,
           label: connection.label,
-          color: connection.color,
+          color: subCalendarColors[0] ?? connection.color,
           lastSyncedAt: connection.lastSyncedAt,
           lastSyncError: connection.lastSyncError,
           syncErrorCount: connection.syncErrorCount,
@@ -70,11 +74,19 @@ async function fetchEventsInRange(
     });
   });
 
+  const uniqueSubCalendarIds = [...new Set(events.map((event) => event.subCalendarId))];
+  const subCalendars = await Promise.all(uniqueSubCalendarIds.map((id) => ctx.db.get(id)));
+  const colorBySubCalendar = new Map<Id<"calendarSubCalendars">, string | undefined>();
+  uniqueSubCalendarIds.forEach((id, index) => {
+    colorBySubCalendar.set(id, subCalendars[index]?.color);
+  });
+
   return events.map((event) => {
     const meta = metaByConnection.get(event.connectionId);
+    const subColor = colorBySubCalendar.get(event.subCalendarId);
     return {
       ...event,
-      color: meta?.color ?? "",
+      color: subColor ?? meta?.color ?? "",
       provider: meta?.provider ?? "",
       connectionLabel: meta?.label ?? "",
     };
