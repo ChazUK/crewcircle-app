@@ -58,6 +58,7 @@ export default function Diary() {
   const dayEvents = useQuery(api.calendars.queries.getEventsForDate, {
     startMs: dayStartMs,
     endMs: dayEndMs,
+    selectedDate,
   });
 
   type Period = { startingDay: boolean; endingDay: boolean; color: string } | { color: string };
