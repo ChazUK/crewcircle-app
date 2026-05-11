@@ -133,38 +133,34 @@ export default function Diary() {
           <CalendarPlus />
         </Pressable>
       </View>
-      <ScrollShadow
-        style={{ flex: 1, paddingBottom: insets.bottom + 16 }}
-        LinearGradientComponent={LinearGradient}
-      >
+      <Calendar
+        current={todayIso}
+        onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
+        onMonthChange={(m: DateData) => setVisibleMonth(new Date(m.year, m.month - 1, 1))}
+        markedDates={mergedMarkedDates}
+        markingType="multi-period"
+        theme={{
+          backgroundColor: "transparent",
+          calendarBackground: "transparent",
+          selectedDayBackgroundColor: accent,
+          selectedDayTextColor: accentForeground,
+          todayTextColor: accent,
+          dayTextColor: foreground,
+          textDisabledColor: muted,
+          monthTextColor: foreground,
+          arrowColor: accent,
+          textDayFontWeight: "400",
+          textMonthFontWeight: "600",
+          textDayHeaderFontWeight: "500",
+          dotColor: accent,
+          selectedDotColor: accentForeground,
+        }}
+        customHeader={DiaryCalendarHeader}
+        style={{ marginHorizontal: 8 }}
+      />
+      <ScrollShadow style={{ flex: 1 }} LinearGradientComponent={LinearGradient}>
         <ScrollView style={{ flex: 1 }}>
-          <View className="flex-1">
-            <Calendar
-              current={todayIso}
-              onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
-              onMonthChange={(m: DateData) => setVisibleMonth(new Date(m.year, m.month - 1, 1))}
-              markedDates={mergedMarkedDates}
-              markingType="multi-period"
-              theme={{
-                backgroundColor: "transparent",
-                calendarBackground: "transparent",
-                selectedDayBackgroundColor: accent,
-                selectedDayTextColor: accentForeground,
-                todayTextColor: accent,
-                dayTextColor: foreground,
-                textDisabledColor: muted,
-                monthTextColor: foreground,
-                arrowColor: accent,
-                textDayFontWeight: "400",
-                textMonthFontWeight: "600",
-                textDayHeaderFontWeight: "500",
-                dotColor: accent,
-                selectedDotColor: accentForeground,
-              }}
-              customHeader={DiaryCalendarHeader}
-              style={{ marginHorizontal: 8 }}
-            />
-
+          <View className="flex-1" style={{ paddingBottom: insets.bottom + 16 }}>
             <View className="flex-1 gap-4 mt-4 mx-4">
               <DiaryEventList events={dayEvents} />
 
