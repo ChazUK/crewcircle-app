@@ -44,6 +44,9 @@ type GoogleCalendarListItem = {
   summary: string;
   summaryOverride?: string;
   primary?: boolean;
+  // Hex colour (e.g. "#9fe1e7") the user picked for this calendar in the
+  // Google Calendar UI. Returned by /users/me/calendarList.
+  backgroundColor?: string;
 };
 
 type GoogleCalendarListResponse = {
@@ -213,6 +216,7 @@ export const GoogleCalendarProvider: CalendarProvider = {
           externalId: item.id,
           label: item.summary,
           showAsBusy: true,
+          color: item.backgroundColor,
         });
       }
     }
@@ -337,6 +341,7 @@ export const GoogleCalendarProvider: CalendarProvider = {
           id: item.id,
           label: item.summaryOverride ?? item.summary,
           primary: item.primary ?? false,
+          color: item.backgroundColor,
         });
       }
 

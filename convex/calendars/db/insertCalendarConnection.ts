@@ -23,6 +23,7 @@ export const insertCalendarConnection = internalMutation({
     blueprint: v.object({
       externalAccountId: v.optional(v.string()),
       icalUrl: v.optional(v.bytes()),
+      icalUrlHash: v.optional(v.string()),
       localCalendarId: v.optional(v.string()),
       scope: v.optional(v.string()),
       oauthClientId: v.optional(v.string()),
@@ -34,10 +35,39 @@ export const insertCalendarConnection = internalMutation({
         externalId: v.string(),
         label: v.string(),
         showAsBusy: v.boolean(),
+        color: v.optional(v.string()),
       }),
     ),
   },
   handler: async (ctx, args): Promise<Id<"calendarConnections">> => {
+    const existing = await ctx.db
+      .query("calendarConnections")
+      .withIndex("byUser", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    if (args.blueprint.externalAccountId != null) {
+      const dupe = existing.find(
+        (c) =>
+          c.provider === args.provider && c.externalAccountId === args.blueprint.externalAccountId,
+      );
+      if (dupe) {
+        throw new Error("CALENDAR_ACCOUNT_ALREADY_CONNECTED");
+      }
+    }
+
+    if (args.provider === "native" && existing.some((c) => c.provider === "native")) {
+      throw new Error("CALENDAR_NATIVE_ALREADY_CONNECTED");
+    }
+
+    if (args.blueprint.icalUrlHash != null) {
+      const dupe = existing.find(
+        (c) => c.provider === "ical" && c.icalUrlHash === args.blueprint.icalUrlHash,
+      );
+      if (dupe) {
+        throw new Error("CALENDAR_ICAL_URL_ALREADY_CONNECTED");
+      }
+    }
+
     const connectionId = await ctx.db.insert("calendarConnections", {
       userId: args.userId,
       provider: args.provider,
@@ -54,6 +84,7 @@ export const insertCalendarConnection = internalMutation({
           externalId: sub.externalId,
           label: sub.label,
           showAsBusy: sub.showAsBusy,
+          color: sub.color,
         }),
       ),
     );

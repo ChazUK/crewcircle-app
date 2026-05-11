@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 
-import { internal } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { action } from "../_generated/server";
 import { requireOwnedConnection } from "./auth/requireOwnedConnection";
@@ -17,7 +17,20 @@ export const connectNative = action({
   handler: async (
     ctx,
     args,
-  ): Promise<{ connectionId: Id<"calendarConnections">; color: string }> => {
+  ): Promise<{
+    connectionId: Id<"calendarConnections">;
+    color: string;
+    currentExternalIds: string[];
+  }> => {
+    const all = await ctx.runQuery(api.calendars.queries.getConnections, {});
+    const existing = all.find((c) => c.provider === "native");
+    if (existing) {
+      return {
+        connectionId: existing._id,
+        color: existing.color,
+        currentExternalIds: existing.nativeCalendarIds ?? [],
+      };
+    }
     const connectionId: Id<"calendarConnections"> = await calendarService.connect(ctx, {
       provider: "native",
       deviceCalendarId: "",
@@ -27,7 +40,11 @@ export const connectNative = action({
       internal.calendars.db.getConnectionInternal.getConnectionInternal,
       { connectionId },
     );
-    return { connectionId, color: connection?.color ?? "#6366f1" };
+    return {
+      connectionId,
+      color: connection?.color ?? "#6366f1",
+      currentExternalIds: [],
+    };
   },
 });
 
@@ -135,11 +152,6 @@ export const setEnabledSubCalendars = action({
   handler: async (ctx, args) => {
     const { connection } = await requireOwnedConnection(ctx, args.connectionId);
     await calendarService.setEnabledSubCalendars(ctx, args.connectionId, args.selections);
-    // Server-pulled providers can sync immediately so the user sees their
-    // picks reflected without waiting for the cron sweep. Native syncs
-    // from the device — the client kicks that off after the picker
-    // confirms, since the server has no access to the device's calendar
-    // store.
     if (connection.provider !== "native") {
       await syncAfterConnect(ctx, args.connectionId);
     }

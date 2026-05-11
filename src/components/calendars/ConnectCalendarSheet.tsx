@@ -35,6 +35,7 @@ type Phase =
       connectionId: Id<"calendarConnections">;
       color: string;
       subCalendars: SubCalendar[];
+      initialExternalIds: string[];
     }
   | { kind: "ical-form" }
   | { kind: "ical-submitting" };
@@ -130,6 +131,7 @@ export function ConnectCalendarSheet({ isOpen, onClose }: Props) {
       connectionId: result.connectionId,
       color: result.color,
       subCalendars: result.subCalendars,
+      initialExternalIds: result.currentExternalIds,
     });
   };
 
@@ -141,7 +143,9 @@ export function ConnectCalendarSheet({ isOpen, onClose }: Props) {
       closeAndReset();
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
-      if (message.includes("ICAL_UNREACHABLE")) {
+      if (message.includes("CALENDAR_ICAL_URL_ALREADY_CONNECTED")) {
+        setUrlError("This calendar is already connected.");
+      } else if (message.includes("ICAL_UNREACHABLE")) {
         setUrlError("We couldn't reach this URL. Please check it and try again.");
       } else {
         setUrlError("This URL doesn't appear to be a valid iCal feed.");
@@ -238,6 +242,7 @@ export function ConnectCalendarSheet({ isOpen, onClose }: Props) {
                       subCalendars={phase.subCalendars}
                       provider="native"
                       connectionColor={phase.color}
+                      initialExternalIds={phase.initialExternalIds}
                       onConfirm={handlePickerConfirm}
                       onBack={resetToButtons}
                     />

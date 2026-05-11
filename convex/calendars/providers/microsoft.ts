@@ -43,7 +43,15 @@ type MicrosoftCalendarItem = {
   id: string;
   name: string;
   isDefaultCalendar: boolean;
+  // Hex colour (e.g. "#7e8aab") the user picked in Outlook. Empty string
+  // when the calendar uses the "auto" theme — treat as undefined.
+  hexColor?: string;
 };
+
+function normaliseHexColor(hex: string | undefined): string | undefined {
+  if (hex == null || hex === "") return undefined;
+  return hex;
+}
 
 type MicrosoftCalendarListResponse = {
   value?: MicrosoftCalendarItem[];
@@ -201,6 +209,7 @@ export const MicrosoftCalendarProvider: CalendarProvider = {
           externalId: item.id,
           label: item.name,
           showAsBusy: true,
+          color: normaliseHexColor(item.hexColor),
         });
       }
       nextUrl = calData["@odata.nextLink"];
@@ -318,6 +327,7 @@ export const MicrosoftCalendarProvider: CalendarProvider = {
           id: item.id,
           label: item.name,
           primary: item.isDefaultCalendar,
+          color: normaliseHexColor(item.hexColor),
         });
       }
 

@@ -18,6 +18,7 @@ import { internal } from "../../_generated/api";
 import type { Doc } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import { decryptJson, encryptJson } from "../domain/crypto";
+import { hashICalUrl } from "../domain/hashICalUrl";
 import { convertICalEvent } from "./convertICalEvent";
 
 export const icalCapabilities: CalendarProviderCapabilities = {
@@ -97,10 +98,14 @@ export const ICalProvider: CalendarProvider = {
     if (params.provider !== "ical") {
       throw new Error("ICalProvider.connect called with non-iCal params");
     }
-    const encryptedUrl = await encryptJson(params.url);
+    const [encryptedUrl, icalUrlHash] = await Promise.all([
+      encryptJson(params.url),
+      hashICalUrl(params.url),
+    ]);
     return {
       connection: {
         icalUrl: encryptedUrl,
+        icalUrlHash,
       },
       subCalendars: [
         {

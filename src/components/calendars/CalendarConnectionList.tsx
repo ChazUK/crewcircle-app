@@ -59,7 +59,6 @@ export function CalendarConnectionList({ connections, syncingIds, onSync, onDisc
     <Accordion
       selectionMode="single"
       variant="surface"
-      defaultValue={["1"]}
       classNames={{
         container: "bg-secondary",
       }}

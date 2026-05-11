@@ -20,6 +20,7 @@ type SubCalendarListProps = {
   subCalendars: SubCalendar[] | undefined;
   provider: CalendarProviderType;
   connectionColor: string;
+  initialExternalIds?: string[];
   onConfirm: (selected: { externalId: string; label: string; color?: string }[]) => void;
   onBack: () => void;
 };
@@ -27,7 +28,11 @@ type SubCalendarListProps = {
 function getInitialSelection(
   subCalendars: SubCalendar[],
   provider: CalendarProviderType,
+  initialExternalIds: string[] | undefined,
 ): Set<string> {
+  if (initialExternalIds !== undefined) {
+    return new Set(initialExternalIds.filter((id) => subCalendars.some((c) => c.id === id)));
+  }
   if (provider === "google" || provider === "microsoft") {
     const primaryIds = subCalendars.filter((c) => c.primary).map((c) => c.id);
     return new Set(primaryIds.length > 0 ? primaryIds : subCalendars.map((c) => c.id));
@@ -39,6 +44,7 @@ export function SubCalendarList({
   subCalendars,
   provider,
   connectionColor,
+  initialExternalIds,
   onConfirm,
   onBack,
 }: SubCalendarListProps) {
@@ -46,8 +52,8 @@ export function SubCalendarList({
 
   useEffect(() => {
     if (!subCalendars) return;
-    setSelected(getInitialSelection(subCalendars, provider));
-  }, [subCalendars, provider]);
+    setSelected(getInitialSelection(subCalendars, provider, initialExternalIds));
+  }, [subCalendars, provider, initialExternalIds]);
 
   const toggle = (id: string) => {
     setSelected((prev) => {

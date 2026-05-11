@@ -17,6 +17,7 @@ import type * as calendars_db_getSubCalendarsForConnection from "../calendars/db
 import type * as calendars_db_incrementSyncError from "../calendars/db/incrementSyncError.js";
 import type * as calendars_db_insertCalendarConnection from "../calendars/db/insertCalendarConnection.js";
 import type * as calendars_db_markConnectionSynced from "../calendars/db/markConnectionSynced.js";
+import type * as calendars_db_refreshSubCalendarColors from "../calendars/db/refreshSubCalendarColors.js";
 import type * as calendars_db_setEnabledSubCalendars from "../calendars/db/setEnabledSubCalendars.js";
 import type * as calendars_db_updateICalMeta from "../calendars/db/updateICalMeta.js";
 import type * as calendars_db_updateTokensIfNonce from "../calendars/db/updateTokensIfNonce.js";
@@ -26,6 +27,7 @@ import type * as calendars_domain_crypto from "../calendars/domain/crypto.js";
 import type * as calendars_domain_expandRecurrence from "../calendars/domain/expandRecurrence.js";
 import type * as calendars_domain_filterSubCalendars from "../calendars/domain/filterSubCalendars.js";
 import type * as calendars_domain_getConnectionColoursForUser from "../calendars/domain/getConnectionColoursForUser.js";
+import type * as calendars_domain_hashICalUrl from "../calendars/domain/hashICalUrl.js";
 import type * as calendars_domain_isSecureUrl from "../calendars/domain/isSecureUrl.js";
 import type * as calendars_domain_normalizeICalUrl from "../calendars/domain/normalizeICalUrl.js";
 import type * as calendars_domain_validateICalUrl from "../calendars/domain/validateICalUrl.js";
@@ -77,6 +79,7 @@ declare const fullApi: ApiFromModules<{
   "calendars/db/incrementSyncError": typeof calendars_db_incrementSyncError;
   "calendars/db/insertCalendarConnection": typeof calendars_db_insertCalendarConnection;
   "calendars/db/markConnectionSynced": typeof calendars_db_markConnectionSynced;
+  "calendars/db/refreshSubCalendarColors": typeof calendars_db_refreshSubCalendarColors;
   "calendars/db/setEnabledSubCalendars": typeof calendars_db_setEnabledSubCalendars;
   "calendars/db/updateICalMeta": typeof calendars_db_updateICalMeta;
   "calendars/db/updateTokensIfNonce": typeof calendars_db_updateTokensIfNonce;
@@ -86,6 +89,7 @@ declare const fullApi: ApiFromModules<{
   "calendars/domain/expandRecurrence": typeof calendars_domain_expandRecurrence;
   "calendars/domain/filterSubCalendars": typeof calendars_domain_filterSubCalendars;
   "calendars/domain/getConnectionColoursForUser": typeof calendars_domain_getConnectionColoursForUser;
+  "calendars/domain/hashICalUrl": typeof calendars_domain_hashICalUrl;
   "calendars/domain/isSecureUrl": typeof calendars_domain_isSecureUrl;
   "calendars/domain/normalizeICalUrl": typeof calendars_domain_normalizeICalUrl;
   "calendars/domain/validateICalUrl": typeof calendars_domain_validateICalUrl;

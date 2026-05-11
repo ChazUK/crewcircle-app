@@ -13,6 +13,7 @@ export type NativeConnectResult =
       connectionId: Id<"calendarConnections">;
       color: string;
       subCalendars: SubCalendar[];
+      currentExternalIds: string[];
     }
   | { ok: false; permissionDenied: true }
   | { ok: false; permissionDenied: false; error: string };
@@ -36,6 +37,7 @@ export function useNativeCalendarConnect() {
         connectionId: result.connectionId,
         color: result.color,
         subCalendars,
+        currentExternalIds: result.currentExternalIds,
       };
     } catch (err) {
       return {

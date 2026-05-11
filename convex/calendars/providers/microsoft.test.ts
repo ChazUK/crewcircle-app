@@ -1058,6 +1058,41 @@ describe("MicrosoftCalendarProvider.listSubCalendars", () => {
     expect(result).toEqual([]);
   });
 
+  test("forwards hexColor as the SubCalendar colour and drops empty-string auto theme", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t);
+    const encryptedTokens = await encryptJson({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      tokenType: "Bearer",
+    });
+    const connectionId = await insertConnection(t, userId, {
+      encryptedTokens,
+      tokenExpiresAt: Date.now() + 3_600_000,
+    });
+    const connection = await t.run((ctx) => ctx.db.get(connectionId));
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [
+            { id: "cal-1", name: "Work", isDefaultCalendar: true, hexColor: "#7e8aab" },
+            { id: "cal-2", name: "Auto", isDefaultCalendar: false, hexColor: "" },
+          ],
+        }),
+      }),
+    );
+
+    const result = await t.action((ctx) =>
+      MicrosoftCalendarProvider.listSubCalendars!(ctx, connection!),
+    );
+
+    expect(result[0].color).toBe("#7e8aab");
+    expect(result[1].color).toBeUndefined();
+  });
+
   test("throws auth error when oauthClientId is missing", async () => {
     const t = convexTest(schema, modules);
     const userId = await insertUser(t);

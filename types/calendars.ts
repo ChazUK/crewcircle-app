@@ -29,7 +29,6 @@ export type SubCalendar = {
   label: string;
   primary: boolean;
   hint?: string;
-  // Hex colour, when the source exposes one (native: per-device-calendar OS colour).
   color?: string;
 };
 
@@ -99,6 +98,7 @@ export type CalendarConnectContext = {
 export type CalendarConnectionBlueprint = {
   externalAccountId?: string;
   icalUrl?: ArrayBuffer;
+  icalUrlHash?: string;
   localCalendarId?: string;
   scope?: string;
   oauthClientId?: string;
@@ -114,6 +114,7 @@ export type SubCalendarBlueprint = {
   externalId: string;
   label: string;
   showAsBusy: boolean;
+  color?: string;
 };
 
 // What provider.connect returns: the full state needed to install a

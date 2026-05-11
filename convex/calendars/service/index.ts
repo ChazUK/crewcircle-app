@@ -123,6 +123,21 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
       const window = currentSyncWindow();
       const incoming = await provider.fetchEvents(ctx, connection, window);
 
+      if (provider.capabilities.hasSubCalendars && provider.listSubCalendars) {
+        try {
+          const fresh = await provider.listSubCalendars(ctx, connection);
+          await ctx.runMutation(
+            internal.calendars.db.refreshSubCalendarColors.refreshSubCalendarColors,
+            {
+              connectionId,
+              updates: fresh.map((sc) => ({ externalId: sc.id, color: sc.color })),
+            },
+          );
+        } catch (err) {
+          console.warn("[service.sync] sub-calendar colour refresh failed", err);
+        }
+      }
+
       // Hoist Sub-Calendar resolution out of the per-group loop — one
       // runQuery up front, then in-memory lookup. Sub-Calendar counts
       // per connection are small (<20), so the full collect is cheap.

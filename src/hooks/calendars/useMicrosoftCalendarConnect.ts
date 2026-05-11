@@ -57,10 +57,18 @@ export function useMicrosoftCalendarConnect() {
       });
       return { ok: true, connectionId: result.connectionId, color: result.color };
     } catch (err) {
+      const raw = err instanceof Error ? err.message : "";
+      if (raw.includes("CALENDAR_ACCOUNT_ALREADY_CONNECTED")) {
+        return {
+          ok: false,
+          cancelled: false,
+          error: "This Microsoft account is already connected.",
+        };
+      }
       return {
         ok: false,
         cancelled: false,
-        error: err instanceof Error ? err.message : "Connection failed",
+        error: raw || "Connection failed",
       };
     }
   }, [connectMicrosoft]);

@@ -136,26 +136,26 @@ export default function Diary() {
             style={{ marginHorizontal: 8 }}
           />
 
-          <View className="mt-4">
+          <View className="flex-1 gap-4 mt-4 mx-4">
             <DiaryEventList events={dayEvents} />
-          </View>
 
-          {hasConnections ? (
-            <CalendarConnectionList
-              connections={connections}
-              syncingIds={syncingIds}
-              onSync={syncConnection}
-              onDisconnect={requestDisconnect}
-            />
-          ) : (
-            <Button
-              className="text-sm font-medium"
-              variant="ghost"
-              onPress={() => setIsManagementSheetOpen(true)}
-            >
-              Connect a calendar to see your events
-            </Button>
-          )}
+            {hasConnections ? (
+              <CalendarConnectionList
+                connections={connections}
+                syncingIds={syncingIds}
+                onSync={syncConnection}
+                onDisconnect={requestDisconnect}
+              />
+            ) : (
+              <Button
+                className="text-sm font-medium"
+                variant="ghost"
+                onPress={() => setIsManagementSheetOpen(true)}
+              >
+                Connect a calendar to see your events
+              </Button>
+            )}
+          </View>
         </View>
       </ScrollView>
 

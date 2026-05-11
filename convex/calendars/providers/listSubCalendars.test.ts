@@ -63,6 +63,7 @@ function makeCalendarListResponse(
     summary: string;
     summaryOverride?: string;
     primary?: boolean;
+    backgroundColor?: string;
   }>,
   nextPageToken?: string,
 ) {
@@ -188,6 +189,36 @@ describe("GoogleCalendarProvider.listSubCalendars", () => {
 
     const calledUrl = vi.mocked(fetch).mock.calls[0][0] as string;
     expect(calledUrl).not.toContain("minAccessRole");
+  });
+
+  test("forwards backgroundColor as the SubCalendar colour when present", async () => {
+    const { GoogleCalendarProvider } = await import("./google");
+    const ctx = makeCtx();
+    const conn = makeConnection();
+
+    vi.mocked(fetch).mockResolvedValueOnce(
+      makeCalendarListResponse([
+        { id: "work@example.com", summary: "Work", backgroundColor: "#9fe1e7" },
+      ]),
+    );
+
+    const result = await GoogleCalendarProvider.listSubCalendars!(ctx, conn);
+
+    expect(result[0].color).toBe("#9fe1e7");
+  });
+
+  test("leaves color undefined when Google omits backgroundColor", async () => {
+    const { GoogleCalendarProvider } = await import("./google");
+    const ctx = makeCtx();
+    const conn = makeConnection();
+
+    vi.mocked(fetch).mockResolvedValueOnce(
+      makeCalendarListResponse([{ id: "work@example.com", summary: "Work" }]),
+    );
+
+    const result = await GoogleCalendarProvider.listSubCalendars!(ctx, conn);
+
+    expect(result[0].color).toBeUndefined();
   });
 
   test("throws an auth error when Google API returns a non-ok status", async () => {
