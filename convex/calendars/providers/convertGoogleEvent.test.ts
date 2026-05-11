@@ -84,6 +84,38 @@ describe("convertGoogleEvent", () => {
     expect(result?.endsAt).toBe(Date.UTC(2025, 5, 2, 0, 0, 0));
   });
 
+  test("emits startDate and inclusive endDate for single-day all-day events", () => {
+    const result = convertGoogleEvent(
+      makeEvent({
+        start: { date: "2025-06-01" },
+        end: { date: "2025-06-02" },
+      }),
+      CAL_ID,
+    );
+    expect(result?.startDate).toBe("2025-06-01");
+    expect(result?.endDate).toBe("2025-06-01");
+    expect(result?.originalTimezone).toBeUndefined();
+  });
+
+  test("emits inclusive endDate for multi-day all-day events", () => {
+    const result = convertGoogleEvent(
+      makeEvent({
+        start: { date: "2025-06-01" },
+        end: { date: "2025-06-04" },
+      }),
+      CAL_ID,
+    );
+    expect(result?.startDate).toBe("2025-06-01");
+    expect(result?.endDate).toBe("2025-06-03");
+  });
+
+  test("does not emit startDate/endDate for timed events", () => {
+    const result = convertGoogleEvent(makeEvent(), CAL_ID);
+    expect(result?.startDate).toBeUndefined();
+    expect(result?.endDate).toBeUndefined();
+    expect(result?.originalTimezone).toBe("UTC");
+  });
+
   test("returns cancelled event with status='cancelled'", () => {
     const result = convertGoogleEvent(makeEvent({ status: "cancelled" }), CAL_ID);
     expect(result).not.toBeNull();

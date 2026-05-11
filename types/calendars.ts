@@ -14,6 +14,10 @@ export type IncomingEvent = {
   startsAt: number;
   endsAt: number;
   isAllDay: boolean;
+  // Set when isAllDay=true. Date-valued strings ("yyyy-MM-dd"); endDate is
+  // inclusive. Source of truth for all-day display.
+  startDate?: string;
+  endDate?: string;
   originalTimezone?: string;
   // RFC 5545 RRULE string for recurring events. Consumed by the sync
   // pipeline (expandRecurrence) and stripped before persistence — the

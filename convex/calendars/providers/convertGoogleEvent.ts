@@ -1,5 +1,7 @@
 import type { IncomingEvent } from "@shared/calendars";
 
+import { previousDay } from "./previousDay";
+
 export type GoogleEventDate = {
   dateTime?: string;
   date?: string;
@@ -36,6 +38,8 @@ export function convertGoogleEvent(
 
   const externalId = `${calendarId}::${event.id}`;
   const isAllDay = event.start.date !== undefined && event.start.dateTime === undefined;
+  const startDate = isAllDay ? event.start.date : undefined;
+  const endDate = isAllDay && event.end.date ? previousDay(event.end.date) : undefined;
 
   if (event.status === "cancelled") {
     return {
@@ -45,6 +49,8 @@ export function convertGoogleEvent(
       startsAt: toMs(event.start),
       endsAt: toMs(event.end),
       isAllDay,
+      startDate,
+      endDate,
       status: "cancelled",
     };
   }
@@ -58,7 +64,9 @@ export function convertGoogleEvent(
     startsAt: toMs(event.start),
     endsAt: toMs(event.end),
     isAllDay,
-    originalTimezone: event.start.timeZone,
+    startDate,
+    endDate,
+    originalTimezone: isAllDay ? undefined : event.start.timeZone,
     status: "confirmed",
   };
 }

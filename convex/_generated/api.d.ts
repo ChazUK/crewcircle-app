@@ -39,6 +39,7 @@ import type * as calendars_providers_ical from "../calendars/providers/ical.js";
 import type * as calendars_providers_microsoft from "../calendars/providers/microsoft.js";
 import type * as calendars_providers_native from "../calendars/providers/native.js";
 import type * as calendars_providers_parseGraphDateTimeAsUtc from "../calendars/providers/parseGraphDateTimeAsUtc.js";
+import type * as calendars_providers_previousDay from "../calendars/providers/previousDay.js";
 import type * as calendars_queries from "../calendars/queries.js";
 import type * as calendars_scheduler from "../calendars/scheduler.js";
 import type * as calendars_service_index from "../calendars/service/index.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   "calendars/providers/microsoft": typeof calendars_providers_microsoft;
   "calendars/providers/native": typeof calendars_providers_native;
   "calendars/providers/parseGraphDateTimeAsUtc": typeof calendars_providers_parseGraphDateTimeAsUtc;
+  "calendars/providers/previousDay": typeof calendars_providers_previousDay;
   "calendars/queries": typeof calendars_queries;
   "calendars/scheduler": typeof calendars_scheduler;
   "calendars/service/index": typeof calendars_service_index;

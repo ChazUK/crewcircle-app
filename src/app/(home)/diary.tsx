@@ -68,16 +68,22 @@ export default function Diary() {
     const slotEndKey: string[] = [];
 
     for (const event of sorted) {
-      const startDate = startOfDay(new Date(event.startsAt));
-      const endDate = startOfDay(new Date(event.endsAt - 1));
-      const startKey = format(startDate, "yyyy-MM-dd");
-      const endKey = format(endDate, "yyyy-MM-dd");
+      // All-day events: trust the persisted date strings (timezone-agnostic).
+      // Timed events: format the epoch ms in the viewer's local zone.
+      const startKey =
+        event.isAllDay && event.startDate
+          ? event.startDate
+          : format(startOfDay(new Date(event.startsAt)), "yyyy-MM-dd");
+      const endKey =
+        event.isAllDay && event.endDate
+          ? event.endDate
+          : format(startOfDay(new Date(event.endsAt - 1)), "yyyy-MM-dd");
 
       let slot = slotEndKey.findIndex((end) => end < startKey);
       if (slot === -1) slot = slotEndKey.length;
       slotEndKey[slot] = endKey;
 
-      let cursor = startDate;
+      let cursor = parseISO(startKey);
       while (format(cursor, "yyyy-MM-dd") <= endKey) {
         const key = format(cursor, "yyyy-MM-dd");
         const arr = periodsByDate[key] ?? [];

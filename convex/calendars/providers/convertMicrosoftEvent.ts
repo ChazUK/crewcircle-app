@@ -1,6 +1,7 @@
 import type { IncomingEvent } from "@shared/calendars";
 
 import { parseGraphDateTimeAsUtc } from "./parseGraphDateTimeAsUtc";
+import { previousDay } from "./previousDay";
 
 type MicrosoftEventDate = {
   dateTime: string;
@@ -51,6 +52,13 @@ export function convertMicrosoftEvent(
   const endsAt = event.end?.dateTime ? parseGraphDateTimeAsUtc(event.end.dateTime) : 0;
   const isAllDay = event.isAllDay ?? false;
 
+  // Graph sends all-day events as midnight-UTC dateTimes with timeZone "UTC".
+  // Slice the date portion for startDate; end.dateTime is exclusive, so step back one day.
+  const startDate =
+    isAllDay && event.start?.dateTime ? event.start.dateTime.slice(0, 10) : undefined;
+  const endDate =
+    isAllDay && event.end?.dateTime ? previousDay(event.end.dateTime.slice(0, 10)) : undefined;
+
   return {
     externalId,
     subCalendarId: calendarId,
@@ -60,7 +68,9 @@ export function convertMicrosoftEvent(
     startsAt,
     endsAt,
     isAllDay,
-    originalTimezone: event.start?.timeZone,
+    startDate,
+    endDate,
+    originalTimezone: isAllDay ? undefined : event.start?.timeZone,
     status: "confirmed",
   };
 }

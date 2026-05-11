@@ -48,19 +48,7 @@ export const getConnections = query({
   },
 });
 
-async function fetchEventsInRange(
-  ctx: QueryCtx,
-  userId: Id<"users">,
-  startMs: number,
-  endMs: number,
-) {
-  const events = await ctx.db
-    .query("calendarEvents")
-    .withIndex("byUserStartsAt", (q) =>
-      q.eq("userId", userId).gte("startsAt", startMs).lt("startsAt", endMs),
-    )
-    .collect();
-
+async function enrichEvents(ctx: QueryCtx, events: Doc<"calendarEvents">[]) {
   const uniqueConnectionIds = [...new Set(events.map((event) => event.connectionId))];
   const connections = await Promise.all(uniqueConnectionIds.map((id) => ctx.db.get(id)));
   type ConnectionMeta = { color: string; provider: string; label: string };
@@ -93,20 +81,51 @@ async function fetchEventsInRange(
   });
 }
 
+async function fetchEventsOverlapping(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  startMs: number,
+  endMs: number,
+) {
+  // An event overlaps [startMs, endMs) iff endsAt > startMs AND startsAt < endMs.
+  // We index on endsAt to bound the scan: anything whose endsAt is below
+  // startMs has already finished and can be skipped via the index.
+  const candidates = await ctx.db
+    .query("calendarEvents")
+    .withIndex("byUserEndsAt", (q) => q.eq("userId", userId).gt("endsAt", startMs))
+    .collect();
+  const overlapping = candidates.filter((event) => event.startsAt < endMs);
+  return enrichEvents(ctx, overlapping);
+}
+
 export const getEventsForDateRange = query({
   args: { startMs: v.number(), endMs: v.number() },
   handler: async (ctx, { startMs, endMs }) => {
     const user = await requireUser(ctx);
-    return fetchEventsInRange(ctx, user._id, startMs, endMs);
+    return fetchEventsOverlapping(ctx, user._id, startMs, endMs);
   },
 });
 
 export const getEventsForDate = query({
-  args: { startMs: v.number(), endMs: v.number() },
-  handler: async (ctx, { startMs, endMs }) => {
+  args: {
+    // Local-tz bounds of the selected day, used for timed-event overlap.
+    startMs: v.number(),
+    endMs: v.number(),
+    // "yyyy-MM-dd" of the selected day, compared against persisted
+    // startDate/endDate strings — keeps all-day events timezone-agnostic.
+    selectedDate: v.string(),
+  },
+  handler: async (ctx, { startMs, endMs, selectedDate }) => {
     const user = await requireUser(ctx);
-    const events = await fetchEventsInRange(ctx, user._id, startMs, endMs);
-    return events.sort((a, b) => {
+    const overlapping = await fetchEventsOverlapping(ctx, user._id, startMs, endMs);
+
+    const filtered = overlapping.filter((event) => {
+      if (!event.isAllDay) return true;
+      if (!event.startDate || !event.endDate) return false;
+      return event.startDate <= selectedDate && event.endDate >= selectedDate;
+    });
+
+    return filtered.sort((a, b) => {
       if (a.isAllDay !== b.isAllDay) return a.isAllDay ? -1 : 1;
       return a.startsAt - b.startsAt;
     });

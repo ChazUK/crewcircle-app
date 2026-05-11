@@ -15,6 +15,8 @@ const incomingEventValidator = v.object({
   startsAt: v.number(),
   endsAt: v.number(),
   isAllDay: v.boolean(),
+  startDate: v.optional(v.string()),
+  endDate: v.optional(v.string()),
   originalTimezone: v.optional(v.string()),
 });
 
@@ -72,6 +74,8 @@ export const uploadNativeEvents = action({
             startsAt: e.startsAt,
             endsAt: e.endsAt,
             isAllDay: e.isAllDay,
+            startDate: e.startDate,
+            endDate: e.endDate,
             originalTimezone: e.originalTimezone,
           })),
           pruneAllowlist,

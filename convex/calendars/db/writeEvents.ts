@@ -15,6 +15,8 @@ const incomingEventValidator = v.object({
   startsAt: v.number(),
   endsAt: v.number(),
   isAllDay: v.boolean(),
+  startDate: v.optional(v.string()),
+  endDate: v.optional(v.string()),
   originalTimezone: v.optional(v.string()),
 });
 
@@ -50,6 +52,12 @@ export const writeEvents = internalMutation({
     const now = Date.now();
 
     for (const event of args.events) {
+      if (event.isAllDay && (!event.startDate || !event.endDate)) {
+        throw new Error(
+          `writeEvents: all-day event ${event.externalId} is missing startDate/endDate`,
+        );
+      }
+
       const existing = await ctx.db
         .query("calendarEvents")
         .withIndex("byConnectionExternal", (q) =>
@@ -70,6 +78,9 @@ export const writeEvents = internalMutation({
         startsAt: event.startsAt,
         endsAt: event.endsAt,
         isAllDay: event.isAllDay,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        originalTimezone: event.originalTimezone,
         updatedAt: now,
       };
 

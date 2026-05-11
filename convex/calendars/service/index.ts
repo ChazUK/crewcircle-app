@@ -37,6 +37,8 @@ function toWriteEventsShape(event: IncomingEvent) {
     startsAt: event.startsAt,
     endsAt: event.endsAt,
     isAllDay: event.isAllDay,
+    startDate: event.startDate,
+    endDate: event.endDate,
     originalTimezone: event.originalTimezone,
   };
 }

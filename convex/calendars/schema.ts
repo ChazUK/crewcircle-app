@@ -79,10 +79,20 @@ export const CalendarEvent = {
   title: v.string(),
   description: v.optional(v.string()),
   location: v.optional(v.string()),
-  // Unix ms, UTC
+  // Unix ms, UTC. For all-day events these are UTC-midnight bookends and
+  // exist only to keep `byUserStartsAt` usable for range queries — display
+  // code must read `startDate`/`endDate` instead so timezone changes don't
+  // shift the rendered day.
   startsAt: v.number(),
   endsAt: v.number(),
   isAllDay: v.boolean(),
+  // Set when isAllDay=true. Date-valued, format "yyyy-MM-dd". endDate is
+  // the inclusive last day (unlike provider APIs which use an exclusive end).
+  startDate: v.optional(v.string()),
+  endDate: v.optional(v.string()),
+  // IANA timezone for timed events when the provider supplies one
+  // (Google start.timeZone, Microsoft start.timeZone, iCal TZID).
+  originalTimezone: v.optional(v.string()),
   updatedAt: v.number(),
 };
 
@@ -93,5 +103,10 @@ export const calendarsSchema = {
     .index("byConnection", ["connectionId"])
     .index("byConnectionExternal", ["connectionId", "externalId"])
     .index("bySubCalendar", ["subCalendarId"])
-    .index("byUserStartsAt", ["userId", "startsAt"]),
+    .index("byUserStartsAt", ["userId", "startsAt"])
+    // Overlap queries lead with endsAt so we can fetch every event that
+    // hasn't ended by the window start in a single bounded scan, then
+    // filter on startsAt in memory. Avoids an open-ended startsAt scan
+    // when looking for events that began before the window.
+    .index("byUserEndsAt", ["userId", "endsAt"]),
 };

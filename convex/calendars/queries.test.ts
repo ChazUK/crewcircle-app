@@ -87,6 +87,8 @@ async function insertEvent(
     startsAt: number;
     endsAt?: number;
     isAllDay?: boolean;
+    startDate?: string;
+    endDate?: string;
   },
 ) {
   return t.run((ctx) =>
@@ -99,6 +101,8 @@ async function insertEvent(
       startsAt: args.startsAt,
       endsAt: args.endsAt ?? args.startsAt + 60 * 60 * 1000,
       isAllDay: args.isAllDay ?? false,
+      startDate: args.startDate,
+      endDate: args.endDate,
       updatedAt: Date.now(),
     }),
   );
@@ -217,7 +221,7 @@ describe("getEventsForDateRange", () => {
     ).rejects.toThrow("Not authenticated");
   });
 
-  test("returns events whose startsAt falls within [startMs, endMs)", async () => {
+  test("returns events that overlap [startMs, endMs) — excludes purely-before and starts-at-end", async () => {
     const t = convexTest(schema, modules);
     const userId = await insertUser(t, identity.subject);
     const connectionId = await insertConnection(t, userId, { color: "#abcdef" });
@@ -230,8 +234,17 @@ describe("getEventsForDateRange", () => {
       userId,
       connectionId,
       subCalendarId,
-      title: "before",
-      startsAt: startMs - 1,
+      title: "fully-before",
+      startsAt: startMs - 60_000,
+      endsAt: startMs - 1,
+    });
+    await insertEvent(t, {
+      userId,
+      connectionId,
+      subCalendarId,
+      title: "spans-into-range",
+      startsAt: startMs - 60_000,
+      endsAt: startMs + 60_000,
     });
     await insertEvent(t, {
       userId,
@@ -251,7 +264,7 @@ describe("getEventsForDateRange", () => {
       userId,
       connectionId,
       subCalendarId,
-      title: "at-end",
+      title: "starts-at-end",
       startsAt: endMs,
     });
 
@@ -259,7 +272,32 @@ describe("getEventsForDateRange", () => {
       .withIdentity(identity)
       .query(api.calendars.queries.getEventsForDateRange, { startMs, endMs });
 
-    expect(result.map((e) => e.title).sort()).toEqual(["at-start", "middle"]);
+    expect(result.map((e) => e.title).sort()).toEqual(["at-start", "middle", "spans-into-range"]);
+  });
+
+  test("includes events that fully envelop the range", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, identity.subject);
+    const connectionId = await insertConnection(t, userId);
+    const subCalendarId = await insertSubCalendar(t, connectionId);
+
+    const startMs = 1_700_000_000_000;
+    const endMs = startMs + 7 * 24 * 60 * 60 * 1000;
+
+    await insertEvent(t, {
+      userId,
+      connectionId,
+      subCalendarId,
+      title: "envelops",
+      startsAt: startMs - 24 * 60 * 60 * 1000,
+      endsAt: endMs + 24 * 60 * 60 * 1000,
+    });
+
+    const result = await t
+      .withIdentity(identity)
+      .query(api.calendars.queries.getEventsForDateRange, { startMs, endMs });
+
+    expect(result.map((e) => e.title)).toEqual(["envelops"]);
   });
 
   test("attaches the connection color to each event", async () => {
@@ -320,7 +358,11 @@ describe("getEventsForDate", () => {
   test("throws when unauthenticated", async () => {
     const t = convexTest(schema, modules);
     await expect(
-      t.query(api.calendars.queries.getEventsForDate, { startMs: 0, endMs: 1 }),
+      t.query(api.calendars.queries.getEventsForDate, {
+        startMs: 0,
+        endMs: 1,
+        selectedDate: "1970-01-01",
+      }),
     ).rejects.toThrow("Not authenticated");
   });
 
@@ -330,8 +372,10 @@ describe("getEventsForDate", () => {
     const connectionId = await insertConnection(t, userId);
     const subCalendarId = await insertSubCalendar(t, connectionId);
 
+    // 2023-11-14T22:13:20.000Z — pick a meaningful day so date-string overlap works.
     const startMs = 1_700_000_000_000;
     const endMs = startMs + 24 * 60 * 60 * 1000;
+    const selectedDate = "2023-11-14";
 
     await insertEvent(t, {
       userId,
@@ -347,6 +391,8 @@ describe("getEventsForDate", () => {
       title: "all-day-late",
       startsAt: startMs + 60_000,
       isAllDay: true,
+      startDate: selectedDate,
+      endDate: selectedDate,
     });
     await insertEvent(t, {
       userId,
@@ -362,11 +408,13 @@ describe("getEventsForDate", () => {
       title: "all-day-early",
       startsAt: startMs,
       isAllDay: true,
+      startDate: selectedDate,
+      endDate: selectedDate,
     });
 
     const result = await t
       .withIdentity(identity)
-      .query(api.calendars.queries.getEventsForDate, { startMs, endMs });
+      .query(api.calendars.queries.getEventsForDate, { startMs, endMs, selectedDate });
 
     expect(result.map((e) => e.title)).toEqual([
       "all-day-early",
@@ -376,7 +424,7 @@ describe("getEventsForDate", () => {
     ]);
   });
 
-  test("filters by [startMs, endMs) — endMs is exclusive", async () => {
+  test("includes a timed event that started before the selected day but ends during it", async () => {
     const t = convexTest(schema, modules);
     const userId = await insertUser(t, identity.subject);
     const connectionId = await insertConnection(t, userId);
@@ -389,29 +437,94 @@ describe("getEventsForDate", () => {
       userId,
       connectionId,
       subCalendarId,
-      title: "before",
-      startsAt: startMs - 1,
+      title: "overnight",
+      startsAt: startMs - 60 * 60 * 1000,
+      endsAt: startMs + 2 * 60 * 60 * 1000,
     });
     await insertEvent(t, {
       userId,
       connectionId,
       subCalendarId,
-      title: "in",
-      startsAt: startMs,
-    });
-    await insertEvent(t, {
-      userId,
-      connectionId,
-      subCalendarId,
-      title: "at-end",
-      startsAt: endMs,
+      title: "before-only",
+      startsAt: startMs - 2 * 60 * 60 * 1000,
+      endsAt: startMs - 60 * 60 * 1000,
     });
 
-    const result = await t
+    const result = await t.withIdentity(identity).query(api.calendars.queries.getEventsForDate, {
+      startMs,
+      endMs,
+      selectedDate: "2023-11-14",
+    });
+
+    expect(result.map((e) => e.title)).toEqual(["overnight"]);
+  });
+
+  test("includes a multi-day all-day event on every day it covers", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, identity.subject);
+    const connectionId = await insertConnection(t, userId);
+    const subCalendarId = await insertSubCalendar(t, connectionId);
+
+    const dayMs = 24 * 60 * 60 * 1000;
+    const start = Date.UTC(2023, 10, 14);
+    const end = Date.UTC(2023, 10, 17);
+
+    await insertEvent(t, {
+      userId,
+      connectionId,
+      subCalendarId,
+      title: "trip",
+      startsAt: start,
+      endsAt: end,
+      isAllDay: true,
+      startDate: "2023-11-14",
+      endDate: "2023-11-16",
+    });
+
+    const middleResult = await t
       .withIdentity(identity)
-      .query(api.calendars.queries.getEventsForDate, { startMs, endMs });
+      .query(api.calendars.queries.getEventsForDate, {
+        startMs: Date.UTC(2023, 10, 15),
+        endMs: Date.UTC(2023, 10, 15) + dayMs,
+        selectedDate: "2023-11-15",
+      });
+    expect(middleResult.map((e) => e.title)).toEqual(["trip"]);
 
-    expect(result.map((e) => e.title)).toEqual(["in"]);
+    const afterResult = await t
+      .withIdentity(identity)
+      .query(api.calendars.queries.getEventsForDate, {
+        startMs: Date.UTC(2023, 10, 17),
+        endMs: Date.UTC(2023, 10, 17) + dayMs,
+        selectedDate: "2023-11-17",
+      });
+    expect(afterResult.map((e) => e.title)).toEqual([]);
+  });
+
+  test("excludes all-day events that are missing startDate/endDate", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, identity.subject);
+    const connectionId = await insertConnection(t, userId);
+    const subCalendarId = await insertSubCalendar(t, connectionId);
+
+    const startMs = 1_700_000_000_000;
+    const endMs = startMs + 24 * 60 * 60 * 1000;
+
+    await insertEvent(t, {
+      userId,
+      connectionId,
+      subCalendarId,
+      title: "legacy-all-day",
+      startsAt: startMs,
+      isAllDay: true,
+    });
+
+    const result = await t.withIdentity(identity).query(api.calendars.queries.getEventsForDate, {
+      startMs,
+      endMs,
+      selectedDate: "2023-11-14",
+    });
+
+    expect(result.map((e) => e.title)).toEqual([]);
   });
 
   test("attaches the connection color to each event", async () => {
@@ -428,9 +541,11 @@ describe("getEventsForDate", () => {
       startsAt: 1_000,
     });
 
-    const result = await t
-      .withIdentity(identity)
-      .query(api.calendars.queries.getEventsForDate, { startMs: 0, endMs: 10_000 });
+    const result = await t.withIdentity(identity).query(api.calendars.queries.getEventsForDate, {
+      startMs: 0,
+      endMs: 10_000,
+      selectedDate: "1970-01-01",
+    });
 
     expect(result).toHaveLength(1);
     expect(result[0].color).toBe("#deadbe");
@@ -460,9 +575,11 @@ describe("getEventsForDate", () => {
       startsAt: 1_000,
     });
 
-    const result = await t
-      .withIdentity(identity)
-      .query(api.calendars.queries.getEventsForDate, { startMs: 0, endMs: 10_000 });
+    const result = await t.withIdentity(identity).query(api.calendars.queries.getEventsForDate, {
+      startMs: 0,
+      endMs: 10_000,
+      selectedDate: "1970-01-01",
+    });
 
     expect(result.map((e) => e.title)).toEqual(["mine"]);
   });

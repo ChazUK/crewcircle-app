@@ -95,6 +95,50 @@ END:VCALENDAR`);
 
     expect(result).not.toBeNull();
     expect(result!.isAllDay).toBe(true);
+    expect(result!.startDate).toBe("2025-06-01");
+    expect(result!.endDate).toBe("2025-06-01");
+  });
+
+  test("emits inclusive endDate for multi-day all-day events", () => {
+    const vevent = parseVevent(`BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:multiallday@example.com
+DTSTART;VALUE=DATE:20250601
+DTEND;VALUE=DATE:20250604
+SUMMARY:Multi day
+END:VEVENT
+END:VCALENDAR`);
+
+    const result = convertICalEvent(vevent, SUB_CAL_ID);
+    expect(result!.startDate).toBe("2025-06-01");
+    expect(result!.endDate).toBe("2025-06-03");
+  });
+
+  test("treats all-day event without DTEND as a one-day event", () => {
+    const vevent = parseVevent(`BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:noend@example.com
+DTSTART;VALUE=DATE:20250601
+SUMMARY:No end
+END:VEVENT
+END:VCALENDAR`);
+
+    const result = convertICalEvent(vevent, SUB_CAL_ID);
+    expect(result!.startDate).toBe("2025-06-01");
+    expect(result!.endDate).toBe("2025-06-01");
+  });
+
+  test("does not emit startDate/endDate or TZID timezone for all-day events", () => {
+    const vevent = parseVevent(`BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:alldaynotz@example.com
+DTSTART;VALUE=DATE:20250601
+DTEND;VALUE=DATE:20250602
+SUMMARY:All day
+END:VEVENT
+END:VCALENDAR`);
+    const result = convertICalEvent(vevent, SUB_CAL_ID);
+    expect(result!.originalTimezone).toBeUndefined();
   });
 
   test("extracts TZID from DTSTART into originalTimezone", () => {
