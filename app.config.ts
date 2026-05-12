@@ -91,6 +91,8 @@ export default {
       EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME: process.env.EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME,
       appStoreId: process.env.EXPO_PUBLIC_APP_STORE_ID,
       websiteUrl: "https://crewcircle.app",
+      privacyUrl: "https://policies.google.com/privacy",
+      termsUrl: "https://policies.google.com/terms",
     },
   },
 };
