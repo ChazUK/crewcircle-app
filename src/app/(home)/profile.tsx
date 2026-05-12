@@ -1,57 +1,34 @@
 import { useClerk, useUser } from "@clerk/expo";
-import { api } from "@convex/_generated/api";
-import { useQuery } from "convex/react";
-import { useRouter } from "expo-router";
-import { Button, PressableFeedback, Separator } from "heroui-native";
-import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { Link } from "expo-router";
+import { Button } from "heroui-native";
+import { LogOutIcon, SettingsIcon } from "lucide-react-native";
 import { Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-function formatPhone(phone: string | undefined | null): string {
-  if (!phone) return "Not set";
-  try {
-    const parsed = parsePhoneNumberFromString(phone);
-    return parsed?.formatNational() ?? phone;
-  } catch {
-    return phone;
-  }
-}
+import { Title } from "@/components/ui/Title";
 
 export default function Profile() {
   const { user } = useUser();
   const { signOut } = useClerk();
-  const router = useRouter();
-  const currentUser = useQuery(api.users.queries.getCurrentUser);
+  const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 pt-8">
-      <View className="items-center gap-2 py-6">
-        <Text className="text-2xl font-bold">Profile</Text>
-        <Text className="text-base text-default-500">{user?.emailAddresses[0]?.emailAddress}</Text>
+    <View className="flex-1" style={{ paddingTop: insets.top, paddingBottom: insets.bottom + 16 }}>
+      <View className="flex-row items-center justify-between px-4">
+        <Title title="Profile" />
+        <Link href="/settings" asChild>
+          <Button variant="ghost" isIconOnly>
+            <SettingsIcon />
+          </Button>
+        </Link>
       </View>
 
-      <Separator />
+      <Text className="text-base text-default-500">{user?.emailAddresses[0]?.emailAddress}</Text>
 
-      <PressableFeedback
-        onPress={() => router.push("/settings/phone")}
-        accessibilityRole="button"
-        accessibilityLabel="Change phone number"
-      >
-        <View className="flex-row items-center justify-between px-4 py-4">
-          <Text className="text-base">Phone number</Text>
-          <View className="flex-row items-center gap-1">
-            <Text className="text-base text-default-500">
-              {currentUser === undefined ? "" : formatPhone(currentUser?.phone)}
-            </Text>
-            <Text className="text-default-400 text-lg">›</Text>
-          </View>
-        </View>
-      </PressableFeedback>
-
-      <Separator />
-
-      <View className="items-center mt-8">
+      <View className="items-center ">
         <Button variant="danger-soft" onPress={() => signOut()}>
-          Sign out
+          <LogOutIcon size={20} />
+          <Button.Label>Sign out</Button.Label>
         </Button>
       </View>
     </View>

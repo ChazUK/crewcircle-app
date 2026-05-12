@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Button, ScrollShadow, useThemeColor } from "heroui-native";
 import { CalendarPlus } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
 import { ScrollView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,6 +17,7 @@ import { DiaryEventList } from "@/components/calendars/DiaryEventList";
 import { DisconnectCalendarDialog } from "@/components/calendars/DisconnectCalendarDialog";
 import { useCalendarSync } from "@/components/calendars/hooks/useCalendarSync";
 import { useDisconnectCalendar } from "@/components/calendars/hooks/useDisconnectCalendar";
+import { Title } from "@/components/ui/Title";
 
 export default function Diary() {
   const today = new Date();
@@ -122,7 +123,7 @@ export default function Diary() {
   return (
     <View style={{ flex: 1, paddingTop: insets.top }}>
       <View className="flex-row items-center justify-between px-4">
-        <Text className="text-2xl font-bold text-foreground">My Diary</Text>
+        <Title title="My Diary" subtitle="Availability & Jobs" />
         <Pressable
           onPress={() => setIsManagementSheetOpen(true)}
           accessibilityRole="button"

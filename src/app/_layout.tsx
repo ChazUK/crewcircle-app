@@ -205,6 +205,7 @@ function RootNavigator() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={isAuthenticated && isUserReady && hasCompletedOnboarding}>
         <Stack.Screen name="(home)" />
+        <Stack.Screen name="settings" />
       </Stack.Protected>
       <Stack.Protected guard={isAuthenticated && isUserReady && !hasCompletedOnboarding}>
         <Stack.Screen name="(onboarding)" />
