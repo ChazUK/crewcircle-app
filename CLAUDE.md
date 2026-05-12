@@ -90,3 +90,47 @@ The test for a good issue: a developer who has never seen this codebase should b
 issue body and the files referenced within it.
 
 Files that contain a single function/method should be named the same as the function/method name e.g. `sendEmail.ts` for a function called `sendEmail`.
+
+## Stories and tests (default coverage)
+
+When you create a new file, you must also create its companion story or test as part of the same change. Do not defer this; do not ask whether to do it. The rules below are the default — only skip if the user explicitly says so for that file.
+
+### Stories — presentational components
+
+Every new presentational component in `src/components/**` must ship with a sibling `*.stories.tsx`.
+
+A component is "presentational" (story required) if it:
+
+- Renders UI from props only, and
+- Does NOT call `useAction` / `useMutation` / `useQuery` from Convex, router hooks, auth hooks, or other side-effectful hooks at the top level.
+
+If a component is connected (uses Convex/router/auth/etc.), no story is required — but factor out a dumb sub-component where it makes sense, and write the story for that.
+
+Story conventions:
+
+- Use the existing harness pattern (see `DisconnectCalendarDialog.stories.tsx` and `ConnectCalendarErrorDialog.stories.tsx`): a `Meta` with `args`, a small harness component if local state is needed, and named exports per variant.
+- Cover the meaningful states — default, empty, error, loading, edge values — one named export each.
+- Wrap with `GestureHandlerRootView` + `BottomSheetModalProvider` when the component renders into a portal (Dialog, BottomSheet).
+
+### Tests — `convex/` and `src/lib/`
+
+Every new file in `convex/**` (queries, mutations, actions, internal helpers) and every new pure module in `src/lib/**` must ship with a sibling `*.test.ts`.
+
+Skip only:
+
+- Pure type-only files (`*.types.ts`, or files with no runtime exports)
+- Generated code (`convex/_generated/**`)
+- Barrel/re-export files with no logic
+
+Test conventions:
+
+- Co-locate the test next to the source (`foo.ts` → `foo.test.ts`).
+- For Convex functions, follow the patterns in `convex/calendars/queries.test.ts`.
+- For lib utilities, follow `src/lib/calendars/*.test.ts` and `src/lib/permissions/*.test.ts`.
+- Cover happy path + each branch/error path.
+
+### When in doubt
+
+If you're unsure whether something counts as presentational or whether a `convex/` helper warrants a test, default to writing it. It is much cheaper to delete an unused story/test than to backfill coverage later.
+
+Do not add comments unless they are absolutely necessary.

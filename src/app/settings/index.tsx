@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import { router } from "expo-router";
-import { ListGroup, Separator } from "heroui-native";
+import { ListGroup, PressableFeedback, Separator } from "heroui-native";
 import { FileTextIcon, InfoIcon, LifeBuoyIcon, LockIcon, UserIcon } from "lucide-react-native";
 import { BellIcon } from "lucide-react-native";
 import { ScrollView, Text, View } from "react-native";
@@ -71,20 +71,24 @@ export default function Settings() {
                   return (
                     <View key={item.href}>
                       {index > 0 && <Separator className="mx-4" />}
-                      <ListGroup.Item onPress={() => router.push(item.href)}>
-                        <ListGroup.ItemPrefix>
-                          <Icon size={20} />
-                        </ListGroup.ItemPrefix>
-                        <ListGroup.ItemContent>
-                          <ListGroup.ItemTitle>{item.title}</ListGroup.ItemTitle>
-                          {item.description && (
-                            <ListGroup.ItemDescription>
-                              {item.description}
-                            </ListGroup.ItemDescription>
-                          )}
-                        </ListGroup.ItemContent>
-                        <ListGroup.ItemSuffix />
-                      </ListGroup.Item>
+                      <PressableFeedback animation={false} onPress={() => router.push(item.href)}>
+                        <PressableFeedback.Scale>
+                          <ListGroup.Item disabled>
+                            <ListGroup.ItemPrefix>
+                              <Icon size={20} />
+                            </ListGroup.ItemPrefix>
+                            <ListGroup.ItemContent>
+                              <ListGroup.ItemTitle>{item.title}</ListGroup.ItemTitle>
+                              {item.description && (
+                                <ListGroup.ItemDescription>
+                                  {item.description}
+                                </ListGroup.ItemDescription>
+                              )}
+                            </ListGroup.ItemContent>
+                            <ListGroup.ItemSuffix />
+                          </ListGroup.Item>
+                        </PressableFeedback.Scale>
+                      </PressableFeedback>
                     </View>
                   );
                 })}

@@ -1,69 +1,28 @@
-import { Stack, router } from "expo-router";
-import { Button } from "heroui-native";
-import { ChevronLeftIcon } from "lucide-react-native";
+import { Stack } from "expo-router";
+
+import { HeaderBack } from "@/components/ui/HeaderBack";
 
 export default function SettingsLayout() {
   return (
     <Stack
       screenOptions={{
-        headerBackTitle: "Back",
-        headerTitleStyle: { fontWeight: "600" },
+        headerTitleStyle: { fontWeight: "600", fontSize: 16 },
+        headerBackTitleStyle: { fontSize: 14 },
       }}
     >
       <Stack.Screen
         name="index"
         options={{
           title: "Settings",
-          headerLeft: () => (
-            <Button variant="ghost" size="sm" onPress={() => router.back()}>
-              <ChevronLeftIcon size={20} />
-              <Button.Label>Profile</Button.Label>
-            </Button>
-          ),
+          headerLeft: () => <HeaderBack label="Profile" />,
         }}
       />
-      <Stack.Screen
-        name="account"
-        options={{
-          title: "Account",
-          headerBackTitle: "Settings",
-        }}
-      />
-      <Stack.Screen
-        name="notifications"
-        options={{
-          title: "Notifications",
-          headerBackTitle: "Settings",
-        }}
-      />
-      <Stack.Screen
-        name="support"
-        options={{
-          title: "Support",
-          headerBackTitle: "Settings",
-        }}
-      />
-      <Stack.Screen
-        name="about"
-        options={{
-          title: "About",
-          headerBackTitle: "Settings",
-        }}
-      />
-      <Stack.Screen
-        name="privacy-policy"
-        options={{
-          title: "Privacy Policy",
-          headerBackTitle: "Settings",
-        }}
-      />
-      <Stack.Screen
-        name="terms"
-        options={{
-          title: "Terms & Conditions",
-          headerBackTitle: "Settings",
-        }}
-      />
+      <Stack.Screen name="account" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
+      <Stack.Screen name="support" options={{ title: "Support" }} />
+      <Stack.Screen name="about" options={{ title: "About" }} />
+      <Stack.Screen name="privacy-policy" options={{ title: "Privacy Policy" }} />
+      <Stack.Screen name="terms" options={{ title: "Terms & Conditions" }} />
     </Stack>
   );
 }
