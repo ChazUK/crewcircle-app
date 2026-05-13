@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 
 import { internalMutation } from "../_generated/server";
+import { convertExternalInvitesForNewUser } from "../contacts/domain/convertExternalInvitesForNewUser";
+import { getUserByExternalId } from "./db/getUser";
 import { createUser, deleteUser, updateUser } from "./domain/syncUser";
 
 export const userCreated = internalMutation({
@@ -12,7 +14,18 @@ export const userCreated = internalMutation({
     profilePictureUrl: v.optional(v.string()),
     phone: v.optional(v.string()),
   },
-  handler: (ctx, args) => createUser(ctx, args),
+  handler: async (ctx, args) => {
+    const userId = await createUser(ctx, args);
+    const created = await getUserByExternalId(ctx, args.externalAuthId);
+    if (created) {
+      await convertExternalInvitesForNewUser(ctx, {
+        userId: created._id,
+        email: args.email,
+        ...(args.phone ? { phone: args.phone } : {}),
+      });
+    }
+    return userId;
+  },
 });
 
 export const userUpdated = internalMutation({

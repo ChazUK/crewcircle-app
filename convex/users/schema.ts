@@ -35,5 +35,9 @@ export const User = {
 export const usersSchema = {
   users: defineTable(User)
     .index("byExternalAuthId", ["externalAuthId"])
-    .index("byEmail", ["email"]),
+    .index("byEmail", ["email"])
+    .index("byPhone", ["phone"])
+    .searchIndex("searchByEmail", { searchField: "email" })
+    .searchIndex("searchByFirstName", { searchField: "firstName" })
+    .searchIndex("searchByLastName", { searchField: "lastName" }),
 };

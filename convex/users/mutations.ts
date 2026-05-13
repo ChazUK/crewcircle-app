@@ -59,6 +59,20 @@ export const completeOnboarding = mutation({
   },
 });
 
+export const registerPushToken = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await getUserByExternalId(ctx, identity.subject);
+    if (!user) throw new Error("User not found");
+
+    if (user.pushToken === args.token) return;
+    await ctx.db.patch(user._id, { pushToken: args.token });
+  },
+});
+
 export const updateProfile = mutation({
   args: {
     bio: v.optional(v.string()),
