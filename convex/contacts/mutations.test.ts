@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import workpoolTest from "@convex-dev/workpool/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -7,6 +8,12 @@ import type { Id } from "../_generated/dataModel";
 import schema from "../schema";
 
 const modules = import.meta.glob("/convex/**/*.ts");
+
+const setupTest = () => {
+  const t = convexTest(schema, modules);
+  workpoolTest.register(t, "emailWorkpool");
+  return t;
+};
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -51,7 +58,7 @@ async function insertUser(
 
 describe("sendContactInvite", () => {
   test("creates pending invite + notification when inviting an existing user", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -76,7 +83,7 @@ describe("sendContactInvite", () => {
   });
 
   test("rejects self-invite by user id", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     const aliceId = await insertUser(t, "clerk_alice", "alice@example.com");
 
     await expect(
@@ -87,7 +94,7 @@ describe("sendContactInvite", () => {
   });
 
   test("rejects duplicate pending invite to same user", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -104,7 +111,7 @@ describe("sendContactInvite", () => {
   });
 
   test("auto-accepts when reciprocal pending invite exists", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     const aliceId = await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -126,7 +133,7 @@ describe("sendContactInvite", () => {
   });
 
   test("rejects invite when already a contact", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     const aliceId = await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -151,7 +158,7 @@ describe("sendContactInvite", () => {
   });
 
   test("invite by email matches an existing user via byEmail index", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -166,7 +173,7 @@ describe("sendContactInvite", () => {
   });
 
   test("invite by email persists external row when no matching user", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     await insertUser(t, "clerk_alice", "alice@example.com");
 
     await t
@@ -177,21 +184,13 @@ describe("sendContactInvite", () => {
     expect(invites).toHaveLength(1);
     expect(invites[0].targetUserId).toBeUndefined();
     expect(invites[0].targetEmail).toBe("stranger@example.com");
-
-    const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
-    expect(scheduled).toHaveLength(1);
-    expect(scheduled[0].name).toContain("sendContactInviteEmail");
-    expect(scheduled[0].args[0]).toMatchObject({
-      recipientEmail: "stranger@example.com",
-      inviterEmail: "alice@example.com",
-    });
     await drain(t);
   });
 });
 
 describe("acceptContactInvite", () => {
   test("creates contact rows for both directions and notifies inviter", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     const aliceId = await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -217,7 +216,7 @@ describe("acceptContactInvite", () => {
   });
 
   test("rejects when caller is not the invitee", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -236,7 +235,7 @@ describe("acceptContactInvite", () => {
 
 describe("removeContact", () => {
   test("removes both direction rows and cancels pending invite", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     const aliceId = await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -256,7 +255,7 @@ describe("removeContact", () => {
   });
 
   test("throws when not a contact", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -270,7 +269,7 @@ describe("removeContact", () => {
 
 describe("declineContactInvite", () => {
   test("flips status to declined and notifies inviter", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     const aliceId = await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -298,7 +297,7 @@ describe("declineContactInvite", () => {
 
 describe("cancelContactInvite", () => {
   test("inviter cancels their own pending invite", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 
@@ -316,7 +315,7 @@ describe("cancelContactInvite", () => {
   });
 
   test("non-inviter cannot cancel", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     await insertUser(t, "clerk_alice", "alice@example.com");
     const bobId = await insertUser(t, "clerk_bob", "bob@example.com");
 

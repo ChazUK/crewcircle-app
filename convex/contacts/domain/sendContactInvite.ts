@@ -3,6 +3,7 @@ import { MutationCtx } from "@convex/_generated/server";
 import { ConvexError } from "convex/values";
 
 import { internal } from "../../_generated/api";
+import { emailWorkpool } from "../../emails/emailWorkpool";
 import { emitContactInviteNotification } from "../../notifications/domain/emitContactInviteNotification";
 import { getUserByExternalId } from "../../users/db/getUser";
 import { findContactPair } from "../db/findContactPair";
@@ -119,13 +120,17 @@ const sendEmailInvite = async (
     ...(message && { message }),
   });
 
-  await ctx.scheduler.runAfter(0, internal.emails.sendContactInviteEmail.sendContactInviteEmail, {
-    inviteId,
-    recipientEmail: email,
-    inviterName: inviterDisplayName(me),
-    inviterEmail: me.email,
-    ...(message && { message }),
-  });
+  await emailWorkpool.enqueueAction(
+    ctx,
+    internal.emails.sendContactInviteEmail.sendContactInviteEmail,
+    {
+      inviteId,
+      recipientEmail: email,
+      inviterName: inviterDisplayName(me),
+      inviterEmail: me.email,
+      ...(message && { message }),
+    },
+  );
 
   return { autoAccepted: false, inviteId };
 };

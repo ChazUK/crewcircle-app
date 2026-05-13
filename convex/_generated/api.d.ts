@@ -66,6 +66,7 @@ import type * as contacts_queries from "../contacts/queries.js";
 import type * as crons from "../crons.js";
 import type * as emails_ContactInviteEmail from "../emails/ContactInviteEmail.js";
 import type * as emails_appBaseUrl from "../emails/appBaseUrl.js";
+import type * as emails_emailWorkpool from "../emails/emailWorkpool.js";
 import type * as emails_fromAddress from "../emails/fromAddress.js";
 import type * as emails_resendClient from "../emails/resendClient.js";
 import type * as emails_sendContactInviteEmail from "../emails/sendContactInviteEmail.js";
@@ -159,6 +160,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "emails/ContactInviteEmail": typeof emails_ContactInviteEmail;
   "emails/appBaseUrl": typeof emails_appBaseUrl;
+  "emails/emailWorkpool": typeof emails_emailWorkpool;
   "emails/fromAddress": typeof emails_fromAddress;
   "emails/resendClient": typeof emails_resendClient;
   "emails/sendContactInviteEmail": typeof emails_sendContactInviteEmail;
@@ -214,4 +216,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  emailWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"emailWorkpool">;
+};
