@@ -1,24 +1,8 @@
+import { DEPARTMENTS } from "@shared/departments/departments";
 import { Button, cn } from "heroui-native";
 import { View } from "react-native";
 
 import { StepLayout } from "./StepLayout";
-
-const DEPARTMENTS = [
-  "Camera",
-  "Lighting",
-  "Grip",
-  "Sound",
-  "Art Department",
-  "Costume",
-  "Hair & Makeup",
-  "Production",
-  "Locations",
-  "Transport",
-  "VFX",
-  "Editing",
-  "Script",
-  "Stunts",
-];
 
 type Props = {
   value: string[];
@@ -41,16 +25,16 @@ export function DepartmentStep({ value, onChange }: Props) {
     >
       <View className="mx-4 flex-row flex-wrap gap-2">
         {DEPARTMENTS.map((dept) => {
-          const isSelected = value.includes(dept);
+          const isSelected = value.includes(dept.name);
           return (
             <Button
-              key={dept}
+              key={dept.name}
               variant={isSelected ? "primary" : "outline"}
               size="sm"
               className={cn("rounded-full", !isSelected && "border-border")}
-              onPress={() => toggle(dept)}
+              onPress={() => toggle(dept.name)}
             >
-              {dept}
+              {dept.name}
             </Button>
           );
         })}

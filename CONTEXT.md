@@ -88,21 +88,85 @@ _Avoid_: Work location, base
 
 ## Profile
 
+**Nickname**:
+The professional "known-as" name a Crew Member chooses to be addressed by, distinct from their legal first/last name. Self-declared, visible to everyone who can view the profile. Displayed in brackets after the legal name (e.g. "Jonathan (Joey) Smith"). Common in film/TV where many crew go by a working name.
+_Avoid_: Alias, handle, preferred name, nick
+
+**Profile**:
+The single page that displays a Crew Member's identity, credentials, and working details. Reusable across two contexts: viewing your own (with edit affordances) or viewing another's (read-only). What's shown depends on the viewer's relationship to the subject — see **Profile Visibility**.
+_Avoid_: User page, about
+
+**Profile Visibility**:
+The rule that controls what fields of a Profile a viewer can see. Depends on the subject's user type:
+
+For **Crew Member** Profiles, three viewer relationships:
+- **Self** — sees all fields plus edit affordances (section-level edit pencils, profile-picture upload control).
+- **Contact** (the viewer is in the subject's Contacts) — sees all fields, read-only.
+- **Non-contact** — sees only the Public Card. Only viewable at all if the subject's `isPublic` flag is `true`; otherwise the Profile returns "not found."
+
+For **Production Manager** Profiles, two viewer relationships:
+- **Self** — sees all PM fields plus edit affordances.
+- **Job-linked Viewer** — a Crew Member who shares a Job with the Production Manager (Requester of that Job, Applicant to it, or Circle Member of the Circle it was broadcast to) sees the PM Profile read-only.
+- **Anyone else** — the Profile returns "not found." Production Manager Profiles are never publicly discoverable; their identity is revealed only in the context of a specific Job. (Enforcement of the Job-linkage check depends on `Job.productionManagerId` and Circle-exposure tracking, both of which are not yet in the schema — until those land, the query treats any non-Self PM Profile view as "not found.")
+
+**Public Card**:
+The minimal subset of Crew Member Profile fields shown to a Non-contact viewer: profile picture, legal first name, legal last name, Nickname, City, Country, Department, Roles. No bio, links, kit, languages, or credentials.
+_Avoid_: Basic profile, preview, summary card
+
+**Production Manager Profile**:
+A reduced Profile rendered for Production Manager accounts. Fields: profile picture, legal first name, legal last name, City, Country, Production Company, Bio, Website. No Nickname, Department, Roles, Kit, Certifications, Memberships, Driving Licences, Work Eligibility, Passports, Spoken Languages, Production Types, IMDB, CV, or Years in Department — those fields are Crew-only. Visibility governed by **Profile Visibility** (Job-linked).
+_Avoid_: PM profile (in code/UI copy)
+
+**Production Company**:
+The organisation a Production Manager currently works under. A free-text field on the user record, shown only on Production Manager Profiles.
+_Avoid_: Employer, studio, company
+
+**isPublic**:
+A flag on the Crew Member's user record. When `true`, the Crew Member is discoverable in user search and their Public Card is viewable by Non-contacts. When `false`, the Crew Member does not appear in user search and any direct attempt to load their Profile by a Non-contact returns "not found."
+
+**Profile File**:
+Any binary asset attached to a Profile — currently the profile picture, the CV PDF, and Certification evidence. All Profile Files live in Convex storage and are referenced from data rows as `Id<"_storage">`. The legacy URL-string fields (`users.profilePictureUrl`, `users.cvUrl`) are replaced by `profilePictureFileId` and `cvFileId`. On signup, if Clerk provides an OAuth profile image, it is copied once into Convex storage as a one-time seed; thereafter Clerk's image is ignored. Viewers receive short-lived signed URLs via `ctx.storage.getUrl`; visibility follows **Profile Visibility** (Non-contacts never receive a URL for a CV or evidence file).
+_Avoid_: Asset, attachment, blob
+
 **Kit**:
-Equipment owned by a Crew Member that is available for use on productions.
+Equipment owned by a Crew Member that is available for use on productions. Two tables: `kitCatalogue` is the shared canonical list of equipment names (organically grown — users can add new entries, deduped against existing rows by normalized name on insert), and `userKit` is the per-user ownership join `{ userId, kitCatalogueId }`. The legacy `users.kit` string array is removed.
 _Avoid_: Gear, equipment
 
 **Department**:
-The broad production area a Crew Member works within (e.g. Camera, Grip, Sound).
+The broad production area a Crew Member works within. A Crew Member belongs to exactly one Department and must have one set once onboarding is complete (`hasCompletedOnboarding === true` implies `department` is set and at least one Role is selected). Drawn from a fixed, curated list in `types/departments/departments.ts`. Free-text Departments are not allowed. Production Manager accounts do not have a Department.
 _Avoid_: Division, team
 
 **Spoken Language**:
-A language a Crew Member can communicate in, with an associated fluency level.
+A language a Crew Member can communicate in, with an associated fluency level. Stored as a nested array on the user: `{ language: ISO639_1Code, fluency: "native" | "fluent" | "conversational" | "basic" }`. Drawn from a closed list in `types/profile/languages.ts`; free-text languages are not allowed.
 _Avoid_: Language
 
 **Passport**:
-A travel document held by a Crew Member, indicating international work eligibility.
+A travel document held by a Crew Member, indicating international work eligibility. Stored as an array of ISO 3166-1 alpha-2 country codes on the user. Drawn from a closed list in `types/profile/countries.ts`; free-text countries are not allowed.
 _Avoid_: Travel document
+
+**Years in Department**:
+The number of years a Crew Member has worked within their current Department. Stored on the user as `startYearInDepartment: number` (the four-digit year they started in this Department, e.g. `2018`). Display layer derives the year count on read so it auto-increments and never goes stale. Wiped when Department changes. Replaces the legacy `yearsExperience` and `yearsInRole` fields, both of which are removed.
+_Avoid_: Years experience, years in role, seniority
+
+**Work Eligibility**:
+A region or scheme under which a Crew Member is legally permitted to accept paid work. Multi-select from a fixed list in `types/profile/workEligibility.ts`. Stored as a string array on the user. No visa expiry is tracked; the flag means "I am currently eligible." Initial list: Right to Work UK, Schengen, Right to Work USA, Right to Work Canada, Right to Work Australia, Right to Work Ireland.
+_Avoid_: Visa, right to work (alone — qualify with region)
+
+**Production Type**:
+A category of production a Crew Member is willing to work on, or that a Job belongs to. Multi-select from a fixed list in `types/profile/productionTypes.ts`. Initial list: Feature Film, TV Drama, TV Comedy, Documentary, Reality / Unscripted, Commercial, Music Video, Short Film, Animation, Branded / Corporate, Live Broadcast.
+_Avoid_: Genre, format, project type
+
+**Driving Licence**:
+A UK driving qualification a Crew Member holds. Multi-select from a fixed list in `types/profile/drivingLicences.ts`. No expiry tracked. Initial list: Car (B), Motorcycle (A), Minibus (D1), Bus (D), HGV Class 2 (C), HGV Class 1 (C+E), Forklift, Trailer (B+E), International Driving Permit.
+_Avoid_: Licence (alone), driving cert
+
+**Certification**:
+A training or safety credential a Crew Member holds (e.g. First Aid at Work, IPAF 3a, PASMA, ScreenSkills Production Safety Passport). Each Certification is a separate entity in the `certifications` table, owned by a Crew Member via `userId`. Fields: name, optional issuer, optional reference number, optional expiry date, optional evidence file (Convex storage). Managed through dedicated screens (list / add / edit / view).
+_Avoid_: Training, ticket, qualification
+
+**Professional Membership**:
+A trade body or guild a Crew Member belongs to (e.g. BECTU, BSC, GBCT, BAFTA). Each Membership is a separate entity in the `memberships` table, owned by a Crew Member via `userId`. Fields: name, optional member number. No expiry. No evidence.
+_Avoid_: Guild, union, body (alone)
 
 ---
 
@@ -235,3 +299,4 @@ _Avoid_: Agency, booking service
 - **"apple" in the schema vs Native Calendar**: The `calendarConnections` schema currently uses `"apple"` as the provider literal. The canonical domain term is **Native Calendar** — the connection mechanism is platform-native device calendar access, not Apple-branded. The `"apple"` literal should be migrated to `"native"` when the Native Calendar feature is built out.
 - **"outlook" in the schema vs Microsoft Calendar**: The schema uses `"outlook"` as a provider literal. The canonical term is **Microsoft Calendar** (covers Microsoft 365, Outlook.com, and Exchange). The literal should be `"microsoft"` to match when implemented.
 - **"Calendar" vs "Diary"**: In code, the feature directory is `convex/calendars/` and the screen is `diary.tsx`. The feature directory name is a code convention; the user-facing concept is the **Diary**. Do not use "Calendar" in UI copy or domain discussions.
+- **"Nickname" vs `contacts.nickname` field**: The schema field `contacts.nickname` is a per-viewer private alias (e.g. an owner labelling a contact "Big Dave"), not the canonical **Nickname** which is the Crew Member's self-declared professional known-as name. Decision: `contacts.nickname` is being removed; **Nickname** moves to `users` as the single source of truth.
