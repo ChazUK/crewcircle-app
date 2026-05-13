@@ -177,6 +177,14 @@ describe("sendContactInvite", () => {
     expect(invites).toHaveLength(1);
     expect(invites[0].targetUserId).toBeUndefined();
     expect(invites[0].targetEmail).toBe("stranger@example.com");
+
+    const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    expect(scheduled).toHaveLength(1);
+    expect(scheduled[0].name).toContain("sendContactInviteEmail");
+    expect(scheduled[0].args[0]).toMatchObject({
+      recipientEmail: "stranger@example.com",
+      inviterEmail: "alice@example.com",
+    });
     await drain(t);
   });
 });
