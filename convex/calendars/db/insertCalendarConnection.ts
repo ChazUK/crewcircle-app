@@ -25,6 +25,8 @@ export const insertCalendarConnection = internalMutation({
       icalUrl: v.optional(v.bytes()),
       icalUrlHash: v.optional(v.string()),
       localCalendarId: v.optional(v.string()),
+      deviceId: v.optional(v.string()),
+      devicePlatform: v.optional(v.union(v.literal("ios"), v.literal("android"))),
       scope: v.optional(v.string()),
       oauthClientId: v.optional(v.string()),
       encryptedTokens: v.optional(v.bytes()),
@@ -55,8 +57,17 @@ export const insertCalendarConnection = internalMutation({
       }
     }
 
-    if (args.provider === "native" && existing.some((c) => c.provider === "native")) {
-      throw new Error("CALENDAR_NATIVE_ALREADY_CONNECTED");
+    if (args.provider === "native") {
+      // Native calendars are device-local: the calendar ids only mean
+      // something on the originating device. We allow one native
+      // connection per user per device so the same account can hold
+      // separate iOS and Android connections side by side, but reject a
+      // second connection from the same device.
+      const incomingDeviceId = args.blueprint.deviceId;
+      const dupe = existing.find((c) => c.provider === "native" && c.deviceId === incomingDeviceId);
+      if (dupe) {
+        throw new Error("CALENDAR_NATIVE_ALREADY_CONNECTED");
+      }
     }
 
     if (args.blueprint.icalUrlHash != null) {

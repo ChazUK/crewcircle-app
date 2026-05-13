@@ -18,6 +18,7 @@ import { DisconnectCalendarDialog } from "@/components/calendars/DisconnectCalen
 import { useCalendarSync } from "@/components/calendars/hooks/useCalendarSync";
 import { useDisconnectCalendar } from "@/components/calendars/hooks/useDisconnectCalendar";
 import { Title } from "@/components/ui/Title";
+import { useCurrentDeviceId } from "@/hooks/devices/useCurrentDeviceId";
 
 export default function Diary() {
   const today = new Date();
@@ -48,6 +49,7 @@ export default function Diary() {
   ]);
 
   const connections = useQuery(api.calendars.queries.getConnections, {});
+  const currentDevice = useCurrentDeviceId();
 
   const startMs = visibleMonth.getTime();
   const endMs = endOfMonth(visibleMonth).getTime() + 1;
@@ -171,6 +173,7 @@ export default function Diary() {
                   syncingIds={syncingIds}
                   onSync={syncConnection}
                   onDisconnect={requestDisconnect}
+                  currentDeviceId={currentDevice?.deviceId}
                 />
               ) : (
                 <Button

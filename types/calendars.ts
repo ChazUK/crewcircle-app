@@ -86,7 +86,11 @@ export type CalendarConnectParams =
       provider: "native";
       deviceCalendarId: string;
       label: string;
+      deviceId: string;
+      devicePlatform: CalendarDevicePlatform;
     };
+
+export type CalendarDevicePlatform = "ios" | "android";
 
 export type CalendarConnectContext = {
   userId: string;
@@ -103,6 +107,8 @@ export type CalendarConnectionBlueprint = {
   icalUrl?: ArrayBuffer;
   icalUrlHash?: string;
   localCalendarId?: string;
+  deviceId?: string;
+  devicePlatform?: CalendarDevicePlatform;
   scope?: string;
   oauthClientId?: string;
   encryptedTokens?: ArrayBuffer;

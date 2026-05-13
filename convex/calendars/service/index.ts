@@ -209,13 +209,25 @@ export function createCalendarService(providers: CalendarProviderRegistry) {
     // has no access to the device's calendar store) — this method only
     // applies the 60-second debounce so the client doesn't repeatedly hit
     // the device store when the app is opened in quick succession.
+    //
+    // `deviceId` filters to native connections that originated on the
+    // calling device. Native calendar ids are device-local, so a session
+    // on Android must never try to sync ids issued on iOS (and vice
+    // versa). Legacy connections without a deviceId predate device
+    // locking and are returned to whichever device is calling — the only
+    // safe option until the user re-connects them.
     async syncNativeOnOpen(
       ctx: ActionCtx,
+      deviceId?: string,
     ): Promise<{ connectionId: Id<"calendarConnections">; nativeCalendarIds: string[] }[]> {
       const connections = await ctx.runQuery(api.calendars.queries.getConnections, {});
       const now = Date.now();
       return connections
         .filter((connection) => connection.provider === "native")
+        .filter(
+          (connection) =>
+            connection.deviceId == null || deviceId == null || connection.deviceId === deviceId,
+        )
         .filter(
           (connection) =>
             connection.lastSyncedAt == null || now - connection.lastSyncedAt >= 60_000,

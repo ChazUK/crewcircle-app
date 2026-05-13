@@ -8,6 +8,8 @@ export const CalendarProvider = v.union(
   v.literal("ical"),
 );
 
+export const CalendarDevicePlatform = v.union(v.literal("ios"), v.literal("android"));
+
 export const CalendarConnection = {
   userId: v.id("users"),
   provider: CalendarProvider,
@@ -19,6 +21,15 @@ export const CalendarConnection = {
   icalUrl: v.optional(v.bytes()),
   // For provider="native" — the on-device calendar id from expo-calendar
   localCalendarId: v.optional(v.string()),
+  // For provider="native" — IDFV (iOS) / ANDROID_ID (Android) of the device
+  // that created the connection. Native calendars are inherently
+  // device-local, so a single user account can hold one native connection
+  // per device. Sync-on-open filters on this so an Android session never
+  // tries to sync iOS-issued calendar ids.
+  deviceId: v.optional(v.string()),
+  // For provider="native" — platform the connection was created on. Used
+  // by the UI to label the row when viewed from a different device.
+  devicePlatform: v.optional(CalendarDevicePlatform),
   // For provider="google" / "microsoft" — OAuth scope granted
   scope: v.optional(v.string()),
   // For provider="google" / "microsoft" — the OAuth client_id that issued the tokens.

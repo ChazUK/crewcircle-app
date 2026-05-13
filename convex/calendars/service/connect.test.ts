@@ -242,6 +242,8 @@ describe("CalendarService.connect", () => {
         provider: "native",
         deviceCalendarId: "device-cal-1",
         label: "Phone",
+        deviceId: "device-1",
+        devicePlatform: "ios",
       }),
     );
 
@@ -314,6 +316,8 @@ describe("CalendarService.connect", () => {
         provider: "native",
         deviceCalendarId: "device-cal-1",
         label: "Phone",
+        deviceId: "device-1",
+        devicePlatform: "ios",
       }),
     );
 

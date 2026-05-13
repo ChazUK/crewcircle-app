@@ -250,7 +250,7 @@ describe("insertCalendarConnection", () => {
     ).resolves.toBeDefined();
   });
 
-  test("rejects a second native connection for the same user", async () => {
+  test("rejects a second native connection for the same user on the same device", async () => {
     const t = convexTest(schema, modules);
     const userId = await insertUser(t, "user1");
 
@@ -259,7 +259,7 @@ describe("insertCalendarConnection", () => {
       provider: "native",
       label: "Phone",
       color: "#f59e0b",
-      blueprint: { localCalendarId: "" },
+      blueprint: { localCalendarId: "", deviceId: "device-1", devicePlatform: "ios" },
       subCalendars: [],
     });
 
@@ -269,10 +269,39 @@ describe("insertCalendarConnection", () => {
         provider: "native",
         label: "Phone again",
         color: "#10b981",
-        blueprint: { localCalendarId: "" },
+        blueprint: { localCalendarId: "", deviceId: "device-1", devicePlatform: "ios" },
         subCalendars: [],
       }),
     ).rejects.toThrow(/CALENDAR_NATIVE_ALREADY_CONNECTED/);
+  });
+
+  test("allows native connections for the same user on different devices", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertUser(t, "user1");
+
+    await t.mutation(internal.calendars.db.insertCalendarConnection.insertCalendarConnection, {
+      userId,
+      provider: "native",
+      label: "iPhone",
+      color: "#f59e0b",
+      blueprint: { localCalendarId: "", deviceId: "ios-device", devicePlatform: "ios" },
+      subCalendars: [],
+    });
+
+    await expect(
+      t.mutation(internal.calendars.db.insertCalendarConnection.insertCalendarConnection, {
+        userId,
+        provider: "native",
+        label: "Android",
+        color: "#10b981",
+        blueprint: {
+          localCalendarId: "",
+          deviceId: "android-device",
+          devicePlatform: "android",
+        },
+        subCalendars: [],
+      }),
+    ).resolves.toBeDefined();
   });
 
   test("allows a native connection for one user when another user already has one", async () => {

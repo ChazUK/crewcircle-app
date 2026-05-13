@@ -17,6 +17,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppErrorBoundary } from "@/components/ui/AppErrorBoundary";
 import { registerBackgroundSync } from "@/lib/calendars/backgroundSync";
 import { syncNativeConnections } from "@/lib/calendars/syncNativeConnections";
+import { getDeviceId } from "@/lib/devices/getDeviceId";
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -135,9 +136,12 @@ function RootNavigator() {
       const delays = [400, 800, 1600];
       const startedAt = Date.now();
       console.log(`[RootNavigator] native sync starting (trigger=${trigger})`);
+      const device = await getDeviceId();
       for (let attempt = 0; attempt <= delays.length; attempt++) {
         try {
-          const connections = await syncNativeOnOpenAction({});
+          const connections = await syncNativeOnOpenAction(
+            device ? { deviceId: device.deviceId } : {},
+          );
           console.log(
             `[RootNavigator] native sync: server returned ${connections.length} connection(s) to sync (attempt=${attempt + 1})`,
           );

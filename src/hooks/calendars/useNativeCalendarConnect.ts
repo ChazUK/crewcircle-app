@@ -6,6 +6,7 @@ import { useCallback } from "react";
 
 import { listNativeSubCalendars } from "@/lib/calendars/listNativeSubCalendars";
 import { requestNativeCalendarPermission } from "@/lib/calendars/requestNativeCalendarPermission";
+import { getDeviceId } from "@/lib/devices/getDeviceId";
 
 export type NativeConnectResult =
   | {
@@ -27,9 +28,22 @@ export function useNativeCalendarConnect() {
       return { ok: false, permissionDenied: true };
     }
 
+    const device = await getDeviceId();
+    if (!device) {
+      return {
+        ok: false,
+        permissionDenied: false,
+        error: "Could not identify this device",
+      };
+    }
+
     try {
       const [result, subCalendars] = await Promise.all([
-        connectNative({ label: "Device Calendar" }),
+        connectNative({
+          label: "Device Calendar",
+          deviceId: device.deviceId,
+          devicePlatform: device.platform,
+        }),
         listNativeSubCalendars(),
       ]);
       return {

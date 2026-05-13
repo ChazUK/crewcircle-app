@@ -31,6 +31,8 @@ export const NativeCalendarProvider: CalendarProvider = {
     return {
       connection: {
         localCalendarId: params.deviceCalendarId,
+        deviceId: params.deviceId,
+        devicePlatform: params.devicePlatform,
       },
       subCalendars: [
         {

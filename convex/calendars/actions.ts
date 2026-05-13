@@ -13,7 +13,11 @@ import { syncAfterConnect } from "./syncAfterConnect";
 import { runSyncWithRetry } from "./syncWithRetry";
 
 export const connectNative = action({
-  args: { label: v.string() },
+  args: {
+    label: v.string(),
+    deviceId: v.string(),
+    devicePlatform: v.union(v.literal("ios"), v.literal("android")),
+  },
   handler: async (
     ctx,
     args,
@@ -23,7 +27,10 @@ export const connectNative = action({
     currentExternalIds: string[];
   }> => {
     const all = await ctx.runQuery(api.calendars.queries.getConnections, {});
-    const existing = all.find((c) => c.provider === "native");
+    // Native calendars are device-local: short-circuit only when the
+    // user already has a native connection from THIS device. A native
+    // connection from another device coexists alongside.
+    const existing = all.find((c) => c.provider === "native" && c.deviceId === args.deviceId);
     if (existing) {
       return {
         connectionId: existing._id,
@@ -35,6 +42,8 @@ export const connectNative = action({
       provider: "native",
       deviceCalendarId: "",
       label: args.label,
+      deviceId: args.deviceId,
+      devicePlatform: args.devicePlatform,
     });
     const connection: Doc<"calendarConnections"> | null = await ctx.runQuery(
       internal.calendars.db.getConnectionInternal.getConnectionInternal,
@@ -130,11 +139,12 @@ export const listSubCalendars = action({
 });
 
 export const syncNativeOnOpen = action({
-  args: {},
+  args: { deviceId: v.optional(v.string()) },
   handler: async (
     ctx,
+    args,
   ): Promise<{ connectionId: Id<"calendarConnections">; nativeCalendarIds: string[] }[]> => {
-    return await calendarService.syncNativeOnOpen(ctx);
+    return await calendarService.syncNativeOnOpen(ctx, args.deviceId);
   },
 });
 

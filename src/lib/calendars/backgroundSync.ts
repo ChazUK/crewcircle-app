@@ -4,6 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 
+import { getDeviceId } from "../devices/getDeviceId";
 import { syncNativeConnections } from "./syncNativeConnections";
 
 export const CALENDAR_BACKGROUND_SYNC_TASK = "CALENDAR_BACKGROUND_SYNC";
@@ -28,7 +29,10 @@ TaskManager.defineTask(CALENDAR_BACKGROUND_SYNC_TASK, async () => {
     const convex = new ConvexHttpClient(convexUrl);
     convex.setAuth(token);
 
-    const connections = await convex.action(api.calendars.actions.syncNativeOnOpen, {});
+    const device = await getDeviceId();
+    const connections = await convex.action(api.calendars.actions.syncNativeOnOpen, {
+      ...(device ? { deviceId: device.deviceId } : {}),
+    });
     if (connections.length === 0) {
       return BackgroundFetch.BackgroundFetchResult.NoData;
     }

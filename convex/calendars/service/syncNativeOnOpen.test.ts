@@ -56,7 +56,11 @@ async function insertConnection(
   t: TestConvex<typeof schema>,
   userId: Id<"users">,
   provider: "google" | "ical" | "microsoft" | "native",
-  overrides: Partial<{ lastSyncedAt: number }> = {},
+  overrides: Partial<{
+    lastSyncedAt: number;
+    deviceId: string;
+    devicePlatform: "ios" | "android";
+  }> = {},
 ): Promise<Id<"calendarConnections">> {
   return t.run((ctx) =>
     ctx.db.insert("calendarConnections", {
@@ -163,5 +167,39 @@ describe("CalendarService.syncNativeOnOpen", () => {
       .action(async (ctx) => service.syncNativeOnOpen(ctx));
 
     expect(result.map((row) => row.connectionId)).toEqual([connectionId]);
+  });
+
+  test("filters native connections to those matching the calling deviceId", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertOwner(t);
+    const iosConnectionId = await insertConnection(t, userId, "native", {
+      deviceId: "ios-device",
+      devicePlatform: "ios",
+    });
+    await insertSubCalendar(t, iosConnectionId, "ios-cal");
+    const androidConnectionId = await insertConnection(t, userId, "native", {
+      deviceId: "android-device",
+      devicePlatform: "android",
+    });
+    await insertSubCalendar(t, androidConnectionId, "android-cal");
+
+    const result = await t
+      .withIdentity(ownerIdentity)
+      .action(async (ctx) => service.syncNativeOnOpen(ctx, "android-device"));
+
+    expect(result.map((row) => row.connectionId)).toEqual([androidConnectionId]);
+  });
+
+  test("legacy native connections with no deviceId still surface to any caller", async () => {
+    const t = convexTest(schema, modules);
+    const userId = await insertOwner(t);
+    const legacyConnectionId = await insertConnection(t, userId, "native");
+    await insertSubCalendar(t, legacyConnectionId, "legacy-cal");
+
+    const result = await t
+      .withIdentity(ownerIdentity)
+      .action(async (ctx) => service.syncNativeOnOpen(ctx, "android-device"));
+
+    expect(result.map((row) => row.connectionId)).toEqual([legacyConnectionId]);
   });
 });

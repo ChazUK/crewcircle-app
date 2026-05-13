@@ -139,3 +139,35 @@ export const SyncingMultiple: Story = {
     syncingIds: new Set(["conn_google_1", "conn_native_1"]),
   },
 };
+
+export const NativeOnAnotherDevice: Story = {
+  args: {
+    currentDeviceId: "device-android-here",
+    connections: [
+      {
+        _id: "conn_native_ios" as Id<"calendarConnections">,
+        provider: "native",
+        label: "iPhone Calendar",
+        color: "#f59e0b",
+        lastSyncedAt: now - 60 * 60 * 1000,
+        syncErrorCount: 0,
+        subCalendarCount: 2,
+        nativeCalendarIds: ["cal_default"],
+        deviceId: "device-ios-elsewhere",
+        devicePlatform: "ios",
+      },
+      {
+        _id: "conn_native_android" as Id<"calendarConnections">,
+        provider: "native",
+        label: "Android Calendar",
+        color: "#22c55e",
+        lastSyncedAt: now - 10 * 60 * 1000,
+        syncErrorCount: 0,
+        subCalendarCount: 1,
+        nativeCalendarIds: ["cal_local"],
+        deviceId: "device-android-here",
+        devicePlatform: "android",
+      },
+    ],
+  },
+};

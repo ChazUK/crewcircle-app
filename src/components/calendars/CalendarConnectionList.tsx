@@ -22,6 +22,8 @@ export type ConnectionRow = {
   syncErrorCount: number;
   subCalendarCount: number;
   nativeCalendarIds?: string[];
+  deviceId?: string;
+  devicePlatform?: "ios" | "android";
 };
 
 type Props = {
@@ -29,9 +31,36 @@ type Props = {
   syncingIds?: Set<string>;
   onSync: (connection: ConnectionRow) => void;
   onDisconnect: (id: Id<"calendarConnections">) => void;
+  // Stable identifier for the device rendering the list. Used to mark
+  // native connections that originated on another device — those rows
+  // are read-only here because their calendar ids can't be queried on
+  // this device.
+  currentDeviceId?: string;
 };
 
-export function CalendarConnectionList({ connections, syncingIds, onSync, onDisconnect }: Props) {
+function isForeignDeviceConnection(
+  row: ConnectionRow,
+  currentDeviceId: string | undefined,
+): boolean {
+  if (row.provider !== "native") return false;
+  if (row.deviceId == null) return false;
+  if (currentDeviceId == null) return false;
+  return row.deviceId !== currentDeviceId;
+}
+
+function platformLabel(platform: "ios" | "android" | undefined): string {
+  if (platform === "ios") return "iPhone";
+  if (platform === "android") return "Android";
+  return "another device";
+}
+
+export function CalendarConnectionList({
+  connections,
+  syncingIds,
+  onSync,
+  onDisconnect,
+  currentDeviceId,
+}: Props) {
   if (connections === undefined) {
     return (
       <View className="items-center py-8">
@@ -80,22 +109,29 @@ export function CalendarConnectionList({ connections, syncingIds, onSync, onDisc
                 {BUSY_SWITCH && <Text className="text-xs uppercase text-center w-12">Busy</Text>}
               </View>
               <View className="gap-3">
-                {connections.map((connection, index) => (
-                  <Fragment key={connection._id}>
-                    {index !== 0 && <Separator />}
-                    <CalendarConnectionItem
-                      provider={connection.provider}
-                      color={connection.color}
-                      label={connection.label}
-                      lastSyncedAt={connection.lastSyncedAt}
-                      isSyncing={syncingIds?.has(connection._id) ?? false}
-                      syncErrorCount={connection.syncErrorCount}
-                      lastSyncError={connection.lastSyncError}
-                      onSync={() => onSync(connection)}
-                      onDisconnect={() => onDisconnect(connection._id)}
-                    />
-                  </Fragment>
-                ))}
+                {connections.map((connection, index) => {
+                  const isForeign = isForeignDeviceConnection(connection, currentDeviceId);
+                  return (
+                    <Fragment key={connection._id}>
+                      {index !== 0 && <Separator />}
+                      <CalendarConnectionItem
+                        provider={connection.provider}
+                        color={connection.color}
+                        label={connection.label}
+                        lastSyncedAt={connection.lastSyncedAt}
+                        isSyncing={syncingIds?.has(connection._id) ?? false}
+                        syncErrorCount={connection.syncErrorCount}
+                        lastSyncError={connection.lastSyncError}
+                        isForeignDevice={isForeign}
+                        foreignDeviceLabel={
+                          isForeign ? platformLabel(connection.devicePlatform) : undefined
+                        }
+                        onSync={() => onSync(connection)}
+                        onDisconnect={() => onDisconnect(connection._id)}
+                      />
+                    </Fragment>
+                  );
+                })}
               </View>
             </Fragment>
           ) : null}
@@ -113,6 +149,8 @@ type CalendarConnectionItemProps = {
   isSyncing?: boolean;
   syncErrorCount?: number;
   lastSyncError?: string;
+  isForeignDevice?: boolean;
+  foreignDeviceLabel?: string;
   onSync: () => void;
   onDisconnect: () => void;
 };
@@ -125,14 +163,18 @@ function CalendarConnectionItem({
   isSyncing,
   syncErrorCount = 0,
   lastSyncError,
+  isForeignDevice,
+  foreignDeviceLabel,
   onSync,
   onDisconnect,
 }: CalendarConnectionItemProps) {
-  const syncStatus = isSyncing
-    ? "Syncing..."
-    : lastSyncedAt
-      ? `Last synced ${formatDistanceToNow(new Date(lastSyncedAt), { addSuffix: true })}`
-      : "Never synced";
+  const syncStatus = isForeignDevice
+    ? `Connected on ${foreignDeviceLabel ?? "another device"} — open the app there to sync`
+    : isSyncing
+      ? "Syncing..."
+      : lastSyncedAt
+        ? `Last synced ${formatDistanceToNow(new Date(lastSyncedAt), { addSuffix: true })}`
+        : "Never synced";
 
   return (
     <View className="gap-1">
@@ -140,7 +182,8 @@ function CalendarConnectionItem({
         <PressableFeedback
           className="flex-1 flex-row items-center gap-3"
           accessibilityRole="button"
-          onPress={onSync}
+          isDisabled={isForeignDevice}
+          onPress={isForeignDevice ? undefined : onSync}
         >
           <View className="size-7 items-center justify-center">
             {isSyncing ? (
