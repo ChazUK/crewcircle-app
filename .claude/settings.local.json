@@ -9,6 +9,13 @@
       "WebFetch(domain:api.anthropic.com)"
     ]
   },
+  "skillOverrides": {
+    "clerk": "name-only",
+    "clerk-backend-api": "name-only",
+    "clerk-custom-ui": "name-only",
+    "clerk-expo-patterns": "name-only",
+    "clerk-webhooks": "name-only"
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -21,12 +28,5 @@
         ]
       }
     ]
-  },
-  "skillOverrides": {
-    "clerk": "name-only",
-    "clerk-backend-api": "name-only",
-    "clerk-custom-ui": "name-only",
-    "clerk-expo-patterns": "name-only",
-    "clerk-webhooks": "name-only"
   }
 }
