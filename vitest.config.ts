@@ -6,6 +6,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@convex": path.resolve(__dirname, "convex"),
+      "@shared": path.resolve(__dirname, "types"),
     },
   },
   test: {
@@ -24,6 +25,14 @@ export default defineConfig({
         test: {
           name: "src",
           include: ["src/**/*.test.ts"],
+          environment: "node",
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "shared",
+          include: ["types/**/*.test.ts"],
           environment: "node",
         },
       },

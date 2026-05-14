@@ -1,5 +1,16 @@
+import { DEPARTMENTS, type Department } from "@shared/departments/departments";
 import { defineTable } from "convex/server";
-import { v } from "convex/values";
+import { v, type VLiteral } from "convex/values";
+
+type DepartmentLiteral<D extends Department = Department> = VLiteral<D, "required">;
+
+export const departmentValidator = v.union(
+  ...(DEPARTMENTS.map((d) => v.literal(d)) as [
+    DepartmentLiteral,
+    DepartmentLiteral,
+    ...DepartmentLiteral[],
+  ]),
+);
 
 export const User = {
   email: v.string(),
@@ -12,8 +23,8 @@ export const User = {
   nickname: v.optional(v.string()),
 
   userType: v.optional(v.union(v.literal("crew"), v.literal("production-manager"))),
-  department: v.optional(v.string()),
-  role: v.optional(v.string()),
+  department: v.optional(departmentValidator),
+  roles: v.optional(v.array(v.string())),
   yearsExperience: v.optional(v.number()),
   yearsInRole: v.optional(v.number()),
   country: v.optional(v.string()),

@@ -25,15 +25,29 @@ export const getMyProfile = query({
 
     if (viewer.userType === undefined) return null;
 
+    if (viewer.userType === "crew") {
+      return {
+        mode: "self",
+        userId: viewer._id,
+        firstName: viewer.firstName,
+        lastName: viewer.lastName,
+        nickname: viewer.nickname,
+        profilePictureUrl: viewer.profilePictureUrl,
+        userType: "crew",
+        department: viewer.department,
+        roles: viewer.roles,
+      };
+    }
+
     return {
-      mode: viewer.userType === "crew" ? "self" : "pm-self",
+      mode: "pm-self",
       userId: viewer._id,
       firstName: viewer.firstName,
       lastName: viewer.lastName,
       nickname: viewer.nickname,
       profilePictureUrl: viewer.profilePictureUrl,
-      userType: viewer.userType,
-    } as ViewableProfile;
+      userType: "production-manager",
+    };
   },
 });
 
@@ -65,16 +79,29 @@ export const getViewableProfile = query({
 
     if (visibility.mode === "hidden") return null;
 
-    const userType = subject.userType as "crew" | "production-manager";
+    if (subject.userType === "crew") {
+      return {
+        mode: visibility.mode as "self" | "contact" | "public-card",
+        userId: subject._id,
+        firstName: subject.firstName,
+        lastName: subject.lastName,
+        nickname: subject.nickname,
+        profilePictureUrl: subject.profilePictureUrl,
+        userType: "crew",
+        department: subject.department,
+        roles: subject.roles,
+      };
+    }
 
+    const userType = subject.userType as "production-manager";
     return {
-      mode: visibility.mode,
+      mode: visibility.mode as "pm-self" | "pm-job-linked",
       userId: subject._id,
       firstName: subject.firstName,
       lastName: subject.lastName,
       nickname: subject.nickname,
       profilePictureUrl: subject.profilePictureUrl,
       userType,
-    } as ViewableProfile;
+    };
   },
 });

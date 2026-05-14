@@ -2,7 +2,7 @@ import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import { ListGroup, PressableFeedback, Spinner } from "heroui-native";
-import { ChevronRightIcon, UserIcon } from "lucide-react-native";
+import { BriefcaseIcon, ChevronRightIcon, UserIcon } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
 
 import { Title } from "@/components/ui/Title";
@@ -29,6 +29,9 @@ export default function EditProfileHubScreen() {
 
   const identityPreview = profile.nickname ?? "Not added";
 
+  const deptRolesPreview =
+    profile.userType === "crew" && profile.department ? profile.department : "Not added";
+
   return (
     <ScrollView className="flex-1" contentContainerClassName="p-4 gap-4">
       <ListGroup>
@@ -48,6 +51,28 @@ export default function EditProfileHubScreen() {
             </ListGroup.Item>
           </PressableFeedback.Scale>
         </PressableFeedback>
+
+        {profile.userType === "crew" ? (
+          <PressableFeedback
+            animation={false}
+            onPress={() => router.push("/profile/edit/department-and-roles")}
+          >
+            <PressableFeedback.Scale>
+              <ListGroup.Item>
+                <ListGroup.ItemPrefix>
+                  <BriefcaseIcon size={20} />
+                </ListGroup.ItemPrefix>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>Department & Roles</ListGroup.ItemTitle>
+                  <ListGroup.ItemDescription>{deptRolesPreview}</ListGroup.ItemDescription>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix>
+                  <ChevronRightIcon size={16} />
+                </ListGroup.ItemSuffix>
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+          </PressableFeedback>
+        ) : null}
       </ListGroup>
     </ScrollView>
   );
