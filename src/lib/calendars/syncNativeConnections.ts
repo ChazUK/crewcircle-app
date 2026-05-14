@@ -1,6 +1,7 @@
 import type { Id } from "@convex/_generated/dataModel";
 import type { IncomingEvent, SyncWindow } from "@shared/calendars";
 
+import { reportError } from "../observability/reportError";
 import { fetchNativeEvents } from "./fetchNativeEvents";
 
 export type NativeConnectionToSync = {
@@ -39,7 +40,7 @@ export async function syncNativeConnections(
       // and rethrow at the end so the caller (background-fetch) can
       // signal Failed to the OS scheduler instead of NewData.
       const error = err instanceof Error ? err : new Error(String(err));
-      console.error("[syncNativeConnections] sync failed for connection", connectionId, error);
+      reportError(error, { tags: { area: "calendar.nativeConnection" }, extra: { connectionId } });
       errors.push(error);
     }
   }

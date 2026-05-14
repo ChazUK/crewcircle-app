@@ -10,6 +10,7 @@ import { withUniwind } from "uniwind";
 
 import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
+import { reportError } from "@/lib/observability/reportError";
 import { getClerkErrorMessage } from "@/utils/clerkErrors";
 
 type Step = "email" | "code" | "new-password" | "mfa";
@@ -122,8 +123,9 @@ export default function Page() {
           setStep("mfa");
         }
       } else {
-        console.error(
-          `[forgot-password] Unexpected sign-in status after password reset: "${signIn.status}".`,
+        reportError(
+          new Error(`Unexpected sign-in status after password reset: "${signIn.status}"`),
+          { tags: { area: "auth.forgotPassword" } },
         );
       }
     },
@@ -165,7 +167,9 @@ export default function Page() {
           },
         });
       } else {
-        console.error("Sign-in attempt not complete after MFA:", signIn);
+        reportError(new Error(`Sign-in attempt not complete after MFA: status=${signIn.status}`), {
+          tags: { area: "auth.forgotPassword" },
+        });
       }
     },
   });

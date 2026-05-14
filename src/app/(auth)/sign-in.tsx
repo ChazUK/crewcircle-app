@@ -21,6 +21,7 @@ import { SignInWithAppleButton } from "@/components/auth/SignInWithAppleButton";
 import { SignInWithGoogleButton } from "@/components/auth/SignInWithGoogleButton";
 import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
+import { reportError } from "@/lib/observability/reportError";
 import { getClerkErrorMessage } from "@/utils/clerkErrors";
 
 const StyledSafeAreaView = withUniwind(SafeAreaView);
@@ -92,7 +93,9 @@ export default function Page() {
           await signIn.mfa.sendEmailCode();
         }
       } else {
-        console.error("Sign-in attempt not complete:", signIn);
+        reportError(new Error(`Sign-in attempt not complete: status=${signIn.status}`), {
+          tags: { area: "auth.signIn" },
+        });
       }
     },
   });
@@ -121,7 +124,9 @@ export default function Page() {
           throw e;
         }
       } else {
-        console.error("Sign-in attempt not complete:", signIn);
+        reportError(new Error(`Sign-in attempt not complete: status=${signIn.status}`), {
+          tags: { area: "auth.signIn" },
+        });
       }
     },
   });

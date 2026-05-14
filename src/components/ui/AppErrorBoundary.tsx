@@ -4,6 +4,8 @@ import React from "react";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { reportError } from "@/lib/observability/reportError";
+
 type AppErrorBoundaryProps = {
   children: React.ReactNode;
 };

@@ -20,6 +20,7 @@ import { useSentryUser } from "@/hooks/useSentryUser";
 import { registerBackgroundSync } from "@/lib/calendars/backgroundSync";
 import { syncNativeConnections } from "@/lib/calendars/syncNativeConnections";
 import { getDeviceId } from "@/lib/devices/getDeviceId";
+import { reportError } from "@/lib/observability/reportError";
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN!;
 if (!sentryDsn) throw new Error("Add EXPO_PUBLIC_SENTRY_DSN to the .env file");
@@ -102,7 +103,7 @@ function RootNavigator() {
       initialDesyncCheckDone.current = true;
 
       if (isSignedIn && !isAuthenticated)
-        signOut().catch((err) => console.error("Failed to sign out stale Clerk session:", err));
+        signOut().catch((err) => reportError(err, { tags: { area: "auth.signOut" } }));
     }
   }, [isLoading, isSignedIn, isAuthenticated, signOut]);
 
@@ -114,7 +115,7 @@ function RootNavigator() {
 
     upsertUser()
       .then(() => setIsUserReady(true))
-      .catch((err) => console.error("Failed to upsert user:", err));
+      .catch((err) => reportError(err, { tags: { area: "users.upsert" } }));
   }, [isAuthenticated]);
 
   // Keep the splash visible until auth has resolved AND (if authenticated)
@@ -167,10 +168,10 @@ function RootNavigator() {
           return;
         } catch (err) {
           if (!isConnectionLost(err) || attempt === delays.length) {
-            console.error(
-              `[RootNavigator] native sync failed (trigger=${trigger}, attempt=${attempt + 1})`,
-              err,
-            );
+            reportError(err, {
+              tags: { area: "calendar.nativeSync" },
+              extra: { trigger, attempt },
+            });
             return;
           }
           console.warn(
@@ -203,7 +204,7 @@ function RootNavigator() {
     if (!isUserReady) return;
     if (process.env.EXPO_PUBLIC_ENABLE_NATIVE_BACKGROUND_SYNC !== "true") return;
     registerBackgroundSync().catch((err) =>
-      console.error("[RootNavigator] failed to register background sync", err),
+      reportError(err, { tags: { area: "calendar.backgroundSync" } }),
     );
   }, [isUserReady]);
 

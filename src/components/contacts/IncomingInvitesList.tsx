@@ -7,6 +7,7 @@ import { Text, View } from "react-native";
 
 import { useAcceptContactInvite } from "@/hooks/contacts/useAcceptContactInvite";
 import { useDeclineContactInvite } from "@/hooks/contacts/useDeclineContactInvite";
+import { reportError } from "@/lib/observability/reportError";
 
 import { IncomingInviteRow } from "./IncomingInviteRow";
 
@@ -26,7 +27,7 @@ export function IncomingInvitesList() {
       if (action === "accept") await acceptInvite(inviteId);
       else await declineInvite(inviteId);
     } catch (err) {
-      console.error(`[IncomingInvitesList] ${action} failed`, err);
+      reportError(err, { tags: { area: "contacts.invite" }, extra: { action } });
     } finally {
       setBusyIds((prev) => {
         const next = new Set(prev);

@@ -4,6 +4,7 @@ import { useAction } from "convex/react";
 import { useState } from "react";
 
 import { fetchNativeEvents } from "@/lib/calendars/fetchNativeEvents";
+import { reportError } from "@/lib/observability/reportError";
 
 import type { ConnectionRow } from "../CalendarConnectionList";
 
@@ -28,7 +29,7 @@ export function useCalendarSync() {
       const events = await fetchNativeEvents(nativeCalendarIds, syncWindow);
       await uploadNativeEventsAction({ connectionId, events });
     } catch (err) {
-      console.error("[useCalendarSync] native sync failed", err);
+      reportError(err, { tags: { area: "calendar.nativeSync" } });
     } finally {
       setSyncingIds((prev) => {
         const next = new Set(prev);
@@ -47,7 +48,7 @@ export function useCalendarSync() {
     try {
       await syncNowAction({ connectionId: connection._id });
     } catch (err) {
-      console.error("[useCalendarSync] sync failed", err);
+      reportError(err, { tags: { area: "calendar.sync" } });
     } finally {
       setSyncingIds((prev) => {
         const next = new Set(prev);

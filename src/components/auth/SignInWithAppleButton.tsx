@@ -3,6 +3,8 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter } from "expo-router";
 import { Alert, Platform } from "react-native";
 
+import { reportError } from "@/lib/observability/reportError";
+
 type Props = {
   onSignInComplete?: () => void;
 };
@@ -33,7 +35,7 @@ export function SignInWithAppleButton({ onSignInComplete }: Props) {
 
       const message = err instanceof Error ? err.message : "An error occurred during Apple sign-in";
       Alert.alert("Error", message);
-      console.error("Sign in with Apple error:", JSON.stringify(err, null, 2));
+      reportError(err, { tags: { area: "auth.apple" } });
     }
   };
 

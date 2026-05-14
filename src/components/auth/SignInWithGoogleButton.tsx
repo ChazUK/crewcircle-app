@@ -3,6 +3,8 @@ import { useRouter } from "expo-router";
 import { Button } from "heroui-native";
 import { Alert, Platform } from "react-native";
 
+import { reportError } from "@/lib/observability/reportError";
+
 import { GoogleIcon } from "../ui/icons/Google";
 
 type Props = {
@@ -36,7 +38,7 @@ export function SignInWithGoogleButton({ onSignInComplete }: Props) {
       const message =
         err instanceof Error ? err.message : "An error occurred during Google sign-in";
       Alert.alert("Error", message);
-      console.error("Sign in with Google error:", JSON.stringify(err, null, 2));
+      reportError(err, { tags: { area: "auth.google" } });
     }
   };
 
