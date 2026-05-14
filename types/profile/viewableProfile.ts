@@ -1,5 +1,7 @@
 import type { Id } from "@convex/_generated/dataModel";
 
+import type { Department } from "../departments/departments";
+
 type ProfileIdentity = {
   userId: Id<"users">;
   firstName: string | undefined;
@@ -10,7 +12,7 @@ type ProfileIdentity = {
 
 type CrewProfile = ProfileIdentity & {
   userType: "crew";
-  department: string | undefined;
+  department: Department | undefined;
   roles: string[] | undefined;
 };
 

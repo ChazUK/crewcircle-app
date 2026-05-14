@@ -133,6 +133,57 @@ describe("completeOnboarding phone", () => {
   });
 });
 
+describe("completeOnboarding department and roles", () => {
+  test("persists department and roles for crew", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+      firstName: "Alice",
+      lastName: "Smith",
+      userType: "crew",
+      department: "Camera",
+      roles: ["Director of Photography", "Camera Operator"],
+    });
+    const user = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
+        .unique(),
+    );
+    expect(user?.department).toBe("Camera");
+    expect(user?.roles).toEqual(["Director of Photography", "Camera Operator"]);
+  });
+
+  test("rejects a role that does not belong to the chosen department", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+        firstName: "Alice",
+        lastName: "Smith",
+        userType: "crew",
+        department: "Camera",
+        roles: ["Gaffer"],
+      }),
+    ).rejects.toThrow('Role "Gaffer" does not belong to department "Camera"');
+  });
+
+  test("omits department and roles when not provided", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+      firstName: "Alice",
+      lastName: "Smith",
+      userType: "production-manager",
+    });
+    const user = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
+        .unique(),
+    );
+    expect(user?.department).toBeUndefined();
+    expect(user?.roles).toBeUndefined();
+  });
+});
+
 describe("updateProfile bio length validation", () => {
   test("rejects bio longer than 1000 characters", async () => {
     const t = await makeTestWithUser();

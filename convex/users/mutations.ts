@@ -1,11 +1,12 @@
-import type { Department } from "@shared/departments/departments";
-import { v } from "convex/values";
+import { DEPARTMENT_ROLES, type Department } from "@shared/departments/departments";
+import { ConvexError, v } from "convex/values";
 import { z } from "zod";
 
 import { mutation } from "../_generated/server";
 import { parseOrConvexError } from "../lib/parseOrConvexError";
 import { getUserByExternalId } from "./db/getUser";
 import { upsertCurrentUser } from "./domain/upsertCurrentUser";
+import { departmentValidator } from "./schema";
 
 const httpUrl = z.url({ protocol: /^https?$/, hostname: z.regexes.domain });
 
@@ -40,7 +41,8 @@ export const completeOnboarding = mutation({
     lastName: v.string(),
     city: v.optional(v.string()),
     userType: v.union(v.literal("crew"), v.literal("production-manager")),
-    departments: v.optional(v.array(v.string())),
+    department: v.optional(departmentValidator),
+    roles: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -51,12 +53,24 @@ export const completeOnboarding = mutation({
 
     parseOrConvexError(completeOnboardingSchema, args);
 
+    if (args.department && args.roles?.length) {
+      const validRoles = DEPARTMENT_ROLES[args.department];
+      for (const role of args.roles) {
+        if (!validRoles.includes(role)) {
+          throw new ConvexError(
+            `Role "${role}" does not belong to department "${args.department}"`,
+          );
+        }
+      }
+    }
+
     await ctx.db.patch(user._id, {
       firstName: args.firstName,
       lastName: args.lastName,
       ...(args.city && { city: args.city }),
       userType: args.userType,
-      ...(args.departments?.[0] && { department: args.departments[0] as Department }),
+      ...(args.department && { department: args.department as Department }),
+      ...(args.roles?.length && { roles: args.roles }),
       hasCompletedOnboarding: true,
     });
   },

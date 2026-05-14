@@ -30,11 +30,13 @@ export default function OnboardingPage() {
       roles: [] as string[],
     },
     onSubmit: async ({ value }) => {
+      const isCrew = value.useCase === "crew";
       await completeOnboarding({
         firstName: clerkUser?.firstName ?? "",
         lastName: clerkUser?.lastName ?? "",
-        userType: value.useCase === "crew" ? "crew" : "production-manager",
-        departments: value.useCase === "crew" && value.department ? [value.department] : undefined,
+        userType: isCrew ? "crew" : "production-manager",
+        department: isCrew && value.department ? value.department : undefined,
+        roles: isCrew && value.roles.length > 0 ? value.roles : undefined,
       });
     },
   });
