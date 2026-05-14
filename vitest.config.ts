@@ -28,6 +28,14 @@ export default defineConfig({
           environment: "node",
         },
       },
+      {
+        extends: true,
+        test: {
+          name: "shared",
+          include: ["types/**/*.test.ts"],
+          environment: "node",
+        },
+      },
     ],
     coverage: {
       provider: "v8",
