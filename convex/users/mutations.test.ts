@@ -166,6 +166,18 @@ describe("completeOnboarding department and roles", () => {
     ).rejects.toThrow('Role "Gaffer" does not belong to department "Camera"');
   });
 
+  test("rejects roles when department is not provided", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {
+        firstName: "Alice",
+        lastName: "Smith",
+        userType: "crew",
+        roles: ["Director of Photography"],
+      }),
+    ).rejects.toThrow("Department is required when roles are provided");
+  });
+
   test("omits department and roles when not provided", async () => {
     const t = await makeTestWithUser();
     await t.withIdentity(identity).mutation(api.users.mutations.completeOnboarding, {

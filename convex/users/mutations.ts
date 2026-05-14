@@ -53,7 +53,10 @@ export const completeOnboarding = mutation({
 
     parseOrConvexError(completeOnboardingSchema, args);
 
-    if (args.department && args.roles?.length) {
+    if (args.roles?.length) {
+      if (!args.department) {
+        throw new ConvexError("Department is required when roles are provided");
+      }
       const validRoles = DEPARTMENT_ROLES[args.department];
       for (const role of args.roles) {
         if (!validRoles.includes(role)) {
