@@ -15,6 +15,7 @@ import { AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AppErrorBoundary } from "@/components/ui/AppErrorBoundary";
+import { useSentryUser } from "@/hooks/useSentryUser";
 import { registerBackgroundSync } from "@/lib/calendars/backgroundSync";
 import { syncNativeConnections } from "@/lib/calendars/syncNativeConnections";
 import { getDeviceId } from "@/lib/devices/getDeviceId";
@@ -72,6 +73,7 @@ function RootNavigator() {
   const ref = useNavigationContainerRef();
   const { isLoading, isAuthenticated } = useConvexAuth();
   const { isSignedIn, signOut } = useAuth();
+  useSentryUser();
   const upsertUser = useMutation(api.users.mutations.upsertUser);
   const currentUser = useQuery(api.users.queries.getCurrentUser, isAuthenticated ? {} : "skip");
   const syncNativeOnOpenAction = useAction(api.calendars.actions.syncNativeOnOpen);
