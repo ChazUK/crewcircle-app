@@ -217,6 +217,7 @@ function RootNavigator() {
       <Stack.Protected guard={isAuthenticated && isUserReady && hasCompletedOnboarding}>
         <Stack.Screen name="(home)" />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="profile" />
       </Stack.Protected>
       <Stack.Protected guard={isAuthenticated && isUserReady && !hasCompletedOnboarding}>
         <Stack.Screen name="(onboarding)" />

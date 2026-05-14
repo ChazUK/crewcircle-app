@@ -5,6 +5,8 @@ import { useRouter } from "expo-router";
 import { Button, Card, FieldError, Input, Label, Spinner, TextField } from "heroui-native";
 import { ScrollView, View } from "react-native";
 
+import { Title } from "@/components/ui/Title";
+
 export default function EditIdentityScreen() {
   const router = useRouter();
   const profile = useQuery(api.users.queries.getMyProfile);
@@ -18,9 +20,17 @@ export default function EditIdentityScreen() {
     );
   }
 
+  if (profile === null) {
+    return (
+      <View className="flex-1 items-center justify-center px-4">
+        <Title title="Sign in to edit your profile" />
+      </View>
+    );
+  }
+
   return (
     <EditIdentityForm
-      initialNickname={profile?.nickname ?? ""}
+      initialNickname={profile.nickname ?? ""}
       onDone={() => router.back()}
       onSubmit={updateProfileIdentity}
     />
