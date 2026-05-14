@@ -1,14 +1,11 @@
+import * as Sentry from "@sentry/react-native";
 import { Button } from "heroui-native";
 import React from "react";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type Props = {
+type AppErrorBoundaryProps = {
   children: React.ReactNode;
-};
-
-type State = {
-  hasError: boolean;
 };
 
 export type ErrorFallbackProps = {
@@ -33,21 +30,10 @@ export function ErrorFallback({ onReset }: ErrorFallbackProps) {
   );
 }
 
-export class AppErrorBoundary extends React.Component<Props, State> {
-  state: State = { hasError: false };
-
-  static getDerivedStateFromError(): State {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, info: React.ErrorInfo): void {
-    console.error("[ErrorBoundary]", error, info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <ErrorFallback onReset={() => this.setState({ hasError: false })} />;
-    }
-    return this.props.children;
-  }
+export function AppErrorBoundary({ children }: AppErrorBoundaryProps) {
+  return (
+    <Sentry.ErrorBoundary fallback={({ resetError }) => <ErrorFallback onReset={resetError} />}>
+      {children}
+    </Sentry.ErrorBoundary>
+  );
 }
