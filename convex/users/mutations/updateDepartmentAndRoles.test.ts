@@ -60,9 +60,9 @@ describe("updateDepartmentAndRoles", () => {
     await expect(
       t.withIdentity(identity).mutation(mut, {
         department: "Camera",
-        roles: ["Key Grip"],
+        roles: ["Gaffer"],
       }),
-    ).rejects.toThrow('Role "Key Grip" does not belong to department "Camera"');
+    ).rejects.toThrow('Role "Gaffer" does not belong to department "Camera"');
   });
 
   test("rejects when unauthenticated", async () => {
@@ -70,7 +70,7 @@ describe("updateDepartmentAndRoles", () => {
     await expect(
       t.mutation(mut, {
         department: "Sound",
-        roles: ["Boom Operator"],
+        roles: ["Production Sound Mixer"],
       }),
     ).rejects.toThrow("Not authenticated");
   });
@@ -88,8 +88,8 @@ describe("updateDepartmentAndRoles", () => {
       }),
     );
     await t.withIdentity(identity).mutation(mut, {
-      department: "Grip",
-      roles: ["Key Grip"],
+      department: "Electrical",
+      roles: ["Gaffer"],
     });
     const user = await t.run((ctx) =>
       ctx.db

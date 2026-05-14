@@ -18,7 +18,7 @@ const selfWithData: ViewableProfile = {
   mode: "self",
   ...baseCrew,
   department: "Camera",
-  roles: ["Director of Photography", "Focus Puller"],
+  roles: ["Director of Photography", "1st AC"],
 };
 
 const selfEmpty: ViewableProfile = {
@@ -32,14 +32,14 @@ const contact: ViewableProfile = {
   mode: "contact",
   ...baseCrew,
   department: "Sound",
-  roles: ["Production Sound Mixer", "Boom Operator"],
+  roles: ["Production Sound Mixer", "Sound Assistant"],
 };
 
 const publicCard: ViewableProfile = {
   mode: "public-card",
   ...baseCrew,
-  department: "Grip",
-  roles: ["Key Grip"],
+  department: "Electrical",
+  roles: ["Gaffer"],
 };
 
 const meta = {

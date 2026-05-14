@@ -53,13 +53,13 @@ export const DepartmentSelected: Story = {
 export const DepartmentAndRolesSelected: Story = {
   args: {
     initialDepartment: "Camera",
-    initialRoles: ["Director of Photography", "Focus Puller"],
+    initialRoles: ["Director of Photography", "1st AC"],
   },
 };
 
 export const SoundDepartment: Story = {
   args: {
     initialDepartment: "Sound",
-    initialRoles: ["Boom Operator"],
+    initialRoles: ["Production Sound Mixer"],
   },
 };
