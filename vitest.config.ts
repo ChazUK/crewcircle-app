@@ -6,6 +6,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@convex": path.resolve(__dirname, "convex"),
+      "@shared": path.resolve(__dirname, "types"),
     },
   },
   test: {

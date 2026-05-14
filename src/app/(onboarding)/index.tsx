@@ -1,5 +1,6 @@
 import { useUser } from "@clerk/expo";
 import { api } from "@convex/_generated/api";
+import type { Department } from "@shared/departments/departments";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "convex/react";
 import { Button } from "heroui-native";
@@ -25,15 +26,15 @@ export default function OnboardingPage() {
   const form = useForm({
     defaultValues: {
       useCase: null as UseCase | null,
-      departments: [] as string[],
+      department: undefined as Department | undefined,
+      roles: [] as string[],
     },
     onSubmit: async ({ value }) => {
       await completeOnboarding({
         firstName: clerkUser?.firstName ?? "",
         lastName: clerkUser?.lastName ?? "",
         userType: value.useCase === "crew" ? "crew" : "production-manager",
-        departments:
-          value.useCase === "crew" && value.departments.length > 0 ? value.departments : undefined,
+        departments: value.useCase === "crew" && value.department ? [value.department] : undefined,
       });
     },
   });
@@ -65,8 +66,24 @@ export default function OnboardingPage() {
         );
       case 2:
         return (
-          <form.Field name="departments">
-            {(field) => <DepartmentStep value={field.state.value} onChange={field.handleChange} />}
+          <form.Field name="department">
+            {(deptField) => (
+              <form.Field name="roles">
+                {(rolesField) => (
+                  <DepartmentStep
+                    department={deptField.state.value}
+                    roles={rolesField.state.value}
+                    onDepartmentChange={(dept) => {
+                      if (dept !== deptField.state.value) {
+                        rolesField.handleChange([]);
+                      }
+                      deptField.handleChange(dept);
+                    }}
+                    onRolesChange={rolesField.handleChange}
+                  />
+                )}
+              </form.Field>
+            )}
           </form.Field>
         );
       default:
@@ -101,7 +118,7 @@ export default function OnboardingPage() {
             isDisabled={
               isSubmitting ||
               (currentStep === 1 && values.useCase === null) ||
-              (currentStep === 2 && values.departments.length === 0)
+              (currentStep === 2 && (!values.department || values.roles.length === 0))
             }
             onPress={handleContinue}
           >

@@ -1,3 +1,4 @@
+import type { Department } from "@shared/departments/departments";
 import { v } from "convex/values";
 import { z } from "zod";
 
@@ -55,7 +56,7 @@ export const completeOnboarding = mutation({
       lastName: args.lastName,
       ...(args.city && { city: args.city }),
       userType: args.userType,
-      ...(args.departments?.[0] && { department: args.departments[0] }),
+      ...(args.departments?.[0] && { department: args.departments[0] as Department }),
       hasCompletedOnboarding: true,
     });
   },

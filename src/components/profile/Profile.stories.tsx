@@ -10,6 +10,8 @@ const baseCrew = {
   lastName: "Lovelace",
   profilePictureUrl: undefined,
   userType: "crew" as const,
+  department: undefined,
+  roles: undefined,
 };
 
 const basePm = {

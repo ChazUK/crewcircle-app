@@ -8,7 +8,12 @@ type ProfileIdentity = {
   profilePictureUrl: string | undefined;
 };
 
-type CrewProfile = ProfileIdentity & { userType: "crew" };
+type CrewProfile = ProfileIdentity & {
+  userType: "crew";
+  department: string | undefined;
+  roles: string[] | undefined;
+};
+
 type ProductionManagerProfile = ProfileIdentity & {
   userType: "production-manager";
 };
