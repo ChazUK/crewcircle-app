@@ -8,6 +8,8 @@ import { upsertCurrentUser } from "./domain/upsertCurrentUser";
 
 const httpUrl = z.url({ protocol: /^https?$/, hostname: z.regexes.domain });
 
+const updateProfileIdentitySchema = z.object({ nickname: z.string().trim().max(50).optional() });
+
 const completeOnboardingSchema = z.object({
   firstName: z.string().max(100),
   lastName: z.string().max(100),
@@ -95,5 +97,21 @@ export const updateProfile = mutation({
       ...(args.imdbUrl !== undefined && { imdbUrl: args.imdbUrl }),
       ...(args.cvUrl !== undefined && { cvUrl: args.cvUrl }),
     });
+  },
+});
+
+export const updateProfileIdentity = mutation({
+  args: { nickname: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const parsed = parseOrConvexError(updateProfileIdentitySchema, args);
+
+    const user = await getUserByExternalId(ctx, identity.subject);
+    if (!user) throw new Error("User not found");
+
+    if (parsed.nickname === undefined) return;
+    await ctx.db.patch(user._id, { nickname: parsed.nickname });
   },
 });

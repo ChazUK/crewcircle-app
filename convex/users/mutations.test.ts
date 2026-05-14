@@ -172,6 +172,94 @@ describe("updateProfile bio length validation", () => {
   });
 });
 
+describe("updateProfileIdentity", () => {
+  test("sets nickname on crew user", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfileIdentity, {
+      nickname: "Joey",
+    });
+    const user = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
+        .unique(),
+    );
+    expect(user?.nickname).toBe("Joey");
+  });
+
+  test("rejects nickname longer than 50 characters", async () => {
+    const t = await makeTestWithUser();
+    await expect(
+      t.withIdentity(identity).mutation(api.users.mutations.updateProfileIdentity, {
+        nickname: "A".repeat(51),
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("trims whitespace from nickname", async () => {
+    const t = await makeTestWithUser();
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfileIdentity, {
+      nickname: "  Joey  ",
+    });
+    const user = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
+        .unique(),
+    );
+    expect(user?.nickname).toBe("Joey");
+  });
+
+  test("throws when unauthenticated", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t.mutation(api.users.mutations.updateProfileIdentity, { nickname: "Joey" }),
+    ).rejects.toThrow("Not authenticated");
+  });
+
+  test("does not mutate other fields", async () => {
+    const t = convexTest(schema, modules);
+    await t.run((ctx) =>
+      ctx.db.insert("users", {
+        externalAuthId: identity.subject,
+        email: "me@example.com",
+        hasCompletedOnboarding: false,
+        firstName: "Existing",
+      }),
+    );
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfileIdentity, {
+      nickname: "Joey",
+    });
+    const user = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
+        .unique(),
+    );
+    expect(user?.firstName).toBe("Existing");
+  });
+
+  test("omitting nickname preserves the stored value", async () => {
+    const t = convexTest(schema, modules);
+    await t.run((ctx) =>
+      ctx.db.insert("users", {
+        externalAuthId: identity.subject,
+        email: "me@example.com",
+        hasCompletedOnboarding: false,
+        nickname: "Joey",
+      }),
+    );
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfileIdentity, {});
+    const user = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
+        .unique(),
+    );
+    expect(user?.nickname).toBe("Joey");
+  });
+});
+
 describe("updateProfile URL validation", () => {
   test("rejects javascript: protocol as website", async () => {
     const t = await makeTestWithUser();

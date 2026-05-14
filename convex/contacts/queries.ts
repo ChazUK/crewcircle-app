@@ -18,7 +18,6 @@ export const listMyContacts = query({
     const enriched: Array<{
       contactId: Id<"contacts">;
       user: Doc<"users">;
-      nickname?: string;
       createdAt: number;
     }> = [];
     for (const row of rows) {
@@ -27,7 +26,6 @@ export const listMyContacts = query({
         enriched.push({
           contactId: row._id,
           user,
-          ...(row.nickname && { nickname: row.nickname }),
           createdAt: row.createdAt,
         });
       }

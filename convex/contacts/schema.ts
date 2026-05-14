@@ -20,7 +20,6 @@ export const Contact = {
   contactUserId: v.id("users"),
   createdAt: v.number(),
   sourceInviteId: v.optional(v.id("contactInvites")),
-  nickname: v.optional(v.string()),
   circleIds: v.optional(v.array(v.string())),
 };
 
