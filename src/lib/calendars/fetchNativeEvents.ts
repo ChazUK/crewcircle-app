@@ -21,18 +21,6 @@ export async function fetchNativeEvents(
     new Date(window.windowEndMs),
   );
 
-  console.log(
-    `[fetchNativeEvents] device returned ${events.length} event(s) from ${calendarIds.length} calendar(s)`,
-    events.map((e) => ({
-      id: e.id,
-      calendarId: e.calendarId,
-      title: e.title,
-      availability: e.availability,
-      allDay: e.allDay,
-      startDate: e.startDate,
-    })),
-  );
-
   return events
     .filter((event) => {
       const avail = event.availability as string;

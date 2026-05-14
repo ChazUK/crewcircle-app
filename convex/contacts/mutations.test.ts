@@ -7,6 +7,12 @@ import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import schema from "../schema";
 
+vi.mock("resend", () => ({
+  Resend: class {
+    emails = { send: async () => ({ data: { id: "test" }, error: null }) };
+  },
+}));
+
 const modules = import.meta.glob("/convex/**/*.ts");
 
 const setupTest = () => {
@@ -16,11 +22,13 @@ const setupTest = () => {
 };
 
 beforeEach(() => {
+  vi.stubEnv("RESEND_API_KEY", "test-key");
   vi.useFakeTimers();
 });
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
 });
 
 async function drain(t: TestConvex<typeof schema>) {
