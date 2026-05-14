@@ -111,6 +111,7 @@ export const updateProfileIdentity = mutation({
     const user = await getUserByExternalId(ctx, identity.subject);
     if (!user) throw new Error("User not found");
 
+    if (parsed.nickname === undefined) return;
     await ctx.db.patch(user._id, { nickname: parsed.nickname });
   },
 });

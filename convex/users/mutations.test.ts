@@ -238,6 +238,26 @@ describe("updateProfileIdentity", () => {
     );
     expect(user?.firstName).toBe("Existing");
   });
+
+  test("omitting nickname preserves the stored value", async () => {
+    const t = convexTest(schema, modules);
+    await t.run((ctx) =>
+      ctx.db.insert("users", {
+        externalAuthId: identity.subject,
+        email: "me@example.com",
+        hasCompletedOnboarding: false,
+        nickname: "Joey",
+      }),
+    );
+    await t.withIdentity(identity).mutation(api.users.mutations.updateProfileIdentity, {});
+    const user = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
+        .unique(),
+    );
+    expect(user?.nickname).toBe("Joey");
+  });
 });
 
 describe("updateProfile URL validation", () => {
