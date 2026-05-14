@@ -3,7 +3,7 @@ import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Link, useRouter } from "expo-router";
 import { Button, Spinner } from "heroui-native";
-import { LogOutIcon, SettingsIcon } from "lucide-react-native";
+import { LogOutIcon, PencilIcon, SettingsIcon } from "lucide-react-native";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -16,15 +16,29 @@ export default function ProfileScreen() {
   const router = useRouter();
   const profile = useQuery(api.users.queries.getMyProfile);
 
+  const isSelf = profile?.mode === "self" || profile?.mode === "pm-self";
+
   return (
     <View className="flex-1" style={{ paddingTop: insets.top, paddingBottom: insets.bottom + 16 }}>
       <View className="flex-row items-center justify-between px-4">
         <Title title="Profile" subtitle="All about you" />
-        <Link href="/settings" asChild>
-          <Button variant="ghost" isIconOnly accessibilityLabel="Settings">
-            <SettingsIcon />
-          </Button>
-        </Link>
+        <View className="flex-row items-center gap-1">
+          {isSelf ? (
+            <Button
+              variant="ghost"
+              isIconOnly
+              accessibilityLabel="Edit Profile"
+              onPress={() => router.push("/profile/edit")}
+            >
+              <PencilIcon />
+            </Button>
+          ) : null}
+          <Link href="/settings" asChild>
+            <Button variant="ghost" isIconOnly accessibilityLabel="Settings">
+              <SettingsIcon />
+            </Button>
+          </Link>
+        </View>
       </View>
 
       {profile === undefined ? (
@@ -37,7 +51,7 @@ export default function ProfileScreen() {
         </View>
       ) : (
         <View className="flex-1">
-          <Profile profile={profile} onEditProfile={() => router.push("/profile/edit")} />
+          <Profile profile={profile} />
         </View>
       )}
 
