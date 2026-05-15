@@ -5,7 +5,7 @@ import { View } from "react-native";
 import { ContactRow } from "./ContactRow";
 
 const decorator = (Story: React.ComponentType) => (
-  <View className="p-4">
+  <View style={{ flex: 1, padding: 16 }}>
     <Story />
   </View>
 );

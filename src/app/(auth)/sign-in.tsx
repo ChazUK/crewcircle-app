@@ -14,17 +14,14 @@ import {
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { withUniwind } from "uniwind";
 
 import { SignInWithApple } from "@/components/auth/SignInWithAppleButton";
 import { SignInWithGoogle } from "@/components/auth/SignInWithGoogleButton";
 import { BackButton } from "@/components/ui/BackButton";
+import { SafeAreaView } from "@/components/ui/SafeAreaView";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 import { reportError } from "@/lib/observability/reportError";
 import { getClerkErrorMessage } from "@/utils/clerkErrors";
-
-const StyledSafeAreaView = withUniwind(SafeAreaView);
 
 export default function Page() {
   const [secondFactorStrategy, setSecondFactorStrategy] = useState<
@@ -175,7 +172,7 @@ export default function Page() {
         : undefined;
 
     return (
-      <StyledSafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1 bg-background">
         <BackButton
           className="mb-2"
           onPress={() => {
@@ -213,13 +210,13 @@ export default function Page() {
             </verifyForm.Field>
           </View>
         </ScrollView>
-      </StyledSafeAreaView>
+      </SafeAreaView>
     );
   }
 
   if (signIn.status === "needs_client_trust") {
     return (
-      <StyledSafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1 bg-background">
         <BackButton
           className="mb-2"
           onPress={() => {
@@ -257,23 +254,23 @@ export default function Page() {
             </verifyForm.Field>
           </View>
         </ScrollView>
-      </StyledSafeAreaView>
+      </SafeAreaView>
     );
   }
 
   return (
-    <StyledSafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1 bg-background">
       {/* <ScrollView contentContainerStyle={{ flexGrow: 1 }}> */}
       <View className="flex-1 justify-center gap-6">
         <View className="mx-4">
-          <Text className="text-4xl mb-2 font-bold leading-none">Welcome back</Text>
-          <Text className="text-base">
+          <Text className="mb-2 text-4xl leading-none font-bold text-foreground">Welcome back</Text>
+          <Text className="text-base text-foreground">
             Sign in to pick up your next shift, find a replacement, or manage your crew.
           </Text>
         </View>
 
-        <View className="gap-4 mx-4">
-          <Card className="gap-4">
+        <View className="mx-4 gap-4">
+          <Card className="gap-4 border border-muted/20">
             <Card.Body className="gap-4">
               <signInForm.Field name="emailAddress">
                 {(field) => (
@@ -301,7 +298,7 @@ export default function Page() {
               <signInForm.Field name="password">
                 {(field) => (
                   <TextField isRequired isInvalid={!!clerkErrors.fields.password}>
-                    <View className="flex-row justify-between items-center">
+                    <View className="flex-row items-center justify-between">
                       <Label>Password</Label>
                       <Link href="/forgot-password" asChild>
                         <LinkButton size="sm">
@@ -332,7 +329,7 @@ export default function Page() {
 
             <Card.Footer className="flex-col gap-4">
               {clerkErrors.global?.[0] && (
-                <Text className="text-danger text-sm text-left">
+                <Text className="text-left text-sm text-danger">
                   {clerkErrors.global[0].message}
                 </Text>
               )}
@@ -366,7 +363,7 @@ export default function Page() {
         </View>
       </View>
 
-      <View className="items-end flex-row gap-1 justify-center">
+      <View className="flex-row items-end justify-center gap-1">
         <Text className="text-base text-muted">Don't have an account?</Text>
         <Link href="/sign-up" asChild>
           <LinkButton>
@@ -375,15 +372,15 @@ export default function Page() {
         </Link>
       </View>
       {/* </ScrollView> */}
-    </StyledSafeAreaView>
+    </SafeAreaView>
   );
 }
 
 function OrDivider() {
   return (
     <View className="flex-row items-center">
-      <Separator className="flex-1" />
-      <Text className="mx-2 text-muted">OR</Text>
+      <Separator className="flex-1 " />
+      <Text className="mx-2 text-foreground">OR</Text>
       <Separator className="flex-1" />
     </View>
   );

@@ -4,22 +4,20 @@ import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "heroui-native";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Text, useColorScheme, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { withUniwind } from "uniwind";
 
 import { BackButton } from "@/components/ui/BackButton";
+import { SafeAreaView } from "@/components/ui/SafeAreaView";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
-
-const StyledSafeAreaView = withUniwind(SafeAreaView);
 
 export default function Page() {
   const { signUp, errors: clerkErrors, fetchStatus } = useSignUp();
   const { isSignedIn } = useAuth();
   const { setActive } = useClerk();
-
   const [pendingVerification, setPendingVerification] = useState(false);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   useEffect(() => {
     return () => {
@@ -74,7 +72,7 @@ export default function Page() {
 
   if (pendingVerification) {
     return (
-      <StyledSafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1 bg-background">
         <View className="mx-4 my-4">
           <BackButton onPress={() => setPendingVerification(false)} />
         </View>
@@ -101,24 +99,28 @@ export default function Page() {
             </verifyForm.Field>
           </View>
         </ScrollView>
-      </StyledSafeAreaView>
+      </SafeAreaView>
     );
   }
 
   return (
-    <StyledSafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1 bg-background">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View className="flex-1 gap-6">
-          <View className="items-center gap-4 mx-4 my-8">
+          <View className="mx-4 my-8 items-center gap-4">
             <Image
-              source={require("@/assets/icons/splash-icon-dark.png")}
+              source={
+                isDark
+                  ? require("@/assets/icons/splash-icon-light.png")
+                  : require("@/assets/icons/splash-icon-dark.png")
+              }
               style={{ width: 96, height: 96 }}
             />
-            <Text className="text-3xl font-bold">Create an account</Text>
+            <Text className="text-3xl font-bold text-foreground">Create an account</Text>
             <Text className="text-muted">Enter your details to get started</Text>
           </View>
 
-          <Card className="gap-4 mx-4">
+          <Card className="mx-4 gap-4 border border-muted/20">
             <Card.Body className="gap-4">
               <View className="flex-row gap-3">
                 <signUpForm.Field name="firstName">
@@ -211,7 +213,7 @@ export default function Page() {
 
             <Card.Footer className="flex-col gap-4">
               {clerkErrors.global?.[0] && (
-                <Text className="text-danger text-sm">{clerkErrors.global[0].message}</Text>
+                <Text className="text-sm text-danger">{clerkErrors.global[0].message}</Text>
               )}
 
               <signUpForm.Subscribe selector={(state) => [state.isSubmitting, state.values]}>
@@ -244,7 +246,7 @@ export default function Page() {
             </Card.Footer>
           </Card>
 
-          <View className="flex-row gap-1 justify-center">
+          <View className="flex-row justify-center gap-1">
             <Text className="text-sm text-muted">Already have an account?</Text>
             <Link href="../sign-in" asChild>
               <LinkButton size="sm">
@@ -256,6 +258,6 @@ export default function Page() {
           <View nativeID="clerk-captcha" />
         </View>
       </ScrollView>
-    </StyledSafeAreaView>
+    </SafeAreaView>
   );
 }

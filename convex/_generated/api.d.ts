@@ -85,11 +85,11 @@ import type * as notifications_db_markRead from "../notifications/db/markRead.js
 import type * as notifications_domain_emitContactInviteNotification from "../notifications/domain/emitContactInviteNotification.js";
 import type * as notifications_mutations from "../notifications/mutations.js";
 import type * as notifications_queries from "../notifications/queries.js";
-import type * as migrations_copyRoleToRolesArray from "../migrations/copyRoleToRolesArray.js";
 import type * as users_db_getUser from "../users/db/getUser.js";
 import type * as users_db_upsertUser from "../users/db/upsertUser.js";
 import type * as users_domain_syncUser from "../users/domain/syncUser.js";
 import type * as users_domain_upsertCurrentUser from "../users/domain/upsertCurrentUser.js";
+import type * as users_lib_resolveProfileVisibility from "../users/lib/resolveProfileVisibility.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_mutations_updateDepartmentAndRoles from "../users/mutations/updateDepartmentAndRoles.js";
 import type * as users_queries from "../users/queries.js";
@@ -181,11 +181,11 @@ declare const fullApi: ApiFromModules<{
   "notifications/domain/emitContactInviteNotification": typeof notifications_domain_emitContactInviteNotification;
   "notifications/mutations": typeof notifications_mutations;
   "notifications/queries": typeof notifications_queries;
-  "migrations/copyRoleToRolesArray": typeof migrations_copyRoleToRolesArray;
   "users/db/getUser": typeof users_db_getUser;
   "users/db/upsertUser": typeof users_db_upsertUser;
   "users/domain/syncUser": typeof users_domain_syncUser;
   "users/domain/upsertCurrentUser": typeof users_domain_upsertCurrentUser;
+  "users/lib/resolveProfileVisibility": typeof users_lib_resolveProfileVisibility;
   "users/mutations": typeof users_mutations;
   "users/mutations/updateDepartmentAndRoles": typeof users_mutations_updateDepartmentAndRoles;
   "users/queries": typeof users_queries;

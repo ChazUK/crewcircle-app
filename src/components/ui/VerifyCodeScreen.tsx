@@ -36,11 +36,11 @@ export function VerifyCodeScreen({
   return (
     <View className="gap-6">
       <View className="mx-4">
-        <Text className="text-4xl mb-2 font-bold leading-none">{title}</Text>
-        <Text className="text-base">{subtitle}</Text>
+        <Text className="mb-2 text-4xl leading-none font-bold text-foreground">{title}</Text>
+        <Text className="text-base text-muted">{subtitle}</Text>
       </View>
 
-      <Card className="gap-4 mx-4">
+      <Card className="mx-4 gap-4">
         <Card.Body className="gap-4">
           <VerificationCodeInput
             value={value}
@@ -52,7 +52,7 @@ export function VerifyCodeScreen({
           />
         </Card.Body>
 
-        <Card.Footer className="gap-3 flex-col">
+        <Card.Footer className="flex-col gap-3">
           <FieldError isInvalid={!!error}>{error}</FieldError>
 
           <Button

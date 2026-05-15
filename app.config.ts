@@ -15,9 +15,9 @@ export default {
     scheme: googleIosUrlScheme
       ? ["crewcircle", "com.crewcircle.crewcircleapp", googleIosUrlScheme]
       : ["crewcircle", "com.crewcircle.crewcircleapp"],
-    userInterfaceStyle: "light",
+    userInterfaceStyle: "automatic",
     splash: {
-      image: "./src/assets/icons/splash-icon-light.png",
+      image: "./src/assets/icons/splash-icon-dark.png",
       resizeMode: "contain",
       backgroundColor: "#232323",
     },

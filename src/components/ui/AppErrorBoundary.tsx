@@ -2,9 +2,8 @@ import * as Sentry from "@sentry/react-native";
 import { Button } from "heroui-native";
 import React from "react";
 import { Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
-import { reportError } from "@/lib/observability/reportError";
+import { SafeAreaView } from "./SafeAreaView";
 
 type AppErrorBoundaryProps = {
   children: React.ReactNode;
@@ -16,12 +15,12 @@ export type ErrorFallbackProps = {
 
 export function ErrorFallback({ onReset }: ErrorFallbackProps) {
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView className="flex-1">
       <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-2xl font-bold mb-3 text-center" accessibilityRole="header">
+        <Text className="mb-3 text-center text-2xl font-bold" accessibilityRole="header">
           Something went wrong
         </Text>
-        <Text className="text-base text-center mb-8 text-default-500">
+        <Text className="text-default-500 mb-8 text-center text-base">
           An unexpected error occurred. Please try again.
         </Text>
         <Button variant="primary" onPress={onReset} accessibilityLabel="Try again">

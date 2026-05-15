@@ -5,17 +5,14 @@ import { Button, Card, FieldError, Input, Label, LinkButton, TextField } from "h
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { withUniwind } from "uniwind";
 
 import { BackButton } from "@/components/ui/BackButton";
+import { SafeAreaView } from "@/components/ui/SafeAreaView";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 import { reportError } from "@/lib/observability/reportError";
 import { getClerkErrorMessage } from "@/utils/clerkErrors";
 
 type Step = "email" | "code" | "new-password" | "mfa";
-
-const StyledSafeAreaView = withUniwind(SafeAreaView);
 
 export default function Page() {
   const { signIn, errors: clerkErrors, fetchStatus } = useSignIn();
@@ -217,7 +214,7 @@ export default function Page() {
 
   if (step === "code") {
     return (
-      <StyledSafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1 bg-background">
         <BackButton className="mb-2" onPress={() => setStep("email")} />
         <ScrollView contentContainerStyle={{ flex: 1 }}>
           <View className="flex-1 gap-6">
@@ -248,22 +245,26 @@ export default function Page() {
             </codeForm.Field>
           </View>
         </ScrollView>
-      </StyledSafeAreaView>
+      </SafeAreaView>
     );
   }
 
   if (step === "new-password") {
     return (
-      <StyledSafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1 bg-background">
         <BackButton className="mb-2" onPress={() => setStep("email")} />
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View className="flex-1 gap-6">
             <View className="mx-4">
-              <Text className="text-4xl mb-2 font-bold leading-none">Set new password</Text>
-              <Text className="text-base">Choose a strong password for your account</Text>
+              <Text className="mb-2 text-4xl leading-none font-bold text-foreground">
+                Set new password
+              </Text>
+              <Text className="text-base text-foreground">
+                Choose a strong password for your account
+              </Text>
             </View>
 
-            <Card className="gap-4 mx-4">
+            <Card className="mx-4 gap-4">
               <Card.Body className="gap-4">
                 <passwordForm.Field name="password">
                   {(field) => (
@@ -349,28 +350,30 @@ export default function Page() {
             </Card>
 
             {clerkErrors.global?.[0] && (
-              <Text className="text-danger text-sm text-center mx-4">
+              <FieldError className="mx-4 text-center text-sm text-danger">
                 {clerkErrors.global[0].message}
-              </Text>
+              </FieldError>
             )}
           </View>
         </ScrollView>
-      </StyledSafeAreaView>
+      </SafeAreaView>
     );
   }
 
   return (
-    <StyledSafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1 bg-background">
       <ScrollView contentContainerStyle={{ flex: 1 }}>
-        <View className="flex-1 mt-12 gap-6">
+        <View className="mt-12 flex-1 gap-6">
           <View className="mx-4">
-            <Text className="text-4xl mb-2 font-bold leading-none">Reset your password</Text>
-            <Text className="text-base">
+            <Text className="mb-2 text-4xl leading-none font-bold text-foreground">
+              Reset your password
+            </Text>
+            <Text className="text-base text-foreground">
               Enter the email you signed up with and we'll send a code to reset your password.
             </Text>
           </View>
 
-          <View className="gap-4 mx-4">
+          <View className="mx-4 gap-4">
             <Card className="gap-4">
               <Card.Body className="gap-4">
                 <emailForm.Field name="emailAddress">
@@ -398,7 +401,7 @@ export default function Page() {
 
               <Card.Footer className="flex-col gap-4">
                 {clerkErrors.global?.[0] && (
-                  <Text className="text-danger text-sm text-left">
+                  <Text className="text-left text-sm text-danger">
                     {clerkErrors.global[0].message}
                   </Text>
                 )}
@@ -423,7 +426,7 @@ export default function Page() {
           </View>
         </View>
 
-        <View className="items-end flex-row gap-1 justify-center">
+        <View className="flex-row items-end justify-center gap-1">
           <Text className="text-base text-muted">Remember your password?</Text>
           <Link href="../" asChild>
             <LinkButton>
@@ -432,6 +435,6 @@ export default function Page() {
           </Link>
         </View>
       </ScrollView>
-    </StyledSafeAreaView>
+    </SafeAreaView>
   );
 }

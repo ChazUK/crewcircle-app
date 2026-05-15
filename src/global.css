@@ -4,10 +4,33 @@
 
 @source "../node_modules/heroui-native/lib";
 
-@theme static {
+@layer theme {
+  @variant light {
+    --background: oklch(96.78% 0.009 84.57);
+    --foreground: oklch(18.94% 0.023 72.29);
+    --surface: oklch(100% 0 0);
+    --accent: oklch(64.42% 0.192 41.69);
+    --success: oklch(51.06% 0.122 155.71);
+    --warning: oklch(60.61% 0.136 65.29);
+    --danger: oklch(55.42% 0.185 28.84);
+    --info: oklch(52.59% 0.187 260.18);
+  }
+  @variant dark {
+    --background: oklch(16.73% 0.041 281.01);
+    --foreground: oklch(100% 0 0);
+    --surface: oklch(19.32% 0.038 282.26);
+    --accent: oklch(72.36% 0.187 48.9);
+    --success: oklch(77.3% 0.175 155.5);
+    --warning: oklch(81.31% 0.165 75.04);
+    --danger: oklch(66.33% 0.224 28.29);
+    --info: oklch(69.61% 0.163 254.12);
+  }
+}
+
+/* @theme static {
   --color-accent-hover: color-mix(in oklab, var(--accent) 90%, var(--accent-foreground) 10%);
   --color-default-hover: color-mix(in oklab, var(--default) 96%, var(--default-foreground) 4%);
   --color-success-hover: color-mix(in oklab, var(--success) 90%, var(--success-foreground) 10%);
   --color-warning-hover: color-mix(in oklab, var(--warning) 90%, var(--warning-foreground) 10%);
   --color-danger-hover: color-mix(in oklab, var(--danger) 90%, var(--danger-foreground) 10%);
-}
+} */

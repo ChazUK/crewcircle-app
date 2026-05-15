@@ -7,15 +7,12 @@ import { Button } from "heroui-native";
 import { useState } from "react";
 import { View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { withUniwind } from "uniwind";
 
 import { DepartmentStep } from "@/components/onboarding/DepartmentStep";
 import { UseCaseStep, type UseCase } from "@/components/onboarding/UseCaseStep";
 import { BackButton } from "@/components/ui/BackButton";
 import { ProgressIndicator } from "@/components/ui/ProgressIndicator";
-
-const StyledSafeAreaView = withUniwind(SafeAreaView);
+import { SafeAreaView } from "@/components/ui/SafeAreaView";
 
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -94,10 +91,10 @@ export default function OnboardingPage() {
   }
 
   return (
-    <StyledSafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1">
       <form.Subscribe selector={(s) => s.values.useCase}>
         {(useCase) => (
-          <View className="flex-row items-center gap-4 mx-4 my-4">
+          <View className="mx-4 my-4 flex-row items-center gap-4">
             {currentStep > 1 && <BackButton onPress={goBack} />}
             <ProgressIndicator
               className="flex-1"
@@ -128,6 +125,6 @@ export default function OnboardingPage() {
           </Button>
         )}
       </form.Subscribe>
-    </StyledSafeAreaView>
+    </SafeAreaView>
   );
 }
