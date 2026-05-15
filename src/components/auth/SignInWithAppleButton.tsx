@@ -9,7 +9,7 @@ type Props = {
   onSignInComplete?: () => void;
 };
 
-export function SignInWithAppleButton({ onSignInComplete }: Props) {
+export function SignInWithApple({ onSignInComplete }: Props) {
   const { startAppleAuthenticationFlow } = useSignInWithApple();
   const router = useRouter();
 
@@ -39,13 +39,21 @@ export function SignInWithAppleButton({ onSignInComplete }: Props) {
     }
   };
 
+  return <SignInWithAppleButton onPress={handleAppleSignIn} />;
+}
+
+type SignInWithAppleButtonProps = {
+  onPress: () => void;
+};
+
+export function SignInWithAppleButton({ onPress }: SignInWithAppleButtonProps) {
   return (
     <AppleAuthentication.AppleAuthenticationButton
       buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
       buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE}
       cornerRadius={22}
       style={{ height: 44, width: "100%" }}
-      onPress={handleAppleSignIn}
+      onPress={onPress}
     />
   );
 }

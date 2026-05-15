@@ -1,37 +1,23 @@
 import type { Meta, StoryObj } from "@storybook/react-native";
-import * as AppleAuthentication from "expo-apple-authentication";
 import { View } from "react-native";
 
-// SignInWithAppleButton uses Clerk hooks (useSignInWithApple, useRouter) which require
-// a ClerkProvider in the host app. These stories render the Apple authentication button
-// in isolation so reviewers can inspect its appearance without running the full auth flow.
-
-function AppleButtonVisual() {
-  return (
-    <View style={{ gap: 16 }}>
-      <AppleAuthentication.AppleAuthenticationButton
-        buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-        buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE}
-        cornerRadius={22}
-        style={{ height: 44, width: "100%" }}
-        onPress={() => {}}
-      />
-    </View>
-  );
-}
+import { SignInWithAppleButton } from "./SignInWithAppleButton";
 
 const meta = {
   title: "Auth/SignInWithAppleButton",
-  component: AppleButtonVisual,
+  component: SignInWithAppleButton,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
+      <View style={{ flex: 1, padding: 16 }}>
         <Story />
       </View>
     ),
   ],
+  args: {
+    onPress: () => {},
+  },
   tags: ["autodocs"],
-} satisfies Meta<typeof AppleButtonVisual>;
+} satisfies Meta<typeof SignInWithAppleButton>;
 
 export default meta;
 

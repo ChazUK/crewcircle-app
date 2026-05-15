@@ -12,7 +12,7 @@ export function InputOTP() {
   };
 
   return (
-    <HeroInputOTP ref={ref} maxLength={6} onComplete={onComplete}>
+    <HeroInputOTP className="self-center" ref={ref} maxLength={6} onComplete={onComplete}>
       <HeroInputOTP.Group>
         <HeroInputOTP.Slot index={0} />
         <HeroInputOTP.Slot index={1} />

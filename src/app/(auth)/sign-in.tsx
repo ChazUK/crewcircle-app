@@ -17,8 +17,8 @@ import { ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { withUniwind } from "uniwind";
 
-import { SignInWithAppleButton } from "@/components/auth/SignInWithAppleButton";
-import { SignInWithGoogleButton } from "@/components/auth/SignInWithGoogleButton";
+import { SignInWithApple } from "@/components/auth/SignInWithAppleButton";
+import { SignInWithGoogle } from "@/components/auth/SignInWithGoogleButton";
 import { BackButton } from "@/components/ui/BackButton";
 import { VerifyCodeScreen } from "@/components/ui/VerifyCodeScreen";
 import { reportError } from "@/lib/observability/reportError";
@@ -361,8 +361,8 @@ export default function Page() {
           </Card>
 
           <OrDivider />
-          <SignInWithGoogleButton />
-          <SignInWithAppleButton />
+          <SignInWithGoogle />
+          <SignInWithApple />
         </View>
       </View>
 

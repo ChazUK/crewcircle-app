@@ -8,7 +8,7 @@ const meta = {
   component: InputOTP,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, justifyContent: "center", backgroundColor: "#f9f9f9" }}>
+      <View style={{ flex: 1, padding: 16 }}>
         <Story />
       </View>
     ),

@@ -5,7 +5,11 @@ import {
 } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
 import { InputGroup, ScrollShadow, Select, Separator, useThemeColor } from "heroui-native";
-import parsePhoneNumberFromString, { CountryCode, getExampleNumber } from "libphonenumber-js";
+import parsePhoneNumberFromString, {
+  AsYouType,
+  CountryCode,
+  getExampleNumber,
+} from "libphonenumber-js";
 import examples from "libphonenumber-js/examples.mobile.json";
 import { memo, useCallback, useMemo, useState } from "react";
 import { ListRenderItem, Text, View } from "react-native";
@@ -82,18 +86,35 @@ export const PhoneNumberInput = ({ value, onChange, onBlur, isInvalid }: Props) 
 
   const handleNationalChange = useCallback(
     (next: string) => {
-      const detected = next.startsWith("+") ? detectDialCode(next) : null;
-      if (detected) {
-        setDialCode(detected.dialCode);
-        setNational(detected.national);
-        emit(detected.national, detected.dialCode.code as CountryCode);
+      setNational(next);
+      if (next.startsWith("+")) {
+        const parsed = parsePhoneNumberFromString(next);
+        onChange(parsed?.isValid() ? parsed.number : null);
         return;
       }
-      setNational(next);
       emit(next, dialCode.code as CountryCode);
     },
-    [dialCode, emit],
+    [dialCode, emit, onChange],
   );
+
+  const handleBlur = useCallback(() => {
+    if (national.startsWith("+")) {
+      const formatter = new AsYouType();
+      formatter.input(national);
+      const country = formatter.getCountry();
+      const number = formatter.getNumber();
+      if (country && number) {
+        const match = DIAL_CODES.find((d) => d.code === country);
+        if (match) {
+          const formatted = number.formatNational();
+          setDialCode(match);
+          setNational(formatted);
+          emit(formatted, country);
+        }
+      }
+    }
+    onBlur?.();
+  }, [national, emit, onBlur]);
 
   const handleDialCodeChange = useCallback(
     (option: { value: string; label: string } | undefined) => {
@@ -177,7 +198,7 @@ export const PhoneNumberInput = ({ value, onChange, onBlur, isInvalid }: Props) 
       <InputGroup.Input
         value={national}
         onChangeText={handleNationalChange}
-        onBlur={onBlur}
+        onBlur={handleBlur}
         placeholder={placeholder}
         keyboardType="phone-pad"
         isInvalid={isInvalid}
@@ -233,29 +254,6 @@ function findByCallingCode(callingCode: string): DialCodeOption | null {
     if (match) return match;
   }
   return DIAL_CODES.find((d) => d.dialCode === `+${callingCode}`) ?? null;
-}
-
-/**
- * Detects a leading `+`-prefixed calling code in user input. Handles two cases:
- * - Full E.164 paste (`+447988509614`) - libphonenumber parses and formats it.
- * - Partial typing (`+44`, `+447`) - match longest leading 1–3 digit prefix
- *   against known calling codes, strip it, keep the remainder as national.
- */
-function detectDialCode(input: string): { dialCode: DialCodeOption; national: string } | null {
-  const parsed = parsePhoneNumberFromString(input);
-  if (parsed?.countryCallingCode) {
-    return {
-      dialCode: resolveDialCode(parsed.country, parsed.countryCallingCode),
-      national: parsed.formatNational(),
-    };
-  }
-  const digits = input.slice(1).replace(/\D/g, "");
-  if (!digits) return null;
-  for (let len = Math.min(3, digits.length); len >= 1; len--) {
-    const match = findByCallingCode(digits.slice(0, len));
-    if (match) return { dialCode: match, national: digits.slice(len) };
-  }
-  return null;
 }
 
 function toE164(national: string, country: CountryCode): string | null {

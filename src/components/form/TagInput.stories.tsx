@@ -11,7 +11,7 @@ const meta = {
   component: TagInput,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, backgroundColor: "#f9f9f9" }}>
+      <View style={{ flex: 1, padding: 16 }}>
         <Story />
       </View>
     ),
@@ -50,15 +50,6 @@ export const WithPrefilledTags: Story = {
     label: "Kit",
     placeholder: "e.g. ARRI ALEXA Mini LF",
     tags: ["Sony FX6", "DJI RS 3 Pro", "Tilta Nucleus-M"],
-  },
-  render: InteractiveRender,
-};
-
-export const SkillsExample: Story = {
-  args: {
-    label: "Special Skills",
-    placeholder: "Add a skill...",
-    tags: ["Drone operator", "Underwater camera", "Steadicam"],
   },
   render: InteractiveRender,
 };

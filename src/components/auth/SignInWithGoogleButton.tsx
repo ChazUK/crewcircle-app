@@ -11,7 +11,7 @@ type Props = {
   onSignInComplete?: () => void;
 };
 
-export function SignInWithGoogleButton({ onSignInComplete }: Props) {
+export function SignInWithGoogle({ onSignInComplete }: Props) {
   const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
   const router = useRouter();
 
@@ -42,8 +42,16 @@ export function SignInWithGoogleButton({ onSignInComplete }: Props) {
     }
   };
 
+  return <SignInWithGoogleButton onPress={handleGoogleSignIn} />;
+}
+
+type SignInWithGoogleButtonProps = {
+  onPress: () => void;
+};
+
+export function SignInWithGoogleButton({ onPress }: SignInWithGoogleButtonProps) {
   return (
-    <Button variant="outline" className="w-full" onPress={handleGoogleSignIn}>
+    <Button variant="outline" className="w-full" onPress={onPress}>
       <GoogleIcon size={24} />
       <Button.Label>Sign in with Google</Button.Label>
     </Button>
