@@ -39,6 +39,8 @@ export const getMyProfile = query({
         bio: viewer.bio,
         website: viewer.website,
         imdbId: viewer.imdbId,
+        city: viewer.city,
+        country: viewer.country,
       };
     }
 
@@ -93,6 +95,8 @@ export const getViewableProfile = query({
         userType: "crew" as const,
         department: subject.department,
         roles: subject.roles,
+        city: subject.city,
+        country: subject.country,
       };
       if (mode === "public-card") {
         return { mode, ...base };

@@ -14,6 +14,8 @@ const baseCrew = {
   department: "Camera" as const,
   roles: ["Director of Photography"],
   bio: undefined,
+  city: undefined,
+  country: undefined,
 };
 
 const meta = {

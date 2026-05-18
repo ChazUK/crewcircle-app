@@ -1,8 +1,7 @@
+import { COUNTRIES } from "@shared/countries/countries";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { useState } from "react";
 import { View } from "react-native";
-
-import { COUNTRIES } from "@/lib/countries/countries";
 
 import { TagInput } from "./TagInput";
 

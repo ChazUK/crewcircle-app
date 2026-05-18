@@ -10,6 +10,11 @@ type ProfileIdentity = {
   profilePictureUrl: string | undefined;
 };
 
+type Location = {
+  city: string | undefined;
+  country: string | undefined;
+};
+
 type BioLinks = {
   bio: string | undefined;
   website: string | undefined;
@@ -27,8 +32,8 @@ type ProductionManagerProfile = ProfileIdentity & {
 };
 
 export type ViewableProfile =
-  | ({ mode: "self" } & CrewProfile & BioLinks)
-  | ({ mode: "contact" } & CrewProfile & BioLinks)
-  | ({ mode: "public-card" } & CrewProfile)
+  | ({ mode: "self" } & CrewProfile & BioLinks & Location)
+  | ({ mode: "contact" } & CrewProfile & BioLinks & Location)
+  | ({ mode: "public-card" } & CrewProfile & Location)
   | ({ mode: "pm-self" } & ProductionManagerProfile)
   | ({ mode: "pm-job-linked" } & ProductionManagerProfile);

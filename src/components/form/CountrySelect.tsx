@@ -1,8 +1,7 @@
+import { COUNTRIES } from "@shared/countries/countries";
 import { Select } from "heroui-native";
 import { Fragment, useCallback } from "react";
 import { Text, View } from "react-native";
-
-import { COUNTRIES } from "@/lib/countries/countries";
 
 import { CountryFlag } from "../ui/icons/CountryFlag";
 import { BottomSheetSelect } from "./BottomSheetSelect";
@@ -37,7 +36,7 @@ export const CountrySelect = ({ value, onChange }: CountrySelectProps) => {
       filterOption={filterCountry}
       renderOptionContent={(item) => (
         <Fragment>
-          <View className="flex-row items-center gap-2 flex-1">
+          <View className="flex-1 flex-row items-center gap-2">
             <CountryFlag iso2={item.code} size={20} />
             <Select.ItemLabel />
           </View>

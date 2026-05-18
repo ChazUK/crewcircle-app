@@ -3,6 +3,7 @@ import {
   BottomSheetFooter,
   BottomSheetFooterProps,
 } from "@gorhom/bottom-sheet";
+import { COUNTRIES, Country } from "@shared/countries/countries";
 import { LinearGradient } from "expo-linear-gradient";
 import { InputGroup, ScrollShadow, Select, Separator, useThemeColor } from "heroui-native";
 import parsePhoneNumberFromString, {
@@ -16,7 +17,6 @@ import { ListRenderItem, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BottomSheetSearch } from "@/components/form/BottomSheetSearch";
-import { COUNTRIES, Country } from "@/lib/countries/countries";
 
 import { CountryFlag } from "../ui/icons/CountryFlag";
 
@@ -130,7 +130,7 @@ export const PhoneNumberInput = ({ value, onChange, onBlur, isInvalid }: Props) 
   const renderItem = useCallback<ListRenderItem<DialCodeOption>>(
     ({ item }) => (
       <Select.Item value={item.value} label={item.label}>
-        <View className="flex-row items-center gap-2 flex-1">
+        <View className="flex-1 flex-row items-center gap-2">
           <CountryFlag iso2={item.code} size={20} />
           <Select.ItemLabel />
         </View>

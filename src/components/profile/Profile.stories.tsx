@@ -12,6 +12,8 @@ const baseCrew = {
   userType: "crew" as const,
   department: undefined,
   roles: undefined,
+  city: undefined,
+  country: undefined,
 };
 
 const basePm = {

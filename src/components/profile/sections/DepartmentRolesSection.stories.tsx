@@ -12,6 +12,8 @@ const baseCrew = {
   profilePictureUrl: undefined,
   userType: "crew" as const,
   nickname: undefined,
+  city: undefined,
+  country: undefined,
 };
 
 const selfWithData: ViewableProfile = {
