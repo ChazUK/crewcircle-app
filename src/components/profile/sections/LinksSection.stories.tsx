@@ -1,5 +1,4 @@
 import type { Id } from "@convex/_generated/dataModel";
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
@@ -17,34 +16,6 @@ const baseCrew = {
   bio: undefined,
 };
 
-const selfWithBoth: ViewableProfile = {
-  mode: "self",
-  ...baseCrew,
-  website: "https://adalovelace.com",
-  imdbId: "nm0000123",
-};
-
-const selfWithWebsiteOnly: ViewableProfile = {
-  mode: "self",
-  ...baseCrew,
-  website: "https://adalovelace.com",
-  imdbId: undefined,
-};
-
-const selfEmpty: ViewableProfile = {
-  mode: "self",
-  ...baseCrew,
-  website: undefined,
-  imdbId: undefined,
-};
-
-const contactWithBoth: ViewableProfile = {
-  mode: "contact",
-  ...baseCrew,
-  website: "https://adalovelace.com",
-  imdbId: "nm0000123",
-};
-
 const meta = {
   title: "Profile/LinksSection",
   component: LinksSection,
@@ -56,13 +27,51 @@ const meta = {
     ),
   ],
   tags: ["autodocs"],
-  args: { profile: selfWithBoth },
 } satisfies Meta<typeof LinksSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const SelfWithBoth: Story = { args: { profile: selfWithBoth } };
-export const SelfWithWebsiteOnly: Story = { args: { profile: selfWithWebsiteOnly } };
-export const SelfEmpty: Story = { args: { profile: selfEmpty } };
-export const ContactWithBoth: Story = { args: { profile: contactWithBoth } };
+export const Default: Story = {
+  args: {
+    profile: {
+      mode: "self",
+      ...baseCrew,
+      website: "https://adalovelace.com",
+      imdbId: "nm0000123",
+    },
+  },
+};
+
+export const WebsiteOnly: Story = {
+  args: {
+    profile: {
+      mode: "self",
+      ...baseCrew,
+      website: "https://adalovelace.com",
+      imdbId: undefined,
+    },
+  },
+};
+
+export const IMDBOnly: Story = {
+  args: {
+    profile: {
+      mode: "self",
+      ...baseCrew,
+      website: undefined,
+      imdbId: "nm0000100",
+    },
+  },
+};
+
+export const Empty: Story = {
+  args: {
+    profile: {
+      mode: "self",
+      ...baseCrew,
+      website: undefined,
+      imdbId: undefined,
+    },
+  },
+};

@@ -1,6 +1,6 @@
 import type { ViewableProfile } from "@shared/profile/viewableProfile";
-import { Card } from "heroui-native";
-import { GlobeIcon, FilmIcon } from "lucide-react-native";
+import { Image } from "expo-image";
+import { GlobeIcon } from "lucide-react-native";
 import { Linking, Pressable, Text, View } from "react-native";
 
 type Props = {
@@ -13,29 +13,12 @@ function hasLinks(profile: ViewableProfile): profile is ProfileWithLinks {
   return "website" in profile || "imdbId" in profile;
 }
 
-function hasAnyLink(profile: ProfileWithLinks): boolean {
-  return !!profile.website || !!profile.imdbId;
-}
-
 function imdbUrl(id: string): string {
   return `https://www.imdb.com/name/${id}/`;
 }
 
 export function LinksSection({ profile }: Props) {
   if (!hasLinks(profile)) return null;
-
-  if (!hasAnyLink(profile)) {
-    if (profile.mode === "self") {
-      return (
-        <Card variant="secondary">
-          <Card.Body>
-            <Text className="text-sm text-muted">Add your website or IMDB profile</Text>
-          </Card.Body>
-        </Card>
-      );
-    }
-    return null;
-  }
 
   return (
     <View className="gap-2">
@@ -56,7 +39,7 @@ export function LinksSection({ profile }: Props) {
           onPress={() => Linking.openURL(imdbUrl(profile.imdbId!))}
           accessibilityRole="link"
         >
-          <FilmIcon size={16} className="text-primary" />
+          <Image source={require("@/assets/icons/imdb.svg")} style={{ width: 16, height: 16 }} />
           <Text className="text-primary text-base">IMDB Profile</Text>
         </Pressable>
       ) : null}
