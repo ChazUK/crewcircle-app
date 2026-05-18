@@ -24,6 +24,7 @@ const selfWithData: ViewableProfile = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
+  startYearInDepartment: undefined,
   productionTypes: undefined,
 };
 
@@ -35,6 +36,7 @@ const selfEmpty: ViewableProfile = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
+  startYearInDepartment: undefined,
   productionTypes: undefined,
 };
 
@@ -46,6 +48,7 @@ const contact: ViewableProfile = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
+  startYearInDepartment: undefined,
   productionTypes: undefined,
 };
 

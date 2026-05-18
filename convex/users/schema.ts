@@ -25,6 +25,7 @@ export const User = {
   userType: v.optional(v.union(v.literal("crew"), v.literal("production-manager"))),
   department: v.optional(departmentValidator),
   roles: v.optional(v.array(v.string())),
+  startYearInDepartment: v.optional(v.number()),
   yearsExperience: v.optional(v.number()),
   yearsInRole: v.optional(v.number()),
   country: v.optional(v.string()),

@@ -41,6 +41,7 @@ export const getMyProfile = query({
         imdbId: viewer.imdbId,
         city: viewer.city,
         country: viewer.country,
+        startYearInDepartment: viewer.startYearInDepartment,
         productionTypes: viewer.productionTypes,
       };
     }
@@ -108,6 +109,7 @@ export const getViewableProfile = query({
         bio: subject.bio,
         website: subject.website,
         imdbId: subject.imdbId,
+        startYearInDepartment: subject.startYearInDepartment,
         productionTypes: subject.productionTypes,
       };
     }

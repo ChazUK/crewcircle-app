@@ -31,6 +31,7 @@ const selfWithNicknameProfile: ViewableProfile = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
+  startYearInDepartment: undefined,
   productionTypes: undefined,
 };
 
@@ -41,6 +42,7 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
+  startYearInDepartment: undefined,
   productionTypes: undefined,
 };
 
@@ -51,6 +53,7 @@ const contactProfile: ViewableProfile = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
+  startYearInDepartment: undefined,
   productionTypes: undefined,
 };
 

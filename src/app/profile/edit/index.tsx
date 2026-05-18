@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { ListGroup, PressableFeedback, Spinner } from "heroui-native";
 import {
   BriefcaseIcon,
+  CalendarIcon,
   ChevronRightIcon,
   ClapperboardIcon,
   FileTextIcon,
@@ -38,6 +39,11 @@ export default function EditProfileHubScreen() {
 
   const deptRolesPreview =
     profile.userType === "crew" && profile.department ? profile.department : "Not added";
+
+  const yearsPreview =
+    profile.mode === "self" && profile.startYearInDepartment !== undefined
+      ? `Started ${profile.startYearInDepartment}`
+      : "Not added";
 
   const productionTypesPreview =
     profile.mode === "self" && profile.productionTypes && profile.productionTypes.length > 0
@@ -82,6 +88,25 @@ export default function EditProfileHubScreen() {
                 <ListGroup.ItemContent>
                   <ListGroup.ItemTitle>Department & Roles</ListGroup.ItemTitle>
                   <ListGroup.ItemDescription>{deptRolesPreview}</ListGroup.ItemDescription>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix>
+                  <ChevronRightIcon size={16} />
+                </ListGroup.ItemSuffix>
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+          </PressableFeedback>
+        ) : null}
+
+        {profile.userType === "crew" ? (
+          <PressableFeedback animation={false} onPress={() => router.push("/profile/edit/years")}>
+            <PressableFeedback.Scale>
+              <ListGroup.Item>
+                <ListGroup.ItemPrefix>
+                  <CalendarIcon size={20} />
+                </ListGroup.ItemPrefix>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>Years in Department</ListGroup.ItemTitle>
+                  <ListGroup.ItemDescription>{yearsPreview}</ListGroup.ItemDescription>
                 </ListGroup.ItemContent>
                 <ListGroup.ItemSuffix>
                   <ChevronRightIcon size={16} />

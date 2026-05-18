@@ -22,6 +22,7 @@ type BioLinks = {
 };
 
 type CrewExtras = {
+  startYearInDepartment: number | undefined;
   productionTypes: string[] | undefined;
 };
 

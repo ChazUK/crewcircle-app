@@ -95,6 +95,8 @@ import type * as users_mutations_updateDepartmentAndRoles from "../users/mutatio
 import type * as users_mutations_updateProfileBioLinks from "../users/mutations/updateProfileBioLinks.js";
 import type * as users_mutations_updateProfileLocation from "../users/mutations/updateProfileLocation.js";
 import type * as users_mutations_updateProfileProductionTypes from "../users/mutations/updateProfileProductionTypes.js";
+import type * as users_mutations_updateProfileYears from "../users/mutations/updateProfileYears.js";
+import type * as migrations_dropLegacyYearsFields from "../migrations/dropLegacyYearsFields.js";
 import type * as users_queries from "../users/queries.js";
 import type * as users_syncVerifiedPhone from "../users/syncVerifiedPhone.js";
 import type * as users_webhooks from "../users/webhooks.js";
@@ -194,6 +196,8 @@ declare const fullApi: ApiFromModules<{
   "users/mutations/updateProfileBioLinks": typeof users_mutations_updateProfileBioLinks;
   "users/mutations/updateProfileLocation": typeof users_mutations_updateProfileLocation;
   "users/mutations/updateProfileProductionTypes": typeof users_mutations_updateProfileProductionTypes;
+  "users/mutations/updateProfileYears": typeof users_mutations_updateProfileYears;
+  "migrations/dropLegacyYearsFields": typeof migrations_dropLegacyYearsFields;
   "users/queries": typeof users_queries;
   "users/syncVerifiedPhone": typeof users_syncVerifiedPhone;
   "users/webhooks": typeof users_webhooks;

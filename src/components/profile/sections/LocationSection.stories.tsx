@@ -24,6 +24,7 @@ const selfWithData: ViewableProfile = {
   ...baseCrew,
   city: "London",
   country: "GB",
+  startYearInDepartment: undefined,
   productionTypes: undefined,
 };
 
@@ -32,6 +33,7 @@ const selfEmpty: ViewableProfile = {
   ...baseCrew,
   city: undefined,
   country: undefined,
+  startYearInDepartment: undefined,
   productionTypes: undefined,
 };
 
@@ -40,6 +42,7 @@ const contactWithData: ViewableProfile = {
   ...baseCrew,
   city: "Los Angeles",
   country: "US",
+  startYearInDepartment: undefined,
   productionTypes: undefined,
 };
 
