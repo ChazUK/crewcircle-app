@@ -24,18 +24,21 @@ const selfWithBio: ViewableProfile = {
   mode: "self",
   ...baseCrew,
   bio: "Camera operator with 15 years experience in film and television.",
+  productionTypes: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
   ...baseCrew,
   bio: undefined,
+  productionTypes: undefined,
 };
 
 const contactWithBio: ViewableProfile = {
   mode: "contact",
   ...baseCrew,
   bio: "Camera operator with 15 years experience in film and television.",
+  productionTypes: undefined,
 };
 
 const meta = {

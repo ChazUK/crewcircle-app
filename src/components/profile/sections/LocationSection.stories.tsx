@@ -24,6 +24,7 @@ const selfWithData: ViewableProfile = {
   ...baseCrew,
   city: "London",
   country: "GB",
+  productionTypes: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -31,6 +32,7 @@ const selfEmpty: ViewableProfile = {
   ...baseCrew,
   city: undefined,
   country: undefined,
+  productionTypes: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -38,6 +40,7 @@ const contactWithData: ViewableProfile = {
   ...baseCrew,
   city: "Los Angeles",
   country: "US",
+  productionTypes: undefined,
 };
 
 const publicCard: ViewableProfile = {

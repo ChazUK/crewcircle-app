@@ -31,6 +31,7 @@ const selfWithNicknameProfile: ViewableProfile = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
+  productionTypes: undefined,
 };
 
 const selfWithoutNicknameProfile: ViewableProfile = {
@@ -40,6 +41,7 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
+  productionTypes: undefined,
 };
 
 const contactProfile: ViewableProfile = {
@@ -49,6 +51,7 @@ const contactProfile: ViewableProfile = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
+  productionTypes: undefined,
 };
 
 const publicCardProfile: ViewableProfile = {

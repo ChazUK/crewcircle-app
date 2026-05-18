@@ -21,6 +21,10 @@ type BioLinks = {
   imdbId: string | undefined;
 };
 
+type CrewExtras = {
+  productionTypes: string[] | undefined;
+};
+
 type CrewProfile = ProfileIdentity & {
   userType: "crew";
   department: Department | undefined;
@@ -32,8 +36,8 @@ type ProductionManagerProfile = ProfileIdentity & {
 };
 
 export type ViewableProfile =
-  | ({ mode: "self" } & CrewProfile & BioLinks & Location)
-  | ({ mode: "contact" } & CrewProfile & BioLinks & Location)
+  | ({ mode: "self" } & CrewProfile & BioLinks & Location & CrewExtras)
+  | ({ mode: "contact" } & CrewProfile & BioLinks & Location & CrewExtras)
   | ({ mode: "public-card" } & CrewProfile & Location)
   | ({ mode: "pm-self" } & ProductionManagerProfile)
   | ({ mode: "pm-job-linked" } & ProductionManagerProfile);

@@ -41,6 +41,7 @@ export const Default: Story = {
       ...baseCrew,
       website: "https://adalovelace.com",
       imdbId: "nm0000123",
+      productionTypes: undefined,
     },
   },
 };
@@ -52,6 +53,7 @@ export const WebsiteOnly: Story = {
       ...baseCrew,
       website: "https://adalovelace.com",
       imdbId: undefined,
+      productionTypes: undefined,
     },
   },
 };
@@ -63,6 +65,7 @@ export const IMDBOnly: Story = {
       ...baseCrew,
       website: undefined,
       imdbId: "nm0000100",
+      productionTypes: undefined,
     },
   },
 };
@@ -74,6 +77,7 @@ export const Empty: Story = {
       ...baseCrew,
       website: undefined,
       imdbId: undefined,
+      productionTypes: undefined,
     },
   },
 };

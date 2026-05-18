@@ -40,6 +40,7 @@ export const User = {
   spokenLanguages: v.optional(v.array(v.object({ language: v.string(), fluency: v.string() }))),
   passports: v.optional(v.array(v.string())),
   kit: v.optional(v.array(v.string())),
+  productionTypes: v.optional(v.array(v.string())),
 
   hasCompletedOnboarding: v.boolean(),
   isPublic: v.optional(v.boolean()),
