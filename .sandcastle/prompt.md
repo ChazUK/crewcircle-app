@@ -21,7 +21,19 @@ Work on issues in this order:
 3. **Polish** — improving existing functionality (error messages, UX, docs)
 4. **Refactors** — internal cleanups with no user-visible change
 
-Pick the highest-priority open issue that is not blocked by another open issue.
+Pick the highest-priority open issue that is not blocked by another **open** issue.
+
+### Resolving blockers
+
+The open-issue list above only contains issues in the `open` state. Closed issues do not appear there, so you cannot determine a blocker's state from the list alone. Before treating an issue as blocked:
+
+1. Scan the issue body and comments for blocker references — phrases like "Blocks #N", "Blocked by #N", "Depends on #N", or a `blocked-by` field.
+2. For **each** referenced blocker, look up its current state with:
+   ```
+   gh issue view <N> --json state,title --jq '{number: <N>, state, title}'
+   ```
+3. Treat the issue as blocked **only if at least one referenced blocker is still `OPEN`**. If every referenced blocker is `CLOSED`, the issue is unblocked and eligible to work on.
+4. Never assume a blocker is open just because it isn't in the list above — always verify with `gh issue view`.
 
 ## Workflow
 
