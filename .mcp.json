@@ -3,13 +3,10 @@
     "heroui-native": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@heroui/native-mcp@latest"],
-      "env": {}
-    },
-    "container-use": {
-      "type": "stdio",
-      "command": "container-use",
-      "args": ["stdio"],
+      "args": [
+        "-y",
+        "@heroui/native-mcp@latest"
+      ],
       "env": {}
     }
   }
