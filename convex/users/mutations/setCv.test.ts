@@ -26,10 +26,25 @@ async function makeTestWithCrewUser() {
   return t;
 }
 
-async function storeBlob(t: Awaited<ReturnType<typeof makeTestWithCrewUser>>) {
+type TestHandle = Awaited<ReturnType<typeof makeTestWithCrewUser>>;
+
+async function storeBlob(t: TestHandle) {
   return t.run((ctx) =>
     ctx.storage.store(new Blob([new Uint8Array(64)], { type: "application/pdf" })),
   );
+}
+
+// convex-test's `ctx.storage.store` drops `blob.type`, leaving `_storage` rows
+// without a `contentType`. Patch it directly so the mutation can validate.
+async function storePdfWithContentType(t: TestHandle, contentType = "application/pdf") {
+  const fileId = await storeBlob(t);
+  await t.run(async (ctx) => {
+    const db = ctx.db as unknown as {
+      patch: (id: string, value: Record<string, unknown>) => Promise<void>;
+    };
+    await db.patch(fileId, { contentType });
+  });
+  return fileId;
 }
 
 const mut = api.users.mutations.setCv.setCv;
@@ -61,18 +76,11 @@ describe("setCv", () => {
     );
   });
 
-  test("sets cvFileId when called directly", async () => {
+  test("sets cvFileId on the user record", async () => {
     const t = await makeTestWithCrewUser();
-    const fileId = await storeBlob(t);
+    const fileId = await storePdfWithContentType(t);
 
-    await t.run(async (ctx) => {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
-        .unique();
-      if (!user) throw new Error("User not found");
-      await ctx.db.patch(user._id, { cvFileId: fileId });
-    });
+    await t.withIdentity(identity).mutation(mut, { fileId });
 
     const user = await t.run((ctx) =>
       ctx.db
@@ -83,31 +91,13 @@ describe("setCv", () => {
     expect(user?.cvFileId).toBe(fileId);
   });
 
-  test("deleting old storage entry works when replacing CV", async () => {
+  test("deletes the previous storage entry when replacing the CV", async () => {
     const t = await makeTestWithCrewUser();
-    const firstFileId = await storeBlob(t);
-    const secondFileId = await storeBlob(t);
+    const firstFileId = await storePdfWithContentType(t);
+    const secondFileId = await storePdfWithContentType(t);
 
-    await t.run(async (ctx) => {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
-        .unique();
-      if (!user) throw new Error("User not found");
-      await ctx.db.patch(user._id, { cvFileId: firstFileId });
-    });
-
-    await t.run(async (ctx) => {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("byExternalAuthId", (q) => q.eq("externalAuthId", identity.subject))
-        .unique();
-      if (!user) throw new Error("User not found");
-      if (user.cvFileId) {
-        await ctx.storage.delete(user.cvFileId);
-      }
-      await ctx.db.patch(user._id, { cvFileId: secondFileId });
-    });
+    await t.withIdentity(identity).mutation(mut, { fileId: firstFileId });
+    await t.withIdentity(identity).mutation(mut, { fileId: secondFileId });
 
     const user = await t.run((ctx) =>
       ctx.db
