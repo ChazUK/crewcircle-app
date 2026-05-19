@@ -54,7 +54,6 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
           primary_email_address_id,
           first_name,
           last_name,
-          image_url,
           phone_numbers,
           primary_phone_number_id,
         } = event.data;
@@ -64,7 +63,6 @@ export const handleClerkWebhook = httpAction(async (ctx, request) => {
           email: resolvePrimaryEmail(email_addresses, primary_email_address_id),
           firstName: first_name ?? undefined,
           lastName: last_name ?? undefined,
-          profilePictureUrl: image_url ?? undefined,
           phone: resolvePrimaryPhone(phone_numbers ?? [], primary_phone_number_id ?? null),
         });
         break;

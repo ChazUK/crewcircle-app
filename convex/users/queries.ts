@@ -1,9 +1,19 @@
 import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import { v } from "convex/values";
 
+import type { Id } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { getUserByExternalId } from "./db/getUser";
 import { resolveProfileVisibility } from "./lib/resolveProfileVisibility";
+
+async function resolveProfilePictureUrl(
+  ctx: QueryCtx,
+  fileId: Id<"_storage"> | undefined,
+): Promise<string | undefined> {
+  if (!fileId) return undefined;
+  return (await ctx.storage.getUrl(fileId)) ?? undefined;
+}
 
 export const getCurrentUser = query({
   args: {},
@@ -25,6 +35,8 @@ export const getMyProfile = query({
 
     if (viewer.userType === undefined) return null;
 
+    const profilePictureUrl = await resolveProfilePictureUrl(ctx, viewer.profilePictureFileId);
+
     if (viewer.userType === "crew") {
       return {
         mode: "self",
@@ -32,7 +44,7 @@ export const getMyProfile = query({
         firstName: viewer.firstName,
         lastName: viewer.lastName,
         nickname: viewer.nickname,
-        profilePictureUrl: viewer.profilePictureUrl,
+        profilePictureUrl,
         userType: "crew",
         department: viewer.department,
         roles: viewer.roles,
@@ -53,7 +65,7 @@ export const getMyProfile = query({
       firstName: viewer.firstName,
       lastName: viewer.lastName,
       nickname: viewer.nickname,
-      profilePictureUrl: viewer.profilePictureUrl,
+      profilePictureUrl,
       userType: "production-manager",
     };
   },
@@ -87,6 +99,8 @@ export const getViewableProfile = query({
 
     if (visibility.mode === "hidden") return null;
 
+    const profilePictureUrl = await resolveProfilePictureUrl(ctx, subject.profilePictureFileId);
+
     if (subject.userType === "crew") {
       const mode = visibility.mode as "self" | "contact" | "public-card";
       const base = {
@@ -94,7 +108,7 @@ export const getViewableProfile = query({
         firstName: subject.firstName,
         lastName: subject.lastName,
         nickname: subject.nickname,
-        profilePictureUrl: subject.profilePictureUrl,
+        profilePictureUrl,
         userType: "crew" as const,
         department: subject.department,
         roles: subject.roles,
@@ -123,7 +137,7 @@ export const getViewableProfile = query({
       firstName: subject.firstName,
       lastName: subject.lastName,
       nickname: subject.nickname,
-      profilePictureUrl: subject.profilePictureUrl,
+      profilePictureUrl,
       userType,
     };
   },

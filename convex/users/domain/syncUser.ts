@@ -11,7 +11,6 @@ export const createUser = (
     email: string;
     firstName?: string;
     lastName?: string;
-    profilePictureUrl?: string;
     phone?: string;
   },
 ) => upsertUser(ctx, args);
@@ -27,7 +26,6 @@ export const updateUser = async (
     email?: string;
     firstName?: string;
     lastName?: string;
-    profilePictureUrl?: string;
     phone?: string;
   },
 ) => {

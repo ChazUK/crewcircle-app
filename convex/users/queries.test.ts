@@ -75,6 +75,9 @@ describe("getMyProfile", () => {
 
   test("returns self variant with all identity fields for crew user", async () => {
     const t = convexTest(schema, modules);
+    const fileId = await t.run((ctx) =>
+      ctx.storage.store(new Blob([new Uint8Array(64)], { type: "image/jpeg" })),
+    );
     await t.run((ctx) =>
       ctx.db.insert("users", {
         externalAuthId: identity.subject,
@@ -84,7 +87,7 @@ describe("getMyProfile", () => {
         firstName: "Alice",
         lastName: "Smith",
         nickname: "Ali",
-        profilePictureUrl: "https://example.com/pic.jpg",
+        profilePictureFileId: fileId,
       }),
     );
     const result = await t.withIdentity(identity).query(api.users.queries.getMyProfile, {});
@@ -94,7 +97,8 @@ describe("getMyProfile", () => {
     expect(result?.firstName).toBe("Alice");
     expect(result?.lastName).toBe("Smith");
     expect(result?.nickname).toBe("Ali");
-    expect(result?.profilePictureUrl).toBe("https://example.com/pic.jpg");
+    expect(result?.profilePictureUrl).toBeDefined();
+    expect(result?.profilePictureUrl).toContain("https://");
   });
 
   test("returns pm-self variant for production-manager user", async () => {

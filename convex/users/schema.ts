@@ -17,7 +17,7 @@ export const User = {
   externalAuthId: v.string(),
   pushToken: v.optional(v.string()),
 
-  profilePictureUrl: v.optional(v.string()),
+  profilePictureFileId: v.optional(v.id("_storage")),
   firstName: v.optional(v.string()),
   lastName: v.optional(v.string()),
   nickname: v.optional(v.string()),

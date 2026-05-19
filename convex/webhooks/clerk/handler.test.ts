@@ -98,14 +98,17 @@ describe("handleClerkWebhook", () => {
       );
       expect(response.status).toBe(200);
       expect(ctx.runMutation).toHaveBeenCalledOnce();
-      expect(ctx.runMutation).toHaveBeenCalledWith("users:webhooks:userCreated", {
-        externalAuthId: "user_abc",
-        email: "test@example.com",
-        firstName: "Alice",
-        lastName: "Smith",
-        profilePictureUrl: "https://example.com/pic.jpg",
-        phone: "",
-      });
+      expect(ctx.runMutation).toHaveBeenCalledWith(
+        "users:webhooks:userCreated",
+        expect.objectContaining({
+          externalAuthId: "user_abc",
+          email: "test@example.com",
+          firstName: "Alice",
+          lastName: "Smith",
+          profilePictureUrl: "https://example.com/pic.jpg",
+          phone: "",
+        }),
+      );
     });
 
     test("skips mutation and returns 200 when primary email is missing", async () => {

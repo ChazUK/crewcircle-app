@@ -52,6 +52,7 @@
     "expo-crypto": "~55.0.15",
     "expo-dev-client": "~55.0.33",
     "expo-image": "~55.0.10",
+    "expo-image-manipulator": "~55.0.16",
     "expo-image-picker": "~55.0.20",
     "expo-linear-gradient": "~55.0.14",
     "expo-linking": "~55.0.15",
