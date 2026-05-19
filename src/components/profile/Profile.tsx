@@ -1,6 +1,7 @@
 import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import { ScrollView } from "react-native";
 
+import { usePictureUpload } from "./PictureUploadFlow";
 import { BioSection } from "./sections/BioSection";
 import { DepartmentRolesSection } from "./sections/DepartmentRolesSection";
 import { IdentitySection } from "./sections/IdentitySection";
@@ -15,9 +16,11 @@ type Props = {
 };
 
 export function Profile({ profile }: Props) {
+  const pickAndUpload = usePictureUpload();
+
   return (
     <ScrollView contentContainerClassName="gap-4 p-4">
-      <IdentitySection profile={profile} />
+      <IdentitySection profile={profile} onPicturePress={pickAndUpload} />
       <DepartmentRolesSection profile={profile} />
       <YearsSection profile={profile} />
       <ProductionTypesSection profile={profile} />

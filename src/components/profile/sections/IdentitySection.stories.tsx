@@ -49,6 +49,19 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   spokenLanguages: undefined,
 };
 
+const selfWithPictureProfile: ViewableProfile = {
+  mode: "self",
+  ...baseCrew,
+  profilePictureUrl: "https://i.pravatar.cc/300?u=ada",
+  nickname: undefined,
+  bio: undefined,
+  website: undefined,
+  imdbId: undefined,
+  startYearInDepartment: undefined,
+  productionTypes: undefined,
+  spokenLanguages: undefined,
+};
+
 const contactProfile: ViewableProfile = {
   mode: "contact",
   ...baseCrew,
@@ -73,6 +86,8 @@ const pmSelfProfile: ViewableProfile = {
   nickname: undefined,
 };
 
+const noop = () => {};
+
 const meta = {
   title: "Profile/IdentitySection",
   component: IdentitySection,
@@ -84,14 +99,23 @@ const meta = {
     ),
   ],
   tags: ["autodocs"],
-  args: { profile: selfWithNicknameProfile },
+  args: { profile: selfWithNicknameProfile, onPicturePress: noop },
 } satisfies Meta<typeof IdentitySection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const SelfWithNickname: Story = { args: { profile: selfWithNicknameProfile } };
-export const SelfWithoutNickname: Story = { args: { profile: selfWithoutNicknameProfile } };
+export const SelfWithNickname: Story = {
+  args: { profile: selfWithNicknameProfile, onPicturePress: noop },
+};
+export const SelfWithoutNickname: Story = {
+  args: { profile: selfWithoutNicknameProfile, onPicturePress: noop },
+};
+export const SelfWithPicture: Story = {
+  args: { profile: selfWithPictureProfile, onPicturePress: noop },
+};
 export const Contact: Story = { args: { profile: contactProfile } };
 export const PublicCard: Story = { args: { profile: publicCardProfile } };
-export const PMSelf: Story = { args: { profile: pmSelfProfile } };
+export const PMSelf: Story = {
+  args: { profile: pmSelfProfile, onPicturePress: noop },
+};

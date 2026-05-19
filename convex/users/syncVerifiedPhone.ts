@@ -29,7 +29,6 @@ export const syncVerifiedPhone = action({
       email: primaryEmail?.emailAddress,
       firstName: clerkUser.firstName ?? undefined,
       lastName: clerkUser.lastName ?? undefined,
-      profilePictureUrl: clerkUser.imageUrl,
       phone: primaryPhone.phoneNumber,
     });
 

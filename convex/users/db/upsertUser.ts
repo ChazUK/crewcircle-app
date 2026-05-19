@@ -9,7 +9,6 @@ export const upsertUser = async (
     email: string;
     firstName?: string;
     lastName?: string;
-    profilePictureUrl?: string;
     phone?: string;
   },
 ) => {
