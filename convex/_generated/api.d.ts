@@ -94,6 +94,7 @@ import type * as users_mutations from "../users/mutations.js";
 import type * as users_mutations_updateDepartmentAndRoles from "../users/mutations/updateDepartmentAndRoles.js";
 import type * as users_mutations_updateProfileBioLinks from "../users/mutations/updateProfileBioLinks.js";
 import type * as users_mutations_updateProfileLocation from "../users/mutations/updateProfileLocation.js";
+import type * as users_mutations_updateProfileLanguages from "../users/mutations/updateProfileLanguages.js";
 import type * as users_mutations_updateProfileProductionTypes from "../users/mutations/updateProfileProductionTypes.js";
 import type * as users_mutations_updateProfileYears from "../users/mutations/updateProfileYears.js";
 import type * as migrations_dropLegacyYearsFields from "../migrations/dropLegacyYearsFields.js";
@@ -195,6 +196,7 @@ declare const fullApi: ApiFromModules<{
   "users/mutations/updateDepartmentAndRoles": typeof users_mutations_updateDepartmentAndRoles;
   "users/mutations/updateProfileBioLinks": typeof users_mutations_updateProfileBioLinks;
   "users/mutations/updateProfileLocation": typeof users_mutations_updateProfileLocation;
+  "users/mutations/updateProfileLanguages": typeof users_mutations_updateProfileLanguages;
   "users/mutations/updateProfileProductionTypes": typeof users_mutations_updateProfileProductionTypes;
   "users/mutations/updateProfileYears": typeof users_mutations_updateProfileYears;
   "migrations/dropLegacyYearsFields": typeof migrations_dropLegacyYearsFields;

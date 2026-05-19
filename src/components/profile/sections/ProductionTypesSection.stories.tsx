@@ -26,6 +26,7 @@ const selfWithData: ViewableProfile = {
   imdbId: undefined,
   startYearInDepartment: undefined,
   productionTypes: ["Feature Film", "TV Drama", "Documentary", "Commercial"],
+  spokenLanguages: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -36,6 +37,7 @@ const selfEmpty: ViewableProfile = {
   imdbId: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
+  spokenLanguages: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -46,6 +48,7 @@ const contactWithData: ViewableProfile = {
   imdbId: undefined,
   startYearInDepartment: undefined,
   productionTypes: ["Music Video", "Short Film", "Streaming Series"],
+  spokenLanguages: undefined,
 };
 
 const meta = {

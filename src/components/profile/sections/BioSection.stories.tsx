@@ -26,6 +26,7 @@ const selfWithBio: ViewableProfile = {
   bio: "Camera operator with 15 years experience in film and television.",
   startYearInDepartment: undefined,
   productionTypes: undefined,
+  spokenLanguages: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -34,6 +35,7 @@ const selfEmpty: ViewableProfile = {
   bio: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
+  spokenLanguages: undefined,
 };
 
 const contactWithBio: ViewableProfile = {
@@ -42,6 +44,7 @@ const contactWithBio: ViewableProfile = {
   bio: "Camera operator with 15 years experience in film and television.",
   startYearInDepartment: undefined,
   productionTypes: undefined,
+  spokenLanguages: undefined,
 };
 
 const meta = {

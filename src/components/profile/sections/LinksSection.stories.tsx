@@ -43,6 +43,7 @@ export const Default: Story = {
       imdbId: "nm0000123",
       startYearInDepartment: undefined,
       productionTypes: undefined,
+      spokenLanguages: undefined,
     },
   },
 };
@@ -56,6 +57,7 @@ export const WebsiteOnly: Story = {
       imdbId: undefined,
       startYearInDepartment: undefined,
       productionTypes: undefined,
+      spokenLanguages: undefined,
     },
   },
 };
@@ -69,6 +71,7 @@ export const IMDBOnly: Story = {
       imdbId: "nm0000100",
       startYearInDepartment: undefined,
       productionTypes: undefined,
+      spokenLanguages: undefined,
     },
   },
 };
@@ -82,6 +85,7 @@ export const Empty: Story = {
       imdbId: undefined,
       startYearInDepartment: undefined,
       productionTypes: undefined,
+      spokenLanguages: undefined,
     },
   },
 };

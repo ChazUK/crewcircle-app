@@ -4,6 +4,7 @@ import { ScrollView } from "react-native";
 import { BioSection } from "./sections/BioSection";
 import { DepartmentRolesSection } from "./sections/DepartmentRolesSection";
 import { IdentitySection } from "./sections/IdentitySection";
+import { LanguagesSection } from "./sections/LanguagesSection";
 import { LinksSection } from "./sections/LinksSection";
 import { LocationSection } from "./sections/LocationSection";
 import { ProductionTypesSection } from "./sections/ProductionTypesSection";
@@ -20,6 +21,7 @@ export function Profile({ profile }: Props) {
       <DepartmentRolesSection profile={profile} />
       <YearsSection profile={profile} />
       <ProductionTypesSection profile={profile} />
+      <LanguagesSection profile={profile} />
       <LocationSection profile={profile} />
       <BioSection profile={profile} />
       <LinksSection profile={profile} />

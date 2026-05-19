@@ -1,0 +1,83 @@
+export const LANGUAGE_CODES = [
+  "ar",
+  "bn",
+  "cs",
+  "da",
+  "de",
+  "en",
+  "es",
+  "fi",
+  "fr",
+  "he",
+  "hi",
+  "id",
+  "it",
+  "ja",
+  "ko",
+  "ms",
+  "nl",
+  "no",
+  "pl",
+  "pt",
+  "ru",
+  "sv",
+  "th",
+  "tl",
+  "tr",
+  "uk",
+  "ur",
+  "vi",
+  "zh",
+] as const;
+
+export type LanguageCode = (typeof LANGUAGE_CODES)[number];
+
+export const LANGUAGE_NAMES: Record<LanguageCode, string> = {
+  ar: "Arabic",
+  bn: "Bengali",
+  cs: "Czech",
+  da: "Danish",
+  de: "German",
+  en: "English",
+  es: "Spanish",
+  fi: "Finnish",
+  fr: "French",
+  he: "Hebrew",
+  hi: "Hindi",
+  id: "Indonesian",
+  it: "Italian",
+  ja: "Japanese",
+  ko: "Korean",
+  ms: "Malay",
+  nl: "Dutch",
+  no: "Norwegian",
+  pl: "Polish",
+  pt: "Portuguese",
+  ru: "Russian",
+  sv: "Swedish",
+  th: "Thai",
+  tl: "Filipino",
+  tr: "Turkish",
+  uk: "Ukrainian",
+  ur: "Urdu",
+  vi: "Vietnamese",
+  zh: "Chinese",
+};
+
+export const FLUENCY_LEVELS = [
+  "native",
+  "fluent",
+  "professional",
+  "conversational",
+  "basic",
+] as const;
+
+export type Fluency = (typeof FLUENCY_LEVELS)[number];
+
+export const FLUENCY_LABELS: Record<Fluency, string> = {
+  native: "Native",
+  fluent: "Fluent",
+  professional: "Professional",
+  conversational: "Conversational",
+  basic: "Basic",
+};

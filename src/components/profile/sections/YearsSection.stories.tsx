@@ -20,6 +20,7 @@ const baseCrew = {
   city: undefined,
   country: undefined,
   productionTypes: undefined,
+  spokenLanguages: undefined,
 };
 
 const selfWithStartYear: ViewableProfile = {

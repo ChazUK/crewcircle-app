@@ -3,7 +3,7 @@ import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { LocationSection } from "./LocationSection";
+import { LanguagesSection } from "./LanguagesSection";
 
 const baseCrew = {
   userId: "user_1" as Id<"users">,
@@ -14,26 +14,33 @@ const baseCrew = {
   nickname: undefined,
   department: "Camera" as const,
   roles: ["Director of Photography"],
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
+  city: undefined,
+  country: undefined,
 };
 
 const selfWithData: ViewableProfile = {
   mode: "self",
   ...baseCrew,
-  city: "London",
-  country: "GB",
+  bio: undefined,
+  website: undefined,
+  imdbId: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
-  spokenLanguages: undefined,
+  spokenLanguages: [
+    { code: "fr", fluency: "fluent" },
+    { code: "en", fluency: "native" },
+    { code: "de", fluency: "basic" },
+    { code: "es", fluency: "conversational" },
+    { code: "ja", fluency: "professional" },
+  ],
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
   ...baseCrew,
-  city: undefined,
-  country: undefined,
+  bio: undefined,
+  website: undefined,
+  imdbId: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
@@ -42,23 +49,20 @@ const selfEmpty: ViewableProfile = {
 const contactWithData: ViewableProfile = {
   mode: "contact",
   ...baseCrew,
-  city: "Los Angeles",
-  country: "US",
+  bio: undefined,
+  website: undefined,
+  imdbId: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
-  spokenLanguages: undefined,
-};
-
-const publicCard: ViewableProfile = {
-  mode: "public-card",
-  ...baseCrew,
-  city: "Berlin",
-  country: "DE",
+  spokenLanguages: [
+    { code: "ar", fluency: "native" },
+    { code: "en", fluency: "professional" },
+  ],
 };
 
 const meta = {
-  title: "Profile/LocationSection",
-  component: LocationSection,
+  title: "Profile/LanguagesSection",
+  component: LanguagesSection,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 16 }}>
@@ -68,7 +72,7 @@ const meta = {
   ],
   tags: ["autodocs"],
   args: { profile: selfWithData },
-} satisfies Meta<typeof LocationSection>;
+} satisfies Meta<typeof LanguagesSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -76,4 +80,3 @@ type Story = StoryObj<typeof meta>;
 export const SelfWithData: Story = { args: { profile: selfWithData } };
 export const SelfEmpty: Story = { args: { profile: selfEmpty } };
 export const ContactWithData: Story = { args: { profile: contactWithData } };
-export const PublicCard: Story = { args: { profile: publicCard } };

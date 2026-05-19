@@ -8,6 +8,7 @@ import {
   ChevronRightIcon,
   ClapperboardIcon,
   FileTextIcon,
+  LanguagesIcon,
   MapPinIcon,
   UserIcon,
 } from "lucide-react-native";
@@ -48,6 +49,11 @@ export default function EditProfileHubScreen() {
   const productionTypesPreview =
     profile.mode === "self" && profile.productionTypes && profile.productionTypes.length > 0
       ? `${profile.productionTypes.length} selected`
+      : "Not added";
+
+  const languagesPreview =
+    profile.mode === "self" && profile.spokenLanguages && profile.spokenLanguages.length > 0
+      ? `${profile.spokenLanguages.length} added`
       : "Not added";
 
   const locationPreview = "city" in profile && profile.city ? profile.city : "Not added";
@@ -129,6 +135,28 @@ export default function EditProfileHubScreen() {
                 <ListGroup.ItemContent>
                   <ListGroup.ItemTitle>Production Types</ListGroup.ItemTitle>
                   <ListGroup.ItemDescription>{productionTypesPreview}</ListGroup.ItemDescription>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix>
+                  <ChevronRightIcon size={16} />
+                </ListGroup.ItemSuffix>
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+          </PressableFeedback>
+        ) : null}
+
+        {profile.userType === "crew" ? (
+          <PressableFeedback
+            animation={false}
+            onPress={() => router.push("/profile/edit/languages")}
+          >
+            <PressableFeedback.Scale>
+              <ListGroup.Item>
+                <ListGroup.ItemPrefix>
+                  <LanguagesIcon size={20} />
+                </ListGroup.ItemPrefix>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>Spoken Languages</ListGroup.ItemTitle>
+                  <ListGroup.ItemDescription>{languagesPreview}</ListGroup.ItemDescription>
                 </ListGroup.ItemContent>
                 <ListGroup.ItemSuffix>
                   <ChevronRightIcon size={16} />

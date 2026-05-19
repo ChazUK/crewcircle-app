@@ -26,6 +26,7 @@ const selfWithData: ViewableProfile = {
   imdbId: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
+  spokenLanguages: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -38,6 +39,7 @@ const selfEmpty: ViewableProfile = {
   imdbId: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
+  spokenLanguages: undefined,
 };
 
 const contact: ViewableProfile = {
@@ -50,6 +52,7 @@ const contact: ViewableProfile = {
   imdbId: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
+  spokenLanguages: undefined,
 };
 
 const publicCard: ViewableProfile = {

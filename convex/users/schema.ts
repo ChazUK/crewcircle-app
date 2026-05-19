@@ -38,7 +38,7 @@ export const User = {
   imdbId: v.optional(v.string()),
   cvUrl: v.optional(v.string()),
   specialSkills: v.optional(v.array(v.string())),
-  spokenLanguages: v.optional(v.array(v.object({ language: v.string(), fluency: v.string() }))),
+  spokenLanguages: v.optional(v.array(v.object({ code: v.string(), fluency: v.string() }))),
   passports: v.optional(v.array(v.string())),
   kit: v.optional(v.array(v.string())),
   productionTypes: v.optional(v.array(v.string())),

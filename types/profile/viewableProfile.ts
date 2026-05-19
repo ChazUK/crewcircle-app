@@ -21,9 +21,15 @@ type BioLinks = {
   imdbId: string | undefined;
 };
 
+type SpokenLanguageEntry = {
+  code: string;
+  fluency: string;
+};
+
 type CrewExtras = {
   startYearInDepartment: number | undefined;
   productionTypes: string[] | undefined;
+  spokenLanguages: SpokenLanguageEntry[] | undefined;
 };
 
 type CrewProfile = ProfileIdentity & {

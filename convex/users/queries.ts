@@ -43,6 +43,7 @@ export const getMyProfile = query({
         country: viewer.country,
         startYearInDepartment: viewer.startYearInDepartment,
         productionTypes: viewer.productionTypes,
+        spokenLanguages: viewer.spokenLanguages,
       };
     }
 
@@ -111,6 +112,7 @@ export const getViewableProfile = query({
         imdbId: subject.imdbId,
         startYearInDepartment: subject.startYearInDepartment,
         productionTypes: subject.productionTypes,
+        spokenLanguages: subject.spokenLanguages,
       };
     }
 
