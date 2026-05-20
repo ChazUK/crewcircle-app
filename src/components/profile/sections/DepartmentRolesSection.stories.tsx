@@ -28,6 +28,7 @@ const selfWithData: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  workEligibility: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -42,6 +43,7 @@ const selfEmpty: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  workEligibility: undefined,
 };
 
 const contact: ViewableProfile = {
@@ -56,6 +58,7 @@ const contact: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  workEligibility: undefined,
 };
 
 const publicCard: ViewableProfile = {

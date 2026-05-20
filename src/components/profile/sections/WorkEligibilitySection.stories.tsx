@@ -3,7 +3,7 @@ import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { LanguagesSection } from "./LanguagesSection";
+import { WorkEligibilitySection } from "./WorkEligibilitySection";
 
 const baseCrew = {
   userId: "user_1" as Id<"users">,
@@ -27,14 +27,8 @@ const selfWithData: ViewableProfile = {
   cvUrl: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
-  spokenLanguages: [
-    { code: "fr", fluency: "fluent" },
-    { code: "en", fluency: "native" },
-    { code: "de", fluency: "basic" },
-    { code: "es", fluency: "conversational" },
-    { code: "ja", fluency: "professional" },
-  ],
-  workEligibility: undefined,
+  spokenLanguages: undefined,
+  workEligibility: ["Right to Work UK", "Schengen", "Ireland"],
 };
 
 const selfEmpty: ViewableProfile = {
@@ -59,16 +53,13 @@ const contactWithData: ViewableProfile = {
   cvUrl: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
-  spokenLanguages: [
-    { code: "ar", fluency: "native" },
-    { code: "en", fluency: "professional" },
-  ],
-  workEligibility: undefined,
+  spokenLanguages: undefined,
+  workEligibility: ["USA", "Canada", "Australia"],
 };
 
 const meta = {
-  title: "Profile/LanguagesSection",
-  component: LanguagesSection,
+  title: "Profile/WorkEligibilitySection",
+  component: WorkEligibilitySection,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 16 }}>
@@ -78,7 +69,7 @@ const meta = {
   ],
   tags: ["autodocs"],
   args: { profile: selfWithData },
-} satisfies Meta<typeof LanguagesSection>;
+} satisfies Meta<typeof WorkEligibilitySection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
