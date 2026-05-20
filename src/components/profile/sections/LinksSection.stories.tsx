@@ -45,6 +45,7 @@ export const Default: Story = {
       startYearInDepartment: undefined,
       productionTypes: undefined,
       spokenLanguages: undefined,
+      drivingLicences: undefined,
     },
   },
 };
@@ -59,6 +60,7 @@ export const WebsiteOnly: Story = {
       startYearInDepartment: undefined,
       productionTypes: undefined,
       spokenLanguages: undefined,
+      drivingLicences: undefined,
     },
   },
 };
@@ -73,6 +75,7 @@ export const IMDBOnly: Story = {
       startYearInDepartment: undefined,
       productionTypes: undefined,
       spokenLanguages: undefined,
+      drivingLicences: undefined,
     },
   },
 };
@@ -87,6 +90,7 @@ export const Empty: Story = {
       startYearInDepartment: undefined,
       productionTypes: undefined,
       spokenLanguages: undefined,
+      drivingLicences: undefined,
     },
   },
 };

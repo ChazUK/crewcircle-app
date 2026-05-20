@@ -3,7 +3,7 @@ import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { CvSection } from "./CvSection";
+import { DrivingLicencesSection } from "./DrivingLicencesSection";
 
 const baseCrew = {
   userId: "user_1" as Id<"users">,
@@ -14,27 +14,29 @@ const baseCrew = {
   nickname: undefined,
   department: "Camera" as const,
   roles: ["Director of Photography"],
-  website: undefined,
-  imdbId: undefined,
   city: undefined,
   country: undefined,
 };
 
-const selfWithCv: ViewableProfile = {
+const selfWithData: ViewableProfile = {
   mode: "self",
   ...baseCrew,
   bio: undefined,
-  cvUrl: "https://storage.example.com/cv.pdf",
+  website: undefined,
+  imdbId: undefined,
+  cvUrl: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
-  drivingLicences: undefined,
+  drivingLicences: ["Car (B)", "Motorcycle (A)", "HGV/LGV (C)"],
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
   ...baseCrew,
   bio: undefined,
+  website: undefined,
+  imdbId: undefined,
   cvUrl: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
@@ -42,20 +44,22 @@ const selfEmpty: ViewableProfile = {
   drivingLicences: undefined,
 };
 
-const contactWithCv: ViewableProfile = {
+const contactWithData: ViewableProfile = {
   mode: "contact",
   ...baseCrew,
   bio: undefined,
-  cvUrl: "https://storage.example.com/cv.pdf",
+  website: undefined,
+  imdbId: undefined,
+  cvUrl: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
-  drivingLicences: undefined,
+  drivingLicences: ["Car (B)", "Forklift"],
 };
 
 const meta = {
-  title: "Profile/CvSection",
-  component: CvSection,
+  title: "Profile/DrivingLicencesSection",
+  component: DrivingLicencesSection,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 16 }}>
@@ -64,12 +68,12 @@ const meta = {
     ),
   ],
   tags: ["autodocs"],
-  args: { profile: selfWithCv },
-} satisfies Meta<typeof CvSection>;
+  args: { profile: selfWithData },
+} satisfies Meta<typeof DrivingLicencesSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const SelfWithCv: Story = { args: { profile: selfWithCv } };
+export const SelfWithData: Story = { args: { profile: selfWithData } };
 export const SelfEmpty: Story = { args: { profile: selfEmpty } };
-export const ContactWithCv: Story = { args: { profile: contactWithCv } };
+export const ContactWithData: Story = { args: { profile: contactWithData } };

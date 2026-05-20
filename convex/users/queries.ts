@@ -58,6 +58,7 @@ export const getMyProfile = query({
         startYearInDepartment: viewer.startYearInDepartment,
         productionTypes: viewer.productionTypes,
         spokenLanguages: viewer.spokenLanguages,
+        drivingLicences: viewer.drivingLicences,
       };
     }
 
@@ -131,6 +132,7 @@ export const getViewableProfile = query({
         startYearInDepartment: subject.startYearInDepartment,
         productionTypes: subject.productionTypes,
         spokenLanguages: subject.spokenLanguages,
+        drivingLicences: subject.drivingLicences,
       };
     }
 
