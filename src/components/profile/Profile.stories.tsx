@@ -35,6 +35,7 @@ const selfWithNicknameProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  workEligibility: undefined,
 };
 
 const selfWithoutNicknameProfile: ViewableProfile = {
@@ -48,6 +49,7 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  workEligibility: undefined,
 };
 
 const contactProfile: ViewableProfile = {
@@ -61,6 +63,7 @@ const contactProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  workEligibility: undefined,
 };
 
 const publicCardProfile: ViewableProfile = {
