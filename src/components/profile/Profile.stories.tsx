@@ -35,6 +35,7 @@ const selfWithNicknameProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  drivingLicences: undefined,
   workEligibility: undefined,
 };
 
@@ -49,6 +50,7 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  drivingLicences: undefined,
   workEligibility: undefined,
 };
 
@@ -63,6 +65,7 @@ const contactProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  drivingLicences: undefined,
   workEligibility: undefined,
 };
 
