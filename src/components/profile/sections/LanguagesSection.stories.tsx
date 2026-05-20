@@ -35,6 +35,7 @@ const selfWithData: ViewableProfile = {
     { code: "ja", fluency: "professional" },
   ],
   drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -48,6 +49,7 @@ const selfEmpty: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -64,6 +66,7 @@ const contactWithData: ViewableProfile = {
     { code: "en", fluency: "professional" },
   ],
   drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const meta = {

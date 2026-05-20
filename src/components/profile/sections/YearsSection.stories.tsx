@@ -23,6 +23,7 @@ const baseCrew = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfWithStartYear: ViewableProfile = {

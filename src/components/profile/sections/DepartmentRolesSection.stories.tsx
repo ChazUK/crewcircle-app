@@ -29,6 +29,7 @@ const selfWithData: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -44,6 +45,7 @@ const selfEmpty: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const contact: ViewableProfile = {
@@ -59,6 +61,7 @@ const contact: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const publicCard: ViewableProfile = {

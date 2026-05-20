@@ -59,6 +59,7 @@ export const getMyProfile = query({
         productionTypes: viewer.productionTypes,
         spokenLanguages: viewer.spokenLanguages,
         drivingLicences: viewer.drivingLicences,
+        workEligibility: viewer.workEligibility,
       };
     }
 
@@ -133,6 +134,7 @@ export const getViewableProfile = query({
         productionTypes: subject.productionTypes,
         spokenLanguages: subject.spokenLanguages,
         drivingLicences: subject.drivingLicences,
+        workEligibility: subject.workEligibility,
       };
     }
 
