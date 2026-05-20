@@ -41,6 +41,7 @@ export const getMyProfile = query({
       const cvUrl = await resolveStorageUrl(ctx, viewer.cvFileId);
       return {
         mode: "self",
+        isPublic: viewer.isPublic ?? false,
         userId: viewer._id,
         firstName: viewer.firstName,
         lastName: viewer.lastName,
@@ -121,8 +122,7 @@ export const getViewableProfile = query({
         return { mode, ...base };
       }
       const cvUrl = await resolveStorageUrl(ctx, subject.cvFileId);
-      return {
-        mode,
+      const crewExtras = {
         ...base,
         bio: subject.bio,
         website: subject.website,
@@ -132,6 +132,10 @@ export const getViewableProfile = query({
         productionTypes: subject.productionTypes,
         spokenLanguages: subject.spokenLanguages,
       };
+      if (mode === "self") {
+        return { mode, isPublic: subject.isPublic ?? false, ...crewExtras };
+      }
+      return { mode, ...crewExtras };
     }
 
     const userType = subject.userType as "production-manager";

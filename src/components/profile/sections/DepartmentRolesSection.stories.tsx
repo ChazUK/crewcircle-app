@@ -18,6 +18,7 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   department: "Camera",
   roles: ["Director of Photography", "1st AC"],
@@ -32,6 +33,7 @@ const selfWithData: ViewableProfile = {
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   department: undefined,
   roles: undefined,

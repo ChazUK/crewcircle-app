@@ -27,6 +27,7 @@ const basePm = {
 
 const selfWithNicknameProfile: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   nickname: "Ace",
   bio: undefined,
@@ -40,6 +41,7 @@ const selfWithNicknameProfile: ViewableProfile = {
 
 const selfWithoutNicknameProfile: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   nickname: undefined,
   bio: undefined,
@@ -53,6 +55,7 @@ const selfWithoutNicknameProfile: ViewableProfile = {
 
 const selfWithPictureProfile: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   profilePictureUrl: "https://i.pravatar.cc/300?u=ada",
   nickname: undefined,

@@ -26,6 +26,7 @@ const basePm = {
 
 const selfWithNicknameProfile: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   nickname: "Ace",
   bio: undefined,
@@ -39,6 +40,7 @@ const selfWithNicknameProfile: ViewableProfile = {
 
 const selfWithoutNicknameProfile: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   nickname: undefined,
   bio: undefined,

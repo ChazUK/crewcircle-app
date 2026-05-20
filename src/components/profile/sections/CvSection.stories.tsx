@@ -22,6 +22,7 @@ const baseCrew = {
 
 const selfWithCv: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   cvUrl: "https://storage.example.com/cv.pdf",
@@ -32,6 +33,7 @@ const selfWithCv: ViewableProfile = {
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   cvUrl: undefined,

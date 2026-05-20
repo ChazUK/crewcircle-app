@@ -22,6 +22,7 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   city: "London",
   country: "GB",
@@ -32,6 +33,7 @@ const selfWithData: ViewableProfile = {
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   city: undefined,
   country: undefined,

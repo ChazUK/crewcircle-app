@@ -23,6 +23,7 @@ const baseCrew = {
 
 const selfWithBio: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: "Camera operator with 15 years experience in film and television.",
   startYearInDepartment: undefined,
@@ -32,6 +33,7 @@ const selfWithBio: ViewableProfile = {
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   startYearInDepartment: undefined,
