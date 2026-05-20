@@ -58,6 +58,7 @@ export const getMyProfile = query({
         startYearInDepartment: viewer.startYearInDepartment,
         productionTypes: viewer.productionTypes,
         spokenLanguages: viewer.spokenLanguages,
+        passports: viewer.passports,
       };
     }
 
@@ -131,6 +132,7 @@ export const getViewableProfile = query({
         startYearInDepartment: subject.startYearInDepartment,
         productionTypes: subject.productionTypes,
         spokenLanguages: subject.spokenLanguages,
+        passports: subject.passports,
       };
     }
 

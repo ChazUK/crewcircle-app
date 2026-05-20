@@ -28,6 +28,7 @@ const selfWithBio: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -37,6 +38,7 @@ const selfEmpty: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
 };
 
 const contactWithBio: ViewableProfile = {
@@ -46,6 +48,7 @@ const contactWithBio: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
 };
 
 const meta = {
