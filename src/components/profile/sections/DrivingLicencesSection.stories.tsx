@@ -28,7 +28,10 @@ const selfWithData: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: ["Car (B)", "Motorcycle (A)", "HGV/LGV (C)"],
+  workEligibility: undefined,
+  certifications: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -41,7 +44,10 @@ const selfEmpty: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
+  workEligibility: undefined,
+  certifications: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -54,7 +60,10 @@ const contactWithData: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: ["Car (B)", "Forklift"],
+  workEligibility: undefined,
+  certifications: undefined,
 };
 
 const meta = {

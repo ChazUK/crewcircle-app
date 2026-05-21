@@ -39,6 +39,7 @@ const selfWithNicknameProfile: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
 };
 
 const selfWithoutNicknameProfile: ViewableProfile = {
@@ -56,6 +57,7 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
 };
 
 const contactProfile: ViewableProfile = {
@@ -72,6 +74,7 @@ const contactProfile: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
 };
 
 const publicCardProfile: ViewableProfile = {

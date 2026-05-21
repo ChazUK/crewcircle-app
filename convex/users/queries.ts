@@ -39,6 +39,24 @@ export const getMyProfile = query({
 
     if (viewer.userType === "crew") {
       const cvUrl = await resolveStorageUrl(ctx, viewer.cvFileId);
+      const certRows = await ctx.db
+        .query("certifications")
+        .withIndex("byUserIdAndExpiresAt", (q) => q.eq("userId", viewer._id))
+        .collect();
+      const withExpiry = certRows.filter((r) => r.expiresAt !== undefined);
+      const withoutExpiry = certRows.filter((r) => r.expiresAt === undefined);
+      withExpiry.sort((a, b) => (a.expiresAt as number) - (b.expiresAt as number));
+      const sortedCerts = [...withExpiry, ...withoutExpiry];
+      const certifications =
+        sortedCerts.length > 0
+          ? sortedCerts.map((r) => ({
+              id: r._id,
+              name: r.name,
+              issuer: r.issuer,
+              referenceNumber: r.referenceNumber,
+              expiresAt: r.expiresAt,
+            }))
+          : undefined;
       return {
         mode: "self",
         isPublic: viewer.isPublic ?? false,
@@ -62,6 +80,7 @@ export const getMyProfile = query({
         passports: viewer.passports,
         drivingLicences: viewer.drivingLicences,
         workEligibility: viewer.workEligibility,
+        certifications,
       };
     }
 
@@ -125,6 +144,24 @@ export const getViewableProfile = query({
         return { mode, ...base };
       }
       const cvUrl = await resolveStorageUrl(ctx, subject.cvFileId);
+      const certRows = await ctx.db
+        .query("certifications")
+        .withIndex("byUserIdAndExpiresAt", (q) => q.eq("userId", subject._id))
+        .collect();
+      const withExpiry = certRows.filter((r) => r.expiresAt !== undefined);
+      const withoutExpiry = certRows.filter((r) => r.expiresAt === undefined);
+      withExpiry.sort((a, b) => (a.expiresAt as number) - (b.expiresAt as number));
+      const sortedCerts = [...withExpiry, ...withoutExpiry];
+      const certifications =
+        sortedCerts.length > 0
+          ? sortedCerts.map((r) => ({
+              id: r._id,
+              name: r.name,
+              issuer: r.issuer,
+              referenceNumber: r.referenceNumber,
+              expiresAt: r.expiresAt,
+            }))
+          : undefined;
       const crewExtras = {
         ...base,
         bio: subject.bio,
@@ -137,6 +174,7 @@ export const getViewableProfile = query({
         passports: subject.passports,
         drivingLicences: subject.drivingLicences,
         workEligibility: subject.workEligibility,
+        certifications,
       };
       if (mode === "self") {
         return { mode, isPublic: subject.isPublic ?? false, ...crewExtras };

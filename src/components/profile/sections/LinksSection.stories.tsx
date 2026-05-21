@@ -49,6 +49,7 @@ export const Default: Story = {
       passports: undefined,
       drivingLicences: undefined,
       workEligibility: undefined,
+      certifications: undefined,
     },
   },
 };
@@ -67,6 +68,7 @@ export const WebsiteOnly: Story = {
       passports: undefined,
       drivingLicences: undefined,
       workEligibility: undefined,
+      certifications: undefined,
     },
   },
 };
@@ -85,6 +87,7 @@ export const IMDBOnly: Story = {
       passports: undefined,
       drivingLicences: undefined,
       workEligibility: undefined,
+      certifications: undefined,
     },
   },
 };
@@ -103,6 +106,7 @@ export const Empty: Story = {
       passports: undefined,
       drivingLicences: undefined,
       workEligibility: undefined,
+      certifications: undefined,
     },
   },
 };

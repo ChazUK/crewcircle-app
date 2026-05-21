@@ -32,6 +32,7 @@ const selfWithData: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -50,6 +51,7 @@ const selfEmpty: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
 };
 
 const contact: ViewableProfile = {
@@ -67,6 +69,7 @@ const contact: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
 };
 
 const publicCard: ViewableProfile = {

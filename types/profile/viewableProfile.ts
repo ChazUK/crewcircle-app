@@ -27,6 +27,14 @@ type SpokenLanguageEntry = {
   fluency: string;
 };
 
+export type CertificationEntry = {
+  id: string;
+  name: string;
+  issuer: string | undefined;
+  referenceNumber: string | undefined;
+  expiresAt: number | undefined;
+};
+
 type CrewExtras = {
   startYearInDepartment: number | undefined;
   productionTypes: string[] | undefined;
@@ -34,6 +42,7 @@ type CrewExtras = {
   passports: string[] | undefined;
   drivingLicences: string[] | undefined;
   workEligibility: string[] | undefined;
+  certifications: CertificationEntry[] | undefined;
 };
 
 type CrewProfile = ProfileIdentity & {

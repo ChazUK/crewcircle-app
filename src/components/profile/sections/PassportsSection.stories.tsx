@@ -29,6 +29,9 @@ const selfWithData: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: ["GB", "IE", "US"],
+  drivingLicences: undefined,
+  workEligibility: undefined,
+  certifications: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -42,6 +45,9 @@ const selfEmpty: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
+  certifications: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -55,6 +61,9 @@ const contactWithData: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: ["AU", "NZ"],
+  drivingLicences: undefined,
+  workEligibility: undefined,
+  certifications: undefined,
 };
 
 const meta = {
