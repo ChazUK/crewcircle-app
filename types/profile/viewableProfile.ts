@@ -35,6 +35,12 @@ export type CertificationEntry = {
   expiresAt: number | undefined;
 };
 
+export type MembershipEntry = {
+  id: string;
+  name: string;
+  memberNumber: string | undefined;
+};
+
 type CrewExtras = {
   startYearInDepartment: number | undefined;
   productionTypes: string[] | undefined;
@@ -43,6 +49,7 @@ type CrewExtras = {
   drivingLicences: string[] | undefined;
   workEligibility: string[] | undefined;
   certifications: CertificationEntry[] | undefined;
+  memberships: MembershipEntry[] | undefined;
 };
 
 type CrewProfile = ProfileIdentity & {

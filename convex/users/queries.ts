@@ -55,7 +55,15 @@ export const getMyProfile = query({
               issuer: r.issuer,
               referenceNumber: r.referenceNumber,
               expiresAt: r.expiresAt,
-            }))
+            })) : undefined
+      const membershipRows = await ctx.db
+        .query("memberships")
+        .withIndex("byUserId", (q) => q.eq("userId", viewer._id))
+        .collect();
+      membershipRows.sort((a, b) => a.name.localeCompare(b.name));
+      const memberships =
+        membershipRows.length > 0
+          ? membershipRows.map((r) => ({ id: r._id, name: r.name, memberNumber: r.memberNumber }))
           : undefined;
       return {
         mode: "self",
@@ -81,6 +89,7 @@ export const getMyProfile = query({
         drivingLicences: viewer.drivingLicences,
         workEligibility: viewer.workEligibility,
         certifications,
+        memberships,
       };
     }
 
@@ -160,7 +169,15 @@ export const getViewableProfile = query({
               issuer: r.issuer,
               referenceNumber: r.referenceNumber,
               expiresAt: r.expiresAt,
-            }))
+            })) : undefined;
+      const membershipRows = await ctx.db
+        .query("memberships")
+        .withIndex("byUserId", (q) => q.eq("userId", subject._id))
+        .collect();
+      membershipRows.sort((a, b) => a.name.localeCompare(b.name));
+      const memberships =
+        membershipRows.length > 0
+          ? membershipRows.map((r) => ({ id: r._id, name: r.name, memberNumber: r.memberNumber }))
           : undefined;
       const crewExtras = {
         ...base,
@@ -175,6 +192,7 @@ export const getViewableProfile = query({
         drivingLicences: subject.drivingLicences,
         workEligibility: subject.workEligibility,
         certifications,
+        memberships,
       };
       if (mode === "self") {
         return { mode, isPublic: subject.isPublic ?? false, ...crewExtras };

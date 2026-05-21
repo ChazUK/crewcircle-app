@@ -33,6 +33,7 @@ const selfWithBio: ViewableProfile = {
   drivingLicences: undefined,
   workEligibility: undefined,
   certifications: undefined,
+  memberships: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -47,6 +48,7 @@ const selfEmpty: ViewableProfile = {
   drivingLicences: undefined,
   workEligibility: undefined,
   certifications: undefined,
+  memberships: undefined,
 };
 
 const contactWithBio: ViewableProfile = {
@@ -60,6 +62,7 @@ const contactWithBio: ViewableProfile = {
   drivingLicences: undefined,
   workEligibility: undefined,
   certifications: undefined,
+  memberships: undefined,
 };
 
 const meta = {

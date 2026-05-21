@@ -32,6 +32,7 @@ const selfWithData: ViewableProfile = {
   drivingLicences: ["Car (B)", "Motorcycle (A)", "HGV/LGV (C)"],
   workEligibility: undefined,
   certifications: undefined,
+  memberships: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
@@ -48,6 +49,7 @@ const selfEmpty: ViewableProfile = {
   drivingLicences: undefined,
   workEligibility: undefined,
   certifications: undefined,
+  memberships: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -64,6 +66,7 @@ const contactWithData: ViewableProfile = {
   drivingLicences: ["Car (B)", "Forklift"],
   workEligibility: undefined,
   certifications: undefined,
+  memberships: undefined,
 };
 
 const meta = {
