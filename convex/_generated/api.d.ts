@@ -76,6 +76,7 @@ import type * as jobs_domain_generateIcs from "../jobs/domain/generateIcs.js";
 import type * as jobs_http from "../jobs/http.js";
 import type * as jobs_queries from "../jobs/queries.js";
 import type * as lib_parseOrConvexError from "../lib/parseOrConvexError.js";
+import type * as memberships_queries_listMembershipsForUser from "../memberships/queries/listMembershipsForUser.js";
 import type * as notifications_actions from "../notifications/actions.js";
 import type * as notifications_db_countUnreadForUser from "../notifications/db/countUnreadForUser.js";
 import type * as notifications_db_createNotification from "../notifications/db/createNotification.js";
@@ -182,6 +183,7 @@ declare const fullApi: ApiFromModules<{
   "jobs/http": typeof jobs_http;
   "jobs/queries": typeof jobs_queries;
   "lib/parseOrConvexError": typeof lib_parseOrConvexError;
+  "memberships/queries/listMembershipsForUser": typeof memberships_queries_listMembershipsForUser;
   "notifications/actions": typeof notifications_actions;
   "notifications/db/countUnreadForUser": typeof notifications_db_countUnreadForUser;
   "notifications/db/createNotification": typeof notifications_db_createNotification;
