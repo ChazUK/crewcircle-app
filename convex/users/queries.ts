@@ -39,6 +39,15 @@ export const getMyProfile = query({
 
     if (viewer.userType === "crew") {
       const cvUrl = await resolveStorageUrl(ctx, viewer.cvFileId);
+      const membershipRows = await ctx.db
+        .query("memberships")
+        .withIndex("byUserId", (q) => q.eq("userId", viewer._id))
+        .collect();
+      membershipRows.sort((a, b) => a.name.localeCompare(b.name));
+      const memberships =
+        membershipRows.length > 0
+          ? membershipRows.map((r) => ({ id: r._id, name: r.name, memberNumber: r.memberNumber }))
+          : undefined;
       return {
         mode: "self",
         isPublic: viewer.isPublic ?? false,
@@ -62,6 +71,7 @@ export const getMyProfile = query({
         passports: viewer.passports,
         drivingLicences: viewer.drivingLicences,
         workEligibility: viewer.workEligibility,
+        memberships,
       };
     }
 
@@ -125,6 +135,15 @@ export const getViewableProfile = query({
         return { mode, ...base };
       }
       const cvUrl = await resolveStorageUrl(ctx, subject.cvFileId);
+      const membershipRows = await ctx.db
+        .query("memberships")
+        .withIndex("byUserId", (q) => q.eq("userId", subject._id))
+        .collect();
+      membershipRows.sort((a, b) => a.name.localeCompare(b.name));
+      const memberships =
+        membershipRows.length > 0
+          ? membershipRows.map((r) => ({ id: r._id, name: r.name, memberNumber: r.memberNumber }))
+          : undefined;
       const crewExtras = {
         ...base,
         bio: subject.bio,
@@ -137,6 +156,7 @@ export const getViewableProfile = query({
         passports: subject.passports,
         drivingLicences: subject.drivingLicences,
         workEligibility: subject.workEligibility,
+        memberships,
       };
       if (mode === "self") {
         return { mode, isPublic: subject.isPublic ?? false, ...crewExtras };

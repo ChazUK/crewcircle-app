@@ -27,6 +27,12 @@ type SpokenLanguageEntry = {
   fluency: string;
 };
 
+export type MembershipEntry = {
+  id: string;
+  name: string;
+  memberNumber: string | undefined;
+};
+
 type CrewExtras = {
   startYearInDepartment: number | undefined;
   productionTypes: string[] | undefined;
@@ -34,6 +40,7 @@ type CrewExtras = {
   passports: string[] | undefined;
   drivingLicences: string[] | undefined;
   workEligibility: string[] | undefined;
+  memberships: MembershipEntry[] | undefined;
 };
 
 type CrewProfile = ProfileIdentity & {
