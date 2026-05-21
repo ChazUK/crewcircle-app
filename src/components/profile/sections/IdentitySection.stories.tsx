@@ -37,6 +37,8 @@ const selfWithNicknameProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfWithoutNicknameProfile: ViewableProfile = {
@@ -51,6 +53,8 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfWithPictureProfile: ViewableProfile = {
@@ -66,6 +70,8 @@ const selfWithPictureProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const contactProfile: ViewableProfile = {
@@ -79,6 +85,8 @@ const contactProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const publicCardProfile: ViewableProfile = {

@@ -3,7 +3,7 @@ import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { ProductionTypesSection } from "./ProductionTypesSection";
+import { DrivingLicencesSection } from "./DrivingLicencesSection";
 
 const baseCrew = {
   userId: "user_1" as Id<"users">,
@@ -20,22 +20,19 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
-  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
   imdbId: undefined,
   cvUrl: undefined,
   startYearInDepartment: undefined,
-  productionTypes: ["Feature Film", "TV Drama", "Documentary", "Commercial"],
+  productionTypes: undefined,
   spokenLanguages: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
+  drivingLicences: ["Car (B)", "Motorcycle (A)", "HGV/LGV (C)"],
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
-  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -45,7 +42,6 @@ const selfEmpty: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   drivingLicences: undefined,
-  workEligibility: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -56,15 +52,14 @@ const contactWithData: ViewableProfile = {
   imdbId: undefined,
   cvUrl: undefined,
   startYearInDepartment: undefined,
-  productionTypes: ["Music Video", "Short Film", "Streaming Series"],
+  productionTypes: undefined,
   spokenLanguages: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
+  drivingLicences: ["Car (B)", "Forklift"],
 };
 
 const meta = {
-  title: "Profile/ProductionTypesSection",
-  component: ProductionTypesSection,
+  title: "Profile/DrivingLicencesSection",
+  component: DrivingLicencesSection,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 16 }}>
@@ -74,7 +69,7 @@ const meta = {
   ],
   tags: ["autodocs"],
   args: { profile: selfWithData },
-} satisfies Meta<typeof ProductionTypesSection>;
+} satisfies Meta<typeof DrivingLicencesSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

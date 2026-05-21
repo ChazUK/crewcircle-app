@@ -3,7 +3,7 @@ import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { ProductionTypesSection } from "./ProductionTypesSection";
+import { WorkEligibilitySection } from "./WorkEligibilitySection";
 
 const baseCrew = {
   userId: "user_1" as Id<"users">,
@@ -20,22 +20,6 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
-  isPublic: false,
-  ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: ["Feature Film", "TV Drama", "Documentary", "Commercial"],
-  spokenLanguages: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
-};
-
-const selfEmpty: ViewableProfile = {
-  mode: "self",
-  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -44,7 +28,19 @@ const selfEmpty: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
-  drivingLicences: undefined,
+  workEligibility: ["Right to Work UK", "Schengen", "Ireland"],
+};
+
+const selfEmpty: ViewableProfile = {
+  mode: "self",
+  ...baseCrew,
+  bio: undefined,
+  website: undefined,
+  imdbId: undefined,
+  cvUrl: undefined,
+  startYearInDepartment: undefined,
+  productionTypes: undefined,
+  spokenLanguages: undefined,
   workEligibility: undefined,
 };
 
@@ -56,15 +52,14 @@ const contactWithData: ViewableProfile = {
   imdbId: undefined,
   cvUrl: undefined,
   startYearInDepartment: undefined,
-  productionTypes: ["Music Video", "Short Film", "Streaming Series"],
+  productionTypes: undefined,
   spokenLanguages: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
+  workEligibility: ["USA", "Canada", "Australia"],
 };
 
 const meta = {
-  title: "Profile/ProductionTypesSection",
-  component: ProductionTypesSection,
+  title: "Profile/WorkEligibilitySection",
+  component: WorkEligibilitySection,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 16 }}>
@@ -74,7 +69,7 @@ const meta = {
   ],
   tags: ["autodocs"],
   args: { profile: selfWithData },
-} satisfies Meta<typeof ProductionTypesSection>;
+} satisfies Meta<typeof WorkEligibilitySection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

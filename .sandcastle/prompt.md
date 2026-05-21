@@ -54,9 +54,11 @@ The open-issue list above only contains issues in the `open` state. Closed issue
 7. **Commit** — make a single git commit. The message MUST:
    - Start with `RALPH:` prefix
    - Include the task completed and any PRD reference
-   - List key decisions made
-   - List files changed
+   - List key decisions made (the "why")
    - Note any blockers for the next iteration
+
+   Do **not** list files changed — git tracks that. Focus the body on intent and decisions, not a recap of the diff.
+
 8. **Push & open PR** — push the branch with `-u` and open a pull request:
    - Use `gh pr create --base main --head ralph/<issue-number>-<short-slug>`
    - Title: short imperative summary of the change (under 70 chars)
