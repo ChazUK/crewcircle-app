@@ -27,6 +27,11 @@ type SpokenLanguageEntry = {
   fluency: string;
 };
 
+type KitEntry = {
+  id: string;
+  name: string;
+};
+
 type CrewExtras = {
   startYearInDepartment: number | undefined;
   productionTypes: string[] | undefined;
@@ -34,6 +39,7 @@ type CrewExtras = {
   passports: string[] | undefined;
   drivingLicences: string[] | undefined;
   workEligibility: string[] | undefined;
+  kit: KitEntry[] | undefined;
 };
 
 type CrewProfile = ProfileIdentity & {

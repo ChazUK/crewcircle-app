@@ -25,6 +25,7 @@ const baseCrew = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  kit: undefined,
 };
 
 const selfWithStartYear: ViewableProfile = {

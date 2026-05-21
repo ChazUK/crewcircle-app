@@ -3,7 +3,7 @@ import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { DepartmentRolesSection } from "./DepartmentRolesSection";
+import { KitSection } from "./KitSection";
 
 const baseCrew = {
   userId: "user_1" as Id<"users">,
@@ -12,6 +12,8 @@ const baseCrew = {
   profilePictureUrl: undefined,
   userType: "crew" as const,
   nickname: undefined,
+  department: "Camera" as const,
+  roles: ["Director of Photography"],
   city: undefined,
   country: undefined,
 };
@@ -20,8 +22,6 @@ const selfWithData: ViewableProfile = {
   mode: "self",
   isPublic: false,
   ...baseCrew,
-  department: "Camera",
-  roles: ["Director of Photography", "1st AC"],
   bio: undefined,
   website: undefined,
   imdbId: undefined,
@@ -32,15 +32,17 @@ const selfWithData: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
-  kit: undefined,
+  kit: [
+    { id: "kit_1", name: "Arri Alexa Mini" },
+    { id: "kit_2", name: "RED Komodo" },
+    { id: "kit_3", name: "Sony FX6" },
+  ],
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
   isPublic: false,
   ...baseCrew,
-  department: undefined,
-  roles: undefined,
   bio: undefined,
   website: undefined,
   imdbId: undefined,
@@ -54,11 +56,9 @@ const selfEmpty: ViewableProfile = {
   kit: undefined,
 };
 
-const contact: ViewableProfile = {
+const contactWithData: ViewableProfile = {
   mode: "contact",
   ...baseCrew,
-  department: "Sound",
-  roles: ["Production Sound Mixer", "Sound Assistant"],
   bio: undefined,
   website: undefined,
   imdbId: undefined,
@@ -69,19 +69,15 @@ const contact: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
-  kit: undefined,
-};
-
-const publicCard: ViewableProfile = {
-  mode: "public-card",
-  ...baseCrew,
-  department: "Electrical",
-  roles: ["Gaffer"],
+  kit: [
+    { id: "kit_1", name: "Arri Alexa Mini" },
+    { id: "kit_2", name: "Sony FX6" },
+  ],
 };
 
 const meta = {
-  title: "Profile/DepartmentRolesSection",
-  component: DepartmentRolesSection,
+  title: "Profile/KitSection",
+  component: KitSection,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 16 }}>
@@ -91,12 +87,11 @@ const meta = {
   ],
   tags: ["autodocs"],
   args: { profile: selfWithData },
-} satisfies Meta<typeof DepartmentRolesSection>;
+} satisfies Meta<typeof KitSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const SelfWithData: Story = { args: { profile: selfWithData } };
 export const SelfEmpty: Story = { args: { profile: selfEmpty } };
-export const Contact: Story = { args: { profile: contact } };
-export const PublicCard: Story = { args: { profile: publicCard } };
+export const ContactWithData: Story = { args: { profile: contactWithData } };

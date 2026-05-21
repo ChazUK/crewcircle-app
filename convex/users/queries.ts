@@ -15,6 +15,25 @@ async function resolveStorageUrl(
   return (await ctx.storage.getUrl(fileId)) ?? undefined;
 }
 
+async function hydrateKit(ctx: QueryCtx, userId: Id<"users">) {
+  const rows = await ctx.db
+    .query("userKit")
+    .withIndex("byUserId", (q) => q.eq("userId", userId))
+    .collect();
+
+  const items = await Promise.all(
+    rows.map(async (row) => {
+      const catalogue = await ctx.db.get(row.kitCatalogueId);
+      if (!catalogue) return null;
+      return { id: row._id as string, name: catalogue.name };
+    }),
+  );
+
+  const filtered = items.filter((item): item is { id: string; name: string } => item !== null);
+
+  return filtered.length > 0 ? filtered.sort((a, b) => a.name.localeCompare(b.name)) : undefined;
+}
+
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
@@ -39,6 +58,7 @@ export const getMyProfile = query({
 
     if (viewer.userType === "crew") {
       const cvUrl = await resolveStorageUrl(ctx, viewer.cvFileId);
+      const kit = await hydrateKit(ctx, viewer._id);
       return {
         mode: "self",
         isPublic: viewer.isPublic ?? false,
@@ -62,6 +82,7 @@ export const getMyProfile = query({
         passports: viewer.passports,
         drivingLicences: viewer.drivingLicences,
         workEligibility: viewer.workEligibility,
+        kit,
       };
     }
 
@@ -125,6 +146,7 @@ export const getViewableProfile = query({
         return { mode, ...base };
       }
       const cvUrl = await resolveStorageUrl(ctx, subject.cvFileId);
+      const kit = await hydrateKit(ctx, subject._id);
       const crewExtras = {
         ...base,
         bio: subject.bio,
@@ -137,6 +159,7 @@ export const getViewableProfile = query({
         passports: subject.passports,
         drivingLicences: subject.drivingLicences,
         workEligibility: subject.workEligibility,
+        kit,
       };
       if (mode === "self") {
         return { mode, isPublic: subject.isPublic ?? false, ...crewExtras };

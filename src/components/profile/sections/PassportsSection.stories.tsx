@@ -20,6 +20,7 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -29,10 +30,14 @@ const selfWithData: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: ["GB", "IE", "US"],
+  drivingLicences: undefined,
+  workEligibility: undefined,
+  kit: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -42,6 +47,9 @@ const selfEmpty: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
+  kit: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -55,6 +63,9 @@ const contactWithData: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: ["AU", "NZ"],
+  drivingLicences: undefined,
+  workEligibility: undefined,
+  kit: undefined,
 };
 
 const meta = {
