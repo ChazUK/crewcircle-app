@@ -29,6 +29,7 @@ const selfWithData: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: ["Feature Film", "TV Drama", "Documentary", "Commercial"],
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };
@@ -44,6 +45,7 @@ const selfEmpty: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };
@@ -58,6 +60,7 @@ const contactWithData: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: ["Music Video", "Short Film", "Streaming Series"],
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };

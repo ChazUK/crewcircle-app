@@ -12,6 +12,7 @@ import { IdentitySection } from "./sections/IdentitySection";
 import { LanguagesSection } from "./sections/LanguagesSection";
 import { LinksSection } from "./sections/LinksSection";
 import { LocationSection } from "./sections/LocationSection";
+import { PassportsSection } from "./sections/PassportsSection";
 import { ProductionTypesSection } from "./sections/ProductionTypesSection";
 import { VisibilityToggleSection } from "./sections/VisibilityToggleSection";
 import { WorkEligibilitySection } from "./sections/WorkEligibilitySection";
@@ -33,6 +34,7 @@ export function Profile({ profile }: Props) {
       <DepartmentRolesSection profile={profile} />
       <YearsSection profile={profile} />
       <ProductionTypesSection profile={profile} />
+      <PassportsSection profile={profile} />
       <DrivingLicencesSection profile={profile} />
       <WorkEligibilitySection profile={profile} />
       <LanguagesSection profile={profile} />

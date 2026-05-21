@@ -29,6 +29,7 @@ const selfWithBio: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };
@@ -41,6 +42,7 @@ const selfEmpty: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };
@@ -52,6 +54,7 @@ const contactWithBio: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };

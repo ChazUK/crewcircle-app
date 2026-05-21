@@ -37,6 +37,7 @@ const selfWithNicknameProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };
@@ -53,6 +54,7 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };
@@ -70,6 +72,7 @@ const selfWithPictureProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };
@@ -85,6 +88,7 @@ const contactProfile: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
 };

@@ -31,6 +31,7 @@ type CrewExtras = {
   startYearInDepartment: number | undefined;
   productionTypes: string[] | undefined;
   spokenLanguages: SpokenLanguageEntry[] | undefined;
+  passports: string[] | undefined;
   drivingLicences: string[] | undefined;
   workEligibility: string[] | undefined;
 };
