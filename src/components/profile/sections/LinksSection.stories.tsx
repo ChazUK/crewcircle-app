@@ -39,6 +39,7 @@ export const Default: Story = {
   args: {
     profile: {
       mode: "self",
+      isPublic: false,
       ...baseCrew,
       website: "https://adalovelace.com",
       imdbId: "nm0000123",
@@ -55,6 +56,7 @@ export const WebsiteOnly: Story = {
   args: {
     profile: {
       mode: "self",
+      isPublic: false,
       ...baseCrew,
       website: "https://adalovelace.com",
       imdbId: undefined,
@@ -71,6 +73,7 @@ export const IMDBOnly: Story = {
   args: {
     profile: {
       mode: "self",
+      isPublic: false,
       ...baseCrew,
       website: undefined,
       imdbId: "nm0000100",
@@ -87,6 +90,7 @@ export const Empty: Story = {
   args: {
     profile: {
       mode: "self",
+      isPublic: false,
       ...baseCrew,
       website: undefined,
       imdbId: undefined,

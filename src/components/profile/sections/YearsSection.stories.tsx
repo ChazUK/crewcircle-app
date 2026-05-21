@@ -28,12 +28,14 @@ const baseCrew = {
 
 const selfWithStartYear: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   startYearInDepartment: 2015,
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   startYearInDepartment: undefined,
 };

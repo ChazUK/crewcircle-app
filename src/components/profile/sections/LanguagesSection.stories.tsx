@@ -20,6 +20,7 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -40,6 +41,7 @@ const selfWithData: ViewableProfile = {
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,

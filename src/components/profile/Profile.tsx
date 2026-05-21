@@ -1,4 +1,6 @@
+import { api } from "@convex/_generated/api";
 import type { ViewableProfile } from "@shared/profile/viewableProfile";
+import { useMutation } from "convex/react";
 import { ScrollView } from "react-native";
 
 import { usePictureUpload } from "./PictureUploadFlow";
@@ -11,6 +13,7 @@ import { LanguagesSection } from "./sections/LanguagesSection";
 import { LinksSection } from "./sections/LinksSection";
 import { LocationSection } from "./sections/LocationSection";
 import { ProductionTypesSection } from "./sections/ProductionTypesSection";
+import { VisibilityToggleSection } from "./sections/VisibilityToggleSection";
 import { WorkEligibilitySection } from "./sections/WorkEligibilitySection";
 import { YearsSection } from "./sections/YearsSection";
 
@@ -20,6 +23,9 @@ type Props = {
 
 export function Profile({ profile }: Props) {
   const pickAndUpload = usePictureUpload();
+  const updateVisibility = useMutation(
+    api.users.mutations.updateProfileVisibility.updateProfileVisibility,
+  );
 
   return (
     <ScrollView contentContainerClassName="gap-4 p-4">
@@ -34,6 +40,12 @@ export function Profile({ profile }: Props) {
       <BioSection profile={profile} />
       <LinksSection profile={profile} />
       <CvSection profile={profile} />
+      {profile.mode === "self" && (
+        <VisibilityToggleSection
+          isPublic={profile.isPublic}
+          onToggle={(value) => updateVisibility({ isPublic: value })}
+        />
+      )}
     </ScrollView>
   );
 }
