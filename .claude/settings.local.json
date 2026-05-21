@@ -9,6 +9,7 @@
       "WebFetch(domain:api.anthropic.com)"
     ]
   },
+  "enabledMcpjsonServers": ["heroui-native"],
   "skillOverrides": {
     "clerk": "name-only",
     "clerk-backend-api": "name-only",
@@ -29,5 +30,7 @@
       }
     ]
   },
-  "enabledMcpjsonServers": ["heroui-native", "container-use"]
+  "enabledPlugins": {
+    "expo@claude-plugins-official": true
+  }
 }
