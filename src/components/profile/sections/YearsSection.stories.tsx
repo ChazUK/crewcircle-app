@@ -23,16 +23,20 @@ const baseCrew = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfWithStartYear: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   startYearInDepartment: 2015,
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   startYearInDepartment: undefined,
 };

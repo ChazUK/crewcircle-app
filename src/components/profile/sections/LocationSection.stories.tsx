@@ -22,6 +22,7 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   city: "London",
   country: "GB",
@@ -29,10 +30,13 @@ const selfWithData: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   city: undefined,
   country: undefined,
@@ -40,6 +44,8 @@ const selfEmpty: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -51,6 +57,8 @@ const contactWithData: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const publicCard: ViewableProfile = {

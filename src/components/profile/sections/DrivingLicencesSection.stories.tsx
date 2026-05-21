@@ -3,7 +3,7 @@ import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { LanguagesSection } from "./LanguagesSection";
+import { DrivingLicencesSection } from "./DrivingLicencesSection";
 
 const baseCrew = {
   userId: "user_1" as Id<"users">,
@@ -20,29 +20,6 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
-  isPublic: false,
-  ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: undefined,
-  spokenLanguages: [
-    { code: "fr", fluency: "fluent" },
-    { code: "en", fluency: "native" },
-    { code: "de", fluency: "basic" },
-    { code: "es", fluency: "conversational" },
-    { code: "ja", fluency: "professional" },
-  ],
-  passports: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
-};
-
-const selfEmpty: ViewableProfile = {
-  mode: "self",
-  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -51,9 +28,20 @@ const selfEmpty: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
-  passports: undefined,
+  drivingLicences: ["Car (B)", "Motorcycle (A)", "HGV/LGV (C)"],
+};
+
+const selfEmpty: ViewableProfile = {
+  mode: "self",
+  ...baseCrew,
+  bio: undefined,
+  website: undefined,
+  imdbId: undefined,
+  cvUrl: undefined,
+  startYearInDepartment: undefined,
+  productionTypes: undefined,
+  spokenLanguages: undefined,
   drivingLicences: undefined,
-  workEligibility: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -65,18 +53,13 @@ const contactWithData: ViewableProfile = {
   cvUrl: undefined,
   startYearInDepartment: undefined,
   productionTypes: undefined,
-  spokenLanguages: [
-    { code: "ar", fluency: "native" },
-    { code: "en", fluency: "professional" },
-  ],
-  passports: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
+  spokenLanguages: undefined,
+  drivingLicences: ["Car (B)", "Forklift"],
 };
 
 const meta = {
-  title: "Profile/LanguagesSection",
-  component: LanguagesSection,
+  title: "Profile/DrivingLicencesSection",
+  component: DrivingLicencesSection,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 16 }}>
@@ -86,7 +69,7 @@ const meta = {
   ],
   tags: ["autodocs"],
   args: { profile: selfWithData },
-} satisfies Meta<typeof LanguagesSection>;
+} satisfies Meta<typeof DrivingLicencesSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

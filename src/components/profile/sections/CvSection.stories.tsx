@@ -22,6 +22,7 @@ const baseCrew = {
 
 const selfWithCv: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   cvUrl: "https://storage.example.com/cv.pdf",
@@ -29,10 +30,13 @@ const selfWithCv: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   cvUrl: undefined,
@@ -40,6 +44,8 @@ const selfEmpty: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const contactWithCv: ViewableProfile = {
@@ -51,6 +57,8 @@ const contactWithCv: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const meta = {

@@ -20,6 +20,7 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -29,10 +30,13 @@ const selfWithData: ViewableProfile = {
   productionTypes: ["Feature Film", "TV Drama", "Documentary", "Commercial"],
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -42,6 +46,8 @@ const selfEmpty: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -55,6 +61,8 @@ const contactWithData: ViewableProfile = {
   productionTypes: ["Music Video", "Short Film", "Streaming Series"],
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const meta = {

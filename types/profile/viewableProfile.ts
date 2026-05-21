@@ -32,6 +32,8 @@ type CrewExtras = {
   productionTypes: string[] | undefined;
   spokenLanguages: SpokenLanguageEntry[] | undefined;
   passports: string[] | undefined;
+  drivingLicences: string[] | undefined;
+  workEligibility: string[] | undefined;
 };
 
 type CrewProfile = ProfileIdentity & {
@@ -45,7 +47,7 @@ type ProductionManagerProfile = ProfileIdentity & {
 };
 
 export type ViewableProfile =
-  | ({ mode: "self" } & CrewProfile & BioLinks & Location & CrewExtras)
+  | ({ mode: "self"; isPublic: boolean } & CrewProfile & BioLinks & Location & CrewExtras)
   | ({ mode: "contact" } & CrewProfile & BioLinks & Location & CrewExtras)
   | ({ mode: "public-card" } & CrewProfile & Location)
   | ({ mode: "pm-self" } & ProductionManagerProfile)

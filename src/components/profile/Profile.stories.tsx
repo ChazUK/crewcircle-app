@@ -26,6 +26,7 @@ const basePm = {
 
 const selfWithNicknameProfile: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   nickname: "Ace",
   bio: undefined,
@@ -36,10 +37,13 @@ const selfWithNicknameProfile: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const selfWithoutNicknameProfile: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   nickname: undefined,
   bio: undefined,
@@ -50,6 +54,8 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const contactProfile: ViewableProfile = {
@@ -64,6 +70,8 @@ const contactProfile: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   passports: undefined,
+  drivingLicences: undefined,
+  workEligibility: undefined,
 };
 
 const publicCardProfile: ViewableProfile = {

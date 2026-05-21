@@ -39,6 +39,7 @@ export const Default: Story = {
   args: {
     profile: {
       mode: "self",
+      isPublic: false,
       ...baseCrew,
       website: "https://adalovelace.com",
       imdbId: "nm0000123",
@@ -46,6 +47,8 @@ export const Default: Story = {
       productionTypes: undefined,
       spokenLanguages: undefined,
       passports: undefined,
+      drivingLicences: undefined,
+      workEligibility: undefined,
     },
   },
 };
@@ -54,6 +57,7 @@ export const WebsiteOnly: Story = {
   args: {
     profile: {
       mode: "self",
+      isPublic: false,
       ...baseCrew,
       website: "https://adalovelace.com",
       imdbId: undefined,
@@ -61,6 +65,8 @@ export const WebsiteOnly: Story = {
       productionTypes: undefined,
       spokenLanguages: undefined,
       passports: undefined,
+      drivingLicences: undefined,
+      workEligibility: undefined,
     },
   },
 };
@@ -69,6 +75,7 @@ export const IMDBOnly: Story = {
   args: {
     profile: {
       mode: "self",
+      isPublic: false,
       ...baseCrew,
       website: undefined,
       imdbId: "nm0000100",
@@ -76,6 +83,8 @@ export const IMDBOnly: Story = {
       productionTypes: undefined,
       spokenLanguages: undefined,
       passports: undefined,
+      drivingLicences: undefined,
+      workEligibility: undefined,
     },
   },
 };
@@ -84,6 +93,7 @@ export const Empty: Story = {
   args: {
     profile: {
       mode: "self",
+      isPublic: false,
       ...baseCrew,
       website: undefined,
       imdbId: undefined,
@@ -91,6 +101,8 @@ export const Empty: Story = {
       productionTypes: undefined,
       spokenLanguages: undefined,
       passports: undefined,
+      drivingLicences: undefined,
+      workEligibility: undefined,
     },
   },
 };
