@@ -72,3 +72,5 @@ export type ViewableProfile =
   | ({ mode: "public-card" } & CrewProfile & Location)
   | ({ mode: "pm-self" } & ProductionManagerProfile)
   | ({ mode: "pm-job-linked" } & ProductionManagerProfile);
+
+export type Profile = CrewProfile & BioLinks;
