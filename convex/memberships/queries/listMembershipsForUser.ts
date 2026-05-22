@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { query } from "../../_generated/server";
 import { getUserByExternalId } from "../../users/db/getUser";
 import { resolveProfileVisibility } from "../../users/lib/resolveProfileVisibility";
+import { fetchSortedMemberships } from "../db/fetchSortedMemberships";
 
 export const listMembershipsForUser = query({
   args: { userId: v.id("users") },
@@ -32,17 +33,6 @@ export const listMembershipsForUser = query({
 
     if (visibility.mode !== "self" && visibility.mode !== "contact") return [];
 
-    const rows = await ctx.db
-      .query("memberships")
-      .withIndex("byUserId", (q) => q.eq("userId", args.userId))
-      .collect();
-
-    rows.sort((a, b) => a.name.localeCompare(b.name));
-
-    return rows.map((r) => ({
-      id: r._id,
-      name: r.name,
-      memberNumber: r.memberNumber,
-    }));
+    return fetchSortedMemberships(ctx, args.userId);
   },
 });

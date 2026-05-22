@@ -1,6 +1,8 @@
 import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import { v } from "convex/values";
 
+import { fetchSortedCertifications } from "../certifications/db/fetchSortedCertifications";
+import { fetchSortedMemberships } from "../memberships/db/fetchSortedMemberships";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
@@ -39,32 +41,10 @@ export const getMyProfile = query({
 
     if (viewer.userType === "crew") {
       const cvUrl = await resolveStorageUrl(ctx, viewer.cvFileId);
-      const certRows = await ctx.db
-        .query("certifications")
-        .withIndex("byUserIdAndExpiresAt", (q) => q.eq("userId", viewer._id))
-        .collect();
-      const withExpiry = certRows.filter((r) => r.expiresAt !== undefined);
-      const withoutExpiry = certRows.filter((r) => r.expiresAt === undefined);
-      withExpiry.sort((a, b) => (a.expiresAt as number) - (b.expiresAt as number));
-      const sortedCerts = [...withExpiry, ...withoutExpiry];
-      const certifications =
-        sortedCerts.length > 0
-          ? sortedCerts.map((r) => ({
-              id: r._id,
-              name: r.name,
-              issuer: r.issuer,
-              referenceNumber: r.referenceNumber,
-              expiresAt: r.expiresAt,
-            })) : undefined
-      const membershipRows = await ctx.db
-        .query("memberships")
-        .withIndex("byUserId", (q) => q.eq("userId", viewer._id))
-        .collect();
-      membershipRows.sort((a, b) => a.name.localeCompare(b.name));
-      const memberships =
-        membershipRows.length > 0
-          ? membershipRows.map((r) => ({ id: r._id, name: r.name, memberNumber: r.memberNumber }))
-          : undefined;
+      const sortedCerts = await fetchSortedCertifications(ctx, viewer._id);
+      const certifications = sortedCerts.length > 0 ? sortedCerts : undefined;
+      const sortedMemberships = await fetchSortedMemberships(ctx, viewer._id);
+      const memberships = sortedMemberships.length > 0 ? sortedMemberships : undefined;
       return {
         mode: "self",
         isPublic: viewer.isPublic ?? false,
@@ -153,32 +133,10 @@ export const getViewableProfile = query({
         return { mode, ...base };
       }
       const cvUrl = await resolveStorageUrl(ctx, subject.cvFileId);
-      const certRows = await ctx.db
-        .query("certifications")
-        .withIndex("byUserIdAndExpiresAt", (q) => q.eq("userId", subject._id))
-        .collect();
-      const withExpiry = certRows.filter((r) => r.expiresAt !== undefined);
-      const withoutExpiry = certRows.filter((r) => r.expiresAt === undefined);
-      withExpiry.sort((a, b) => (a.expiresAt as number) - (b.expiresAt as number));
-      const sortedCerts = [...withExpiry, ...withoutExpiry];
-      const certifications =
-        sortedCerts.length > 0
-          ? sortedCerts.map((r) => ({
-              id: r._id,
-              name: r.name,
-              issuer: r.issuer,
-              referenceNumber: r.referenceNumber,
-              expiresAt: r.expiresAt,
-            })) : undefined;
-      const membershipRows = await ctx.db
-        .query("memberships")
-        .withIndex("byUserId", (q) => q.eq("userId", subject._id))
-        .collect();
-      membershipRows.sort((a, b) => a.name.localeCompare(b.name));
-      const memberships =
-        membershipRows.length > 0
-          ? membershipRows.map((r) => ({ id: r._id, name: r.name, memberNumber: r.memberNumber }))
-          : undefined;
+      const sortedCerts = await fetchSortedCertifications(ctx, subject._id);
+      const certifications = sortedCerts.length > 0 ? sortedCerts : undefined;
+      const sortedMemberships = await fetchSortedMemberships(ctx, subject._id);
+      const memberships = sortedMemberships.length > 0 ? sortedMemberships : undefined;
       const crewExtras = {
         ...base,
         bio: subject.bio,
