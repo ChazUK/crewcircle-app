@@ -90,6 +90,11 @@ const pmSelfProfile: ViewableProfile = {
   mode: "pm-self",
   ...basePm,
   nickname: undefined,
+  city: undefined,
+  country: undefined,
+  productionCompany: undefined,
+  bio: undefined,
+  website: undefined,
 };
 
 const meta = {

@@ -81,6 +81,11 @@ export const getMyProfile = query({
       nickname: viewer.nickname,
       profilePictureUrl,
       userType: "production-manager",
+      city: viewer.city,
+      country: viewer.country,
+      productionCompany: viewer.productionCompany,
+      bio: viewer.bio,
+      website: viewer.website,
     };
   },
 });
@@ -167,6 +172,11 @@ export const getViewableProfile = query({
       nickname: subject.nickname,
       profilePictureUrl,
       userType,
+      city: subject.city,
+      country: subject.country,
+      productionCompany: subject.productionCompany,
+      bio: subject.bio,
+      website: subject.website,
     };
   },
 });

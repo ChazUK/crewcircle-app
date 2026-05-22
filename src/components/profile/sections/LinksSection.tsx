@@ -33,7 +33,7 @@ export function LinksSection({ profile }: Props) {
           <Text className="text-primary text-base">{profile.website}</Text>
         </Pressable>
       ) : null}
-      {profile.imdbId ? (
+      {"imdbId" in profile && profile.imdbId ? (
         <Pressable
           className="flex-row items-center gap-2"
           onPress={() => Linking.openURL(imdbUrl(profile.imdbId!))}

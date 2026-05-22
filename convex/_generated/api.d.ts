@@ -103,6 +103,7 @@ import type * as users_mutations_updateProfileBioLinks from "../users/mutations/
 import type * as users_mutations_updateProfileLanguages from "../users/mutations/updateProfileLanguages.js";
 import type * as users_mutations_updateProfileLocation from "../users/mutations/updateProfileLocation.js";
 import type * as users_mutations_updateProfileProductionTypes from "../users/mutations/updateProfileProductionTypes.js";
+import type * as users_mutations_updateProductionCompany from "../users/mutations/updateProductionCompany.js";
 import type * as users_mutations_updateProfileYears from "../users/mutations/updateProfileYears.js";
 import type * as users_queries from "../users/queries.js";
 import type * as users_syncVerifiedPhone from "../users/syncVerifiedPhone.js";
@@ -211,6 +212,7 @@ declare const fullApi: ApiFromModules<{
   "users/mutations/updateProfileLanguages": typeof users_mutations_updateProfileLanguages;
   "users/mutations/updateProfileLocation": typeof users_mutations_updateProfileLocation;
   "users/mutations/updateProfileProductionTypes": typeof users_mutations_updateProfileProductionTypes;
+  "users/mutations/updateProductionCompany": typeof users_mutations_updateProductionCompany;
   "users/mutations/updateProfileYears": typeof users_mutations_updateProfileYears;
   "users/queries": typeof users_queries;
   "users/syncVerifiedPhone": typeof users_syncVerifiedPhone;
