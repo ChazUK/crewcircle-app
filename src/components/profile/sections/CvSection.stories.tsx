@@ -32,6 +32,7 @@ const selfWithCv: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
   memberships: undefined,
 };
 
@@ -47,6 +48,7 @@ const selfEmpty: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
   memberships: undefined,
 };
 
@@ -61,6 +63,7 @@ const contactWithCv: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
   memberships: undefined,
 };
 

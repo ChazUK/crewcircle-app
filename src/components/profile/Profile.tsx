@@ -5,6 +5,7 @@ import { ScrollView } from "react-native";
 
 import { usePictureUpload } from "./PictureUploadFlow";
 import { BioSection } from "./sections/BioSection";
+import { CertificationsSection } from "./sections/CertificationsSection";
 import { CvSection } from "./sections/CvSection";
 import { DepartmentRolesSection } from "./sections/DepartmentRolesSection";
 import { DrivingLicencesSection } from "./sections/DrivingLicencesSection";
@@ -39,6 +40,7 @@ export function Profile({ profile }: Props) {
       <DrivingLicencesSection profile={profile} />
       <WorkEligibilitySection profile={profile} />
       <LanguagesSection profile={profile} />
+      <CertificationsSection profile={profile} />
       <MembershipsSection profile={profile} />
       <LocationSection profile={profile} />
       <BioSection profile={profile} />

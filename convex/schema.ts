@@ -1,6 +1,7 @@
 import { defineSchema } from "convex/server";
 
 import { calendarsSchema } from "./calendars/schema";
+import { certificationsSchema } from "./certifications/schema";
 import { contactsSchema } from "./contacts/schema";
 import { jobsSchema } from "./jobs/schema";
 import { kitSchema } from "./kit/schema";
@@ -15,5 +16,6 @@ export default defineSchema({
   ...jobsSchema,
   ...contactsSchema,
   ...notificationsSchema,
+  ...certificationsSchema,
   ...membershipsSchema,
 });

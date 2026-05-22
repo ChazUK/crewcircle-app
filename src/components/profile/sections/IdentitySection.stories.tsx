@@ -40,6 +40,7 @@ const selfWithNicknameProfile: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
   memberships: undefined,
 };
 
@@ -58,6 +59,7 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
   memberships: undefined,
 };
 
@@ -77,6 +79,7 @@ const selfWithPictureProfile: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
   memberships: undefined,
 };
 
@@ -94,6 +97,7 @@ const contactProfile: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
+  certifications: undefined,
   memberships: undefined,
 };
 

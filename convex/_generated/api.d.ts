@@ -47,6 +47,7 @@ import type * as calendars_service_registry from "../calendars/service/registry.
 import type * as calendars_syncAfterConnect from "../calendars/syncAfterConnect.js";
 import type * as calendars_syncWithRetry from "../calendars/syncWithRetry.js";
 import type * as calendars_uploadNativeEvents from "../calendars/uploadNativeEvents.js";
+import type * as certifications_queries_listCertificationsForUser from "../certifications/queries/listCertificationsForUser.js";
 import type * as contacts_db_findContactPair from "../contacts/db/findContactPair.js";
 import type * as contacts_db_findPendingInviteBetween from "../contacts/db/findPendingInviteBetween.js";
 import type * as contacts_db_findPendingInvitesForEmail from "../contacts/db/findPendingInvitesForEmail.js";
@@ -154,6 +155,7 @@ declare const fullApi: ApiFromModules<{
   "calendars/syncAfterConnect": typeof calendars_syncAfterConnect;
   "calendars/syncWithRetry": typeof calendars_syncWithRetry;
   "calendars/uploadNativeEvents": typeof calendars_uploadNativeEvents;
+  "certifications/queries/listCertificationsForUser": typeof certifications_queries_listCertificationsForUser;
   "contacts/db/findContactPair": typeof contacts_db_findContactPair;
   "contacts/db/findPendingInviteBetween": typeof contacts_db_findPendingInviteBetween;
   "contacts/db/findPendingInvitesForEmail": typeof contacts_db_findPendingInvitesForEmail;

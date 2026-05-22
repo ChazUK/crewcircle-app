@@ -3,9 +3,9 @@ import { v } from "convex/values";
 import { query } from "../../_generated/server";
 import { getUserByExternalId } from "../../users/db/getUser";
 import { resolveProfileVisibility } from "../../users/lib/resolveProfileVisibility";
-import { fetchSortedMemberships } from "../db/fetchSortedMemberships";
+import { fetchSortedCertifications } from "../db/fetchSortedCertifications";
 
-export const listMembershipsForUser = query({
+export const listCertificationsForUser = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -33,6 +33,6 @@ export const listMembershipsForUser = query({
 
     if (visibility.mode !== "self" && visibility.mode !== "contact") return [];
 
-    return fetchSortedMemberships(ctx, args.userId);
+    return fetchSortedCertifications(ctx, args.userId);
   },
 });

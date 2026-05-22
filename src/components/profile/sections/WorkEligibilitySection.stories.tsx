@@ -29,6 +29,7 @@ const selfWithData: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   workEligibility: ["Right to Work UK", "Schengen", "Ireland"],
+  certifications: undefined,
   memberships: undefined,
 };
 
@@ -43,6 +44,7 @@ const selfEmpty: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   workEligibility: undefined,
+  certifications: undefined,
   memberships: undefined,
 };
 
@@ -57,6 +59,7 @@ const contactWithData: ViewableProfile = {
   productionTypes: undefined,
   spokenLanguages: undefined,
   workEligibility: ["USA", "Canada", "Australia"],
+  certifications: undefined,
   memberships: undefined,
 };
 
