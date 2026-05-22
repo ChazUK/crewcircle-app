@@ -44,6 +44,7 @@ export const User = {
   productionTypes: v.optional(v.array(v.string())),
   drivingLicences: v.optional(v.array(v.string())),
   workEligibility: v.optional(v.array(v.string())),
+  productionCompany: v.optional(v.string()),
 
   hasCompletedOnboarding: v.boolean(),
   isPublic: v.optional(v.boolean()),

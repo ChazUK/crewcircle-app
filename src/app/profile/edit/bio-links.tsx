@@ -30,16 +30,19 @@ export default function EditBioLinksScreen() {
     );
   }
 
-  const bio = profile.mode === "self" || profile.mode === "contact" ? profile.bio : undefined;
-  const website =
-    profile.mode === "self" || profile.mode === "contact" ? profile.website : undefined;
+  const hasBioLinks =
+    profile.mode === "self" || profile.mode === "contact" || profile.mode === "pm-self";
+  const bio = hasBioLinks ? profile.bio : undefined;
+  const website = hasBioLinks ? profile.website : undefined;
   const imdbId = profile.mode === "self" || profile.mode === "contact" ? profile.imdbId : undefined;
+  const showImdb = profile.userType === "crew";
 
   return (
     <EditBioLinksForm
       initialBio={bio ?? ""}
       initialWebsite={website ?? ""}
       initialImdbId={imdbId ?? ""}
+      showImdb={showImdb}
       onDone={() => router.back()}
       onSubmit={updateProfileBioLinks}
     />
@@ -50,6 +53,7 @@ type FormProps = {
   initialBio: string;
   initialWebsite: string;
   initialImdbId: string;
+  showImdb: boolean;
   onDone: () => void;
   onSubmit: (args: { bio?: string; website?: string; imdbId?: string }) => Promise<unknown>;
 };
@@ -58,6 +62,7 @@ function EditBioLinksForm({
   initialBio,
   initialWebsite,
   initialImdbId,
+  showImdb,
   onDone,
   onSubmit,
 }: FormProps) {
@@ -123,25 +128,27 @@ function EditBioLinksForm({
             )}
           </form.Field>
 
-          <form.Field name="imdbId">
-            {(field) => (
-              <TextField>
-                <Label>IMDB</Label>
-                <Input
-                  value={field.state.value}
-                  onChangeText={field.handleChange}
-                  onBlur={field.handleBlur}
-                  placeholder="nm1234567 or full IMDB URL"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                />
-                <FieldError isInvalid={!!field.state.meta.errors.length}>
-                  {field.state.meta.errors[0]}
-                </FieldError>
-              </TextField>
-            )}
-          </form.Field>
+          {showImdb ? (
+            <form.Field name="imdbId">
+              {(field) => (
+                <TextField>
+                  <Label>IMDB</Label>
+                  <Input
+                    value={field.state.value}
+                    onChangeText={field.handleChange}
+                    onBlur={field.handleBlur}
+                    placeholder="nm1234567 or full IMDB URL"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="done"
+                  />
+                  <FieldError isInvalid={!!field.state.meta.errors.length}>
+                    {field.state.meta.errors[0]}
+                  </FieldError>
+                </TextField>
+              )}
+            </form.Field>
+          ) : null}
         </Card.Body>
 
         <Card.Footer className="flex-col gap-4">

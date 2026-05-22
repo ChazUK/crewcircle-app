@@ -49,9 +49,13 @@ type CrewProfile = ProfileIdentity & {
   roles: string[] | undefined;
 };
 
-type ProductionManagerProfile = ProfileIdentity & {
-  userType: "production-manager";
-};
+type ProductionManagerProfile = ProfileIdentity &
+  Location & {
+    userType: "production-manager";
+    productionCompany: string | undefined;
+    bio: string | undefined;
+    website: string | undefined;
+  };
 
 export type ViewableProfile =
   | ({ mode: "self"; isPublic: boolean } & CrewProfile & BioLinks & Location & CrewExtras)
