@@ -1,15 +1,18 @@
+import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { findOrCreateCatalogueEntry } from "../kit/lib/findOrCreateCatalogueEntry";
 import { normalizeKitName } from "../kit/lib/normalizeKitName";
 
 export const copyUsersKitToCatalogue = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const users = await ctx.db.query("users").take(100);
+  args: { cursor: v.optional(v.string()) },
+  handler: async (ctx, { cursor }) => {
+    const results = await ctx.db
+      .query("users")
+      .paginate({ numItems: 100, cursor: cursor ?? null });
 
     let processed = 0;
-    for (const user of users) {
+    for (const user of results.page) {
       const kit = (user as Record<string, unknown>).kit as string[] | undefined;
       if (!kit || kit.length === 0) continue;
 
@@ -27,12 +30,12 @@ export const copyUsersKitToCatalogue = internalMutation({
       processed++;
     }
 
-    const hasMore = users.length === 100;
+    const hasMore = !results.isDone;
     if (hasMore) {
       await ctx.scheduler.runAfter(
         0,
         internal.migrations.copyUsersKitToCatalogue.copyUsersKitToCatalogue,
-        {},
+        { cursor: results.continueCursor },
       );
     }
 

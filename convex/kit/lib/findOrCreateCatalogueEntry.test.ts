@@ -53,6 +53,20 @@ describe("findOrCreateCatalogueEntry", () => {
     expect(id1).not.toBe(id2);
   });
 
+  test("throws for empty kit name", async () => {
+    const t = convexTest(schema, modules);
+    await expect(t.run((ctx) => findOrCreateCatalogueEntry(ctx, ""))).rejects.toThrow(
+      "Kit name must not be empty or whitespace-only",
+    );
+  });
+
+  test("throws for whitespace-only kit name", async () => {
+    const t = convexTest(schema, modules);
+    await expect(t.run((ctx) => findOrCreateCatalogueEntry(ctx, "   "))).rejects.toThrow(
+      "Kit name must not be empty or whitespace-only",
+    );
+  });
+
   test("different users can link to the same catalogue entry via userKit", async () => {
     const t = convexTest(schema, modules);
     const alice = await insertUser(t, "clerk_alice", "alice@example.com");

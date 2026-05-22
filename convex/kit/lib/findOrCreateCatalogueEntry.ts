@@ -7,6 +7,11 @@ export async function findOrCreateCatalogueEntry(
   rawName: string,
 ): Promise<Id<"kitCatalogue">> {
   const normalizedName = normalizeKitName(rawName);
+
+  if (normalizedName.length === 0) {
+    throw new Error("Kit name must not be empty or whitespace-only");
+  }
+
   const existing = await ctx.db
     .query("kitCatalogue")
     .withIndex("byNormalizedName", (q) => q.eq("normalizedName", normalizedName))
