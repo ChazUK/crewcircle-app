@@ -27,6 +27,11 @@ type SpokenLanguageEntry = {
   fluency: string;
 };
 
+type KitEntry = {
+  id: string;
+  name: string;
+};
+
 export type CertificationEntry = {
   id: string;
   name: string;
@@ -48,6 +53,7 @@ type CrewExtras = {
   passports: string[] | undefined;
   drivingLicences: string[] | undefined;
   workEligibility: string[] | undefined;
+  kit: KitEntry[] | undefined;
   certifications: CertificationEntry[] | undefined;
   memberships: MembershipEntry[] | undefined;
 };

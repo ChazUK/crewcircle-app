@@ -3,7 +3,7 @@ import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { PassportsSection } from "./PassportsSection";
+import { KitSection } from "./KitSection";
 
 const baseCrew = {
   userId: "user_1" as Id<"users">,
@@ -29,12 +29,14 @@ const selfWithData: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
-  passports: ["GB", "IE", "US"],
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
-  kit: undefined,
-  certifications: undefined,
-  memberships: undefined,
+  kit: [
+    { id: "kit_1", name: "Arri Alexa Mini" },
+    { id: "kit_2", name: "RED Komodo" },
+    { id: "kit_3", name: "Sony FX6" },
+  ],
 };
 
 const selfEmpty: ViewableProfile = {
@@ -52,8 +54,6 @@ const selfEmpty: ViewableProfile = {
   drivingLicences: undefined,
   workEligibility: undefined,
   kit: undefined,
-  certifications: undefined,
-  memberships: undefined,
 };
 
 const contactWithData: ViewableProfile = {
@@ -66,17 +66,18 @@ const contactWithData: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
-  passports: ["AU", "NZ"],
+  passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
-  kit: undefined,
-  certifications: undefined,
-  memberships: undefined,
+  kit: [
+    { id: "kit_1", name: "Arri Alexa Mini" },
+    { id: "kit_2", name: "Sony FX6" },
+  ],
 };
 
 const meta = {
-  title: "Profile/PassportsSection",
-  component: PassportsSection,
+  title: "Profile/KitSection",
+  component: KitSection,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 16 }}>
@@ -86,7 +87,7 @@ const meta = {
   ],
   tags: ["autodocs"],
   args: { profile: selfWithData },
-} satisfies Meta<typeof PassportsSection>;
+} satisfies Meta<typeof KitSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

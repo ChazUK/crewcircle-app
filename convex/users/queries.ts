@@ -1,11 +1,11 @@
 import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import { v } from "convex/values";
 
-import { fetchSortedCertifications } from "../certifications/db/fetchSortedCertifications";
-import { fetchSortedMemberships } from "../memberships/db/fetchSortedMemberships";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
+import { fetchSortedCertifications } from "../certifications/db/fetchSortedCertifications";
+import { fetchSortedMemberships } from "../memberships/db/fetchSortedMemberships";
 import { getUserByExternalId } from "./db/getUser";
 import { resolveProfileVisibility } from "./lib/resolveProfileVisibility";
 
@@ -15,6 +15,25 @@ async function resolveStorageUrl(
 ): Promise<string | undefined> {
   if (!fileId) return undefined;
   return (await ctx.storage.getUrl(fileId)) ?? undefined;
+}
+
+async function hydrateKit(ctx: QueryCtx, userId: Id<"users">) {
+  const rows = await ctx.db
+    .query("userKit")
+    .withIndex("byUserId", (q) => q.eq("userId", userId))
+    .collect();
+
+  const items = await Promise.all(
+    rows.map(async (row) => {
+      const catalogue = await ctx.db.get(row.kitCatalogueId);
+      if (!catalogue) return null;
+      return { id: row._id as string, name: catalogue.name };
+    }),
+  );
+
+  const filtered = items.filter((item): item is { id: string; name: string } => item !== null);
+
+  return filtered.length > 0 ? filtered.sort((a, b) => a.name.localeCompare(b.name)) : undefined;
 }
 
 export const getCurrentUser = query({
@@ -41,10 +60,12 @@ export const getMyProfile = query({
 
     if (viewer.userType === "crew") {
       const cvUrl = await resolveStorageUrl(ctx, viewer.cvFileId);
+      const kit = await hydrateKit(ctx, viewer._id);
       const sortedCerts = await fetchSortedCertifications(ctx, viewer._id);
       const certifications = sortedCerts.length > 0 ? sortedCerts : undefined;
       const sortedMemberships = await fetchSortedMemberships(ctx, viewer._id);
       const memberships = sortedMemberships.length > 0 ? sortedMemberships : undefined;
+
       return {
         mode: "self",
         isPublic: viewer.isPublic ?? false,
@@ -68,6 +89,7 @@ export const getMyProfile = query({
         passports: viewer.passports,
         drivingLicences: viewer.drivingLicences,
         workEligibility: viewer.workEligibility,
+        kit,
         certifications,
         memberships,
       };
@@ -138,6 +160,7 @@ export const getViewableProfile = query({
         return { mode, ...base };
       }
       const cvUrl = await resolveStorageUrl(ctx, subject.cvFileId);
+      const kit = await hydrateKit(ctx, subject._id);
       const sortedCerts = await fetchSortedCertifications(ctx, subject._id);
       const certifications = sortedCerts.length > 0 ? sortedCerts : undefined;
       const sortedMemberships = await fetchSortedMemberships(ctx, subject._id);
@@ -154,6 +177,7 @@ export const getViewableProfile = query({
         passports: subject.passports,
         drivingLicences: subject.drivingLicences,
         workEligibility: subject.workEligibility,
+        kit,
         certifications,
         memberships,
       };

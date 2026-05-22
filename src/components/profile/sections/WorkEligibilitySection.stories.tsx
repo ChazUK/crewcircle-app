@@ -20,6 +20,7 @@ const baseCrew = {
 
 const selfWithData: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -28,13 +29,17 @@ const selfWithData: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
+  drivingLicences: undefined,
   workEligibility: ["Right to Work UK", "Schengen", "Ireland"],
+  kit: undefined,
   certifications: undefined,
   memberships: undefined,
 };
 
 const selfEmpty: ViewableProfile = {
   mode: "self",
+  isPublic: false,
   ...baseCrew,
   bio: undefined,
   website: undefined,
@@ -43,7 +48,10 @@ const selfEmpty: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
+  drivingLicences: undefined,
   workEligibility: undefined,
+  kit: undefined,
   certifications: undefined,
   memberships: undefined,
 };
@@ -58,7 +66,10 @@ const contactWithData: ViewableProfile = {
   startYearInDepartment: undefined,
   productionTypes: undefined,
   spokenLanguages: undefined,
+  passports: undefined,
+  drivingLicences: undefined,
   workEligibility: ["USA", "Canada", "Australia"],
+  kit: undefined,
   certifications: undefined,
   memberships: undefined,
 };

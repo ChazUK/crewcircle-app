@@ -29,9 +29,17 @@ describe("fetchSortedCertifications", () => {
     const now = Date.now();
     await t.run(async (ctx) => {
       await ctx.db.insert("certifications", { userId, name: "No Expiry" });
-      await ctx.db.insert("certifications", { userId, name: "Far Future", expiresAt: now + 365 * DAY_MS });
+      await ctx.db.insert("certifications", {
+        userId,
+        name: "Far Future",
+        expiresAt: now + 365 * DAY_MS,
+      });
       await ctx.db.insert("certifications", { userId, name: "Soon", expiresAt: now + 30 * DAY_MS });
-      await ctx.db.insert("certifications", { userId, name: "Expired", expiresAt: now - 10 * DAY_MS });
+      await ctx.db.insert("certifications", {
+        userId,
+        name: "Expired",
+        expiresAt: now - 10 * DAY_MS,
+      });
     });
 
     const result = await t.run((ctx) => fetchSortedCertifications(ctx, userId));

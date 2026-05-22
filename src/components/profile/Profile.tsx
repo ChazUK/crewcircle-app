@@ -10,6 +10,7 @@ import { CvSection } from "./sections/CvSection";
 import { DepartmentRolesSection } from "./sections/DepartmentRolesSection";
 import { DrivingLicencesSection } from "./sections/DrivingLicencesSection";
 import { IdentitySection } from "./sections/IdentitySection";
+import { KitSection } from "./sections/KitSection";
 import { LanguagesSection } from "./sections/LanguagesSection";
 import { LinksSection } from "./sections/LinksSection";
 import { LocationSection } from "./sections/LocationSection";
@@ -39,6 +40,7 @@ export function Profile({ profile }: Props) {
       <PassportsSection profile={profile} />
       <DrivingLicencesSection profile={profile} />
       <WorkEligibilitySection profile={profile} />
+      <KitSection profile={profile} />
       <LanguagesSection profile={profile} />
       <CertificationsSection profile={profile} />
       <MembershipsSection profile={profile} />

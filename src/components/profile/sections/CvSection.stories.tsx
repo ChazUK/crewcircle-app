@@ -24,6 +24,7 @@ export const Default: Story = {
     cvUrl: "https://storage.example.com/cv.pdf",
   },
 };
+
 export const Empty: Story = {
   args: {
     cvUrl: undefined,
