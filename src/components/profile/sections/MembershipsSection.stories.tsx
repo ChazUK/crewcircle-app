@@ -3,7 +3,7 @@ import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
-import { PassportsSection } from "./PassportsSection";
+import { MembershipsSection } from "./MembershipsSection";
 
 const baseCrew = {
   userId: "user_1" as Id<"users">,
@@ -18,29 +18,7 @@ const baseCrew = {
   country: undefined,
 };
 
-const selfWithData: ViewableProfile = {
-  mode: "self",
-  isPublic: false,
-  ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: undefined,
-  spokenLanguages: undefined,
-  passports: ["GB", "IE", "US"],
-  drivingLicences: undefined,
-  workEligibility: undefined,
-  kit: undefined,
-  certifications: undefined,
-  memberships: undefined,
-};
-
-const selfEmpty: ViewableProfile = {
-  mode: "self",
-  isPublic: false,
-  ...baseCrew,
+const extras = {
   bio: undefined,
   website: undefined,
   imdbId: undefined,
@@ -51,32 +29,41 @@ const selfEmpty: ViewableProfile = {
   passports: undefined,
   drivingLicences: undefined,
   workEligibility: undefined,
-  kit: undefined,
-  certifications: undefined,
+};
+
+const selfWithData: ViewableProfile = {
+  mode: "self",
+  isPublic: false,
+  ...baseCrew,
+  ...extras,
+  memberships: [
+    { id: "m1", name: "BECTU", memberNumber: "123456" },
+    { id: "m2", name: "BSC", memberNumber: undefined },
+    { id: "m3", name: "GBCT", memberNumber: "GB-789" },
+  ],
+};
+
+const selfEmpty: ViewableProfile = {
+  mode: "self",
+  isPublic: false,
+  ...baseCrew,
+  ...extras,
   memberships: undefined,
 };
 
 const contactWithData: ViewableProfile = {
   mode: "contact",
   ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: undefined,
-  spokenLanguages: undefined,
-  passports: ["AU", "NZ"],
-  drivingLicences: undefined,
-  workEligibility: undefined,
-  kit: undefined,
-  certifications: undefined,
-  memberships: undefined,
+  ...extras,
+  memberships: [
+    { id: "m1", name: "BAFTA", memberNumber: "BA-001" },
+    { id: "m2", name: "BECTU", memberNumber: undefined },
+  ],
 };
 
 const meta = {
-  title: "Profile/PassportsSection",
-  component: PassportsSection,
+  title: "Profile/MembershipsSection",
+  component: MembershipsSection,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 16 }}>
@@ -86,7 +73,7 @@ const meta = {
   ],
   tags: ["autodocs"],
   args: { profile: selfWithData },
-} satisfies Meta<typeof PassportsSection>;
+} satisfies Meta<typeof MembershipsSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

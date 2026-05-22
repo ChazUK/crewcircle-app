@@ -4,6 +4,8 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
+import { fetchSortedCertifications } from "../certifications/db/fetchSortedCertifications";
+import { fetchSortedMemberships } from "../memberships/db/fetchSortedMemberships";
 import { getUserByExternalId } from "./db/getUser";
 import { resolveProfileVisibility } from "./lib/resolveProfileVisibility";
 
@@ -59,6 +61,11 @@ export const getMyProfile = query({
     if (viewer.userType === "crew") {
       const cvUrl = await resolveStorageUrl(ctx, viewer.cvFileId);
       const kit = await hydrateKit(ctx, viewer._id);
+      const sortedCerts = await fetchSortedCertifications(ctx, viewer._id);
+      const certifications = sortedCerts.length > 0 ? sortedCerts : undefined;
+      const sortedMemberships = await fetchSortedMemberships(ctx, viewer._id);
+      const memberships = sortedMemberships.length > 0 ? sortedMemberships : undefined;
+
       return {
         mode: "self",
         isPublic: viewer.isPublic ?? false,
@@ -83,6 +90,8 @@ export const getMyProfile = query({
         drivingLicences: viewer.drivingLicences,
         workEligibility: viewer.workEligibility,
         kit,
+        certifications,
+        memberships,
       };
     }
 
@@ -94,6 +103,11 @@ export const getMyProfile = query({
       nickname: viewer.nickname,
       profilePictureUrl,
       userType: "production-manager",
+      city: viewer.city,
+      country: viewer.country,
+      productionCompany: viewer.productionCompany,
+      bio: viewer.bio,
+      website: viewer.website,
     };
   },
 });
@@ -147,6 +161,10 @@ export const getViewableProfile = query({
       }
       const cvUrl = await resolveStorageUrl(ctx, subject.cvFileId);
       const kit = await hydrateKit(ctx, subject._id);
+      const sortedCerts = await fetchSortedCertifications(ctx, subject._id);
+      const certifications = sortedCerts.length > 0 ? sortedCerts : undefined;
+      const sortedMemberships = await fetchSortedMemberships(ctx, subject._id);
+      const memberships = sortedMemberships.length > 0 ? sortedMemberships : undefined;
       const crewExtras = {
         ...base,
         bio: subject.bio,
@@ -160,6 +178,8 @@ export const getViewableProfile = query({
         drivingLicences: subject.drivingLicences,
         workEligibility: subject.workEligibility,
         kit,
+        certifications,
+        memberships,
       };
       if (mode === "self") {
         return { mode, isPublic: subject.isPublic ?? false, ...crewExtras };
@@ -176,6 +196,11 @@ export const getViewableProfile = query({
       nickname: subject.nickname,
       profilePictureUrl,
       userType,
+      city: subject.city,
+      country: subject.country,
+      productionCompany: subject.productionCompany,
+      bio: subject.bio,
+      website: subject.website,
     };
   },
 });

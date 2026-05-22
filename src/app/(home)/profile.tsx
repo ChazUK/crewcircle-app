@@ -7,6 +7,7 @@ import { LogOutIcon, PencilIcon, SettingsIcon } from "lucide-react-native";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { PmProfile } from "@/components/profile/PmProfile";
 import { Profile } from "@/components/profile/Profile";
 import { Title } from "@/components/ui/Title";
 
@@ -51,7 +52,11 @@ export default function ProfileScreen() {
         </View>
       ) : (
         <View className="flex-1">
-          <Profile profile={profile} />
+          {profile.mode === "pm-self" ? (
+            <PmProfile profile={profile} />
+          ) : (
+            <Profile profile={profile} />
+          )}
         </View>
       )}
 

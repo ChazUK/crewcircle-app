@@ -32,6 +32,20 @@ type KitEntry = {
   name: string;
 };
 
+export type CertificationEntry = {
+  id: string;
+  name: string;
+  issuer: string | undefined;
+  referenceNumber: string | undefined;
+  expiresAt: number | undefined;
+};
+
+export type MembershipEntry = {
+  id: string;
+  name: string;
+  memberNumber: string | undefined;
+};
+
 type CrewExtras = {
   startYearInDepartment: number | undefined;
   productionTypes: string[] | undefined;
@@ -40,6 +54,8 @@ type CrewExtras = {
   drivingLicences: string[] | undefined;
   workEligibility: string[] | undefined;
   kit: KitEntry[] | undefined;
+  certifications: CertificationEntry[] | undefined;
+  memberships: MembershipEntry[] | undefined;
 };
 
 type CrewProfile = ProfileIdentity & {
@@ -48,9 +64,13 @@ type CrewProfile = ProfileIdentity & {
   roles: string[] | undefined;
 };
 
-type ProductionManagerProfile = ProfileIdentity & {
-  userType: "production-manager";
-};
+type ProductionManagerProfile = ProfileIdentity &
+  Location & {
+    userType: "production-manager";
+    productionCompany: string | undefined;
+    bio: string | undefined;
+    website: string | undefined;
+  };
 
 export type ViewableProfile =
   | ({ mode: "self"; isPublic: boolean } & CrewProfile & BioLinks & Location & CrewExtras)
@@ -58,3 +78,5 @@ export type ViewableProfile =
   | ({ mode: "public-card" } & CrewProfile & Location)
   | ({ mode: "pm-self" } & ProductionManagerProfile)
   | ({ mode: "pm-job-linked" } & ProductionManagerProfile);
+
+export type Profile = CrewProfile & BioLinks;

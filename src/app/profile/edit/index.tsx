@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { ListGroup, PressableFeedback, Spinner } from "heroui-native";
 import {
   BriefcaseIcon,
+  BuildingIcon,
   CalendarIcon,
   ChevronRightIcon,
   ClapperboardIcon,
@@ -59,10 +60,15 @@ export default function EditProfileHubScreen() {
 
   const locationPreview = "city" in profile && profile.city ? profile.city : "Not added";
 
-  const bioPreview =
-    profile.mode === "self" && profile.bio ? profile.bio.slice(0, 40) : "Not added";
+  const bioPreview = "bio" in profile && profile.bio ? profile.bio.slice(0, 40) : "Not added";
 
-  const cvPreview = profile.mode === "self" && profile.cvUrl ? "Uploaded" : "Not added";
+  const productionCompanyPreview =
+    "productionCompany" in profile && profile.productionCompany
+      ? profile.productionCompany
+      : "Not added";
+
+  const cvPreview =
+    profile.mode === "self" && "cvUrl" in profile && profile.cvUrl ? "Uploaded" : "Not added";
 
   return (
     <ScrollView className="flex-1" contentContainerClassName="p-4 gap-4">
@@ -186,6 +192,28 @@ export default function EditProfileHubScreen() {
           </PressableFeedback.Scale>
         </PressableFeedback>
 
+        {profile.userType === "production-manager" ? (
+          <PressableFeedback
+            animation={false}
+            onPress={() => router.push("/profile/edit/production-company")}
+          >
+            <PressableFeedback.Scale>
+              <ListGroup.Item>
+                <ListGroup.ItemPrefix>
+                  <BuildingIcon size={20} />
+                </ListGroup.ItemPrefix>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>Production Company</ListGroup.ItemTitle>
+                  <ListGroup.ItemDescription>{productionCompanyPreview}</ListGroup.ItemDescription>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix>
+                  <ChevronRightIcon size={16} />
+                </ListGroup.ItemSuffix>
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+          </PressableFeedback>
+        ) : null}
+
         <PressableFeedback animation={false} onPress={() => router.push("/profile/edit/bio-links")}>
           <PressableFeedback.Scale>
             <ListGroup.Item>
@@ -203,22 +231,24 @@ export default function EditProfileHubScreen() {
           </PressableFeedback.Scale>
         </PressableFeedback>
 
-        <PressableFeedback animation={false} onPress={() => router.push("/profile/edit/cv")}>
-          <PressableFeedback.Scale>
-            <ListGroup.Item>
-              <ListGroup.ItemPrefix>
-                <FileIcon size={20} />
-              </ListGroup.ItemPrefix>
-              <ListGroup.ItemContent>
-                <ListGroup.ItemTitle>CV</ListGroup.ItemTitle>
-                <ListGroup.ItemDescription>{cvPreview}</ListGroup.ItemDescription>
-              </ListGroup.ItemContent>
-              <ListGroup.ItemSuffix>
-                <ChevronRightIcon size={16} />
-              </ListGroup.ItemSuffix>
-            </ListGroup.Item>
-          </PressableFeedback.Scale>
-        </PressableFeedback>
+        {profile.userType === "crew" ? (
+          <PressableFeedback animation={false} onPress={() => router.push("/profile/edit/cv")}>
+            <PressableFeedback.Scale>
+              <ListGroup.Item>
+                <ListGroup.ItemPrefix>
+                  <FileIcon size={20} />
+                </ListGroup.ItemPrefix>
+                <ListGroup.ItemContent>
+                  <ListGroup.ItemTitle>CV</ListGroup.ItemTitle>
+                  <ListGroup.ItemDescription>{cvPreview}</ListGroup.ItemDescription>
+                </ListGroup.ItemContent>
+                <ListGroup.ItemSuffix>
+                  <ChevronRightIcon size={16} />
+                </ListGroup.ItemSuffix>
+              </ListGroup.Item>
+            </PressableFeedback.Scale>
+          </PressableFeedback>
+        ) : null}
       </ListGroup>
     </ScrollView>
   );

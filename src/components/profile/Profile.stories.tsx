@@ -40,6 +40,8 @@ const selfWithNicknameProfile: ViewableProfile = {
   drivingLicences: undefined,
   workEligibility: undefined,
   kit: undefined,
+  certifications: undefined,
+  memberships: undefined,
 };
 
 const selfWithoutNicknameProfile: ViewableProfile = {
@@ -58,6 +60,8 @@ const selfWithoutNicknameProfile: ViewableProfile = {
   drivingLicences: undefined,
   workEligibility: undefined,
   kit: undefined,
+  certifications: undefined,
+  memberships: undefined,
 };
 
 const contactProfile: ViewableProfile = {
@@ -75,6 +79,8 @@ const contactProfile: ViewableProfile = {
   drivingLicences: undefined,
   workEligibility: undefined,
   kit: undefined,
+  certifications: undefined,
+  memberships: undefined,
 };
 
 const publicCardProfile: ViewableProfile = {
@@ -87,6 +93,11 @@ const pmSelfProfile: ViewableProfile = {
   mode: "pm-self",
   ...basePm,
   nickname: undefined,
+  city: undefined,
+  country: undefined,
+  productionCompany: undefined,
+  bio: undefined,
+  website: undefined,
 };
 
 const meta = {
