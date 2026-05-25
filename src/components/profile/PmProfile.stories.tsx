@@ -1,5 +1,5 @@
 import type { Id } from "@convex/_generated/dataModel";
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 
 import { PmProfile } from "./PmProfile";
@@ -13,7 +13,7 @@ const basePm = {
   nickname: undefined,
 };
 
-const pmSelfAllFields: Extract<ViewableProfile, { mode: "pm-self" }> = {
+const pmSelfAllFields: Extract<Profile, { mode: "pm-self" }> = {
   mode: "pm-self",
   ...basePm,
   city: "London",
@@ -23,7 +23,7 @@ const pmSelfAllFields: Extract<ViewableProfile, { mode: "pm-self" }> = {
   website: "https://acmefilms.example.com",
 };
 
-const pmSelfMinimal: Extract<ViewableProfile, { mode: "pm-self" }> = {
+const pmSelfMinimal: Extract<Profile, { mode: "pm-self" }> = {
   mode: "pm-self",
   ...basePm,
   city: undefined,

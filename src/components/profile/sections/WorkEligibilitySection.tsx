@@ -1,32 +1,19 @@
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
+import type { CrewProfile } from "@shared/profile/viewableProfile";
 import { Chip } from "heroui-native";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 
-type Props = {
-  profile: ViewableProfile;
-};
+import { SmallHeading } from "@/components/ui/SmallHeading";
 
-function hasWorkEligibility(profile: ViewableProfile): profile is Extract<
-  ViewableProfile,
-  { workEligibility: string[] | undefined }
-> & {
-  workEligibility: string[];
-} {
-  return (
-    "workEligibility" in profile &&
-    Array.isArray(profile.workEligibility) &&
-    profile.workEligibility.length > 0
-  );
-}
+type Props = Partial<Pick<CrewProfile, "workEligibility">>;
 
-export function WorkEligibilitySection({ profile }: Props) {
-  if (!hasWorkEligibility(profile)) return null;
+export function WorkEligibilitySection({ workEligibility }: Props) {
+  if (!workEligibility || workEligibility.length === 0) return null;
 
   return (
-    <View className="gap-2">
-      <Text className="text-sm font-medium text-muted">Work Eligibility</Text>
+    <View className="gap-1">
+      <SmallHeading>Work Eligibility</SmallHeading>
       <View className="flex-row flex-wrap gap-2">
-        {profile.workEligibility.map((region) => (
+        {workEligibility.map((region) => (
           <Chip key={region} variant="secondary" size="sm">
             {region}
           </Chip>

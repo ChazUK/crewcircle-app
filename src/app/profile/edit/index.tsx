@@ -7,7 +7,6 @@ import {
   BuildingIcon,
   CalendarIcon,
   ChevronRightIcon,
-  ClapperboardIcon,
   FileIcon,
   FileTextIcon,
   LanguagesIcon,
@@ -46,11 +45,6 @@ export default function EditProfileHubScreen() {
   const yearsPreview =
     profile.mode === "self" && profile.startYearInDepartment !== undefined
       ? `Started ${profile.startYearInDepartment}`
-      : "Not added";
-
-  const productionTypesPreview =
-    profile.mode === "self" && profile.productionTypes && profile.productionTypes.length > 0
-      ? `${profile.productionTypes.length} selected`
       : "Not added";
 
   const languagesPreview =
@@ -122,28 +116,6 @@ export default function EditProfileHubScreen() {
                 <ListGroup.ItemContent>
                   <ListGroup.ItemTitle>Years in Department</ListGroup.ItemTitle>
                   <ListGroup.ItemDescription>{yearsPreview}</ListGroup.ItemDescription>
-                </ListGroup.ItemContent>
-                <ListGroup.ItemSuffix>
-                  <ChevronRightIcon size={16} />
-                </ListGroup.ItemSuffix>
-              </ListGroup.Item>
-            </PressableFeedback.Scale>
-          </PressableFeedback>
-        ) : null}
-
-        {profile.userType === "crew" ? (
-          <PressableFeedback
-            animation={false}
-            onPress={() => router.push("/profile/edit/production-types")}
-          >
-            <PressableFeedback.Scale>
-              <ListGroup.Item>
-                <ListGroup.ItemPrefix>
-                  <ClapperboardIcon size={20} />
-                </ListGroup.ItemPrefix>
-                <ListGroup.ItemContent>
-                  <ListGroup.ItemTitle>Production Types</ListGroup.ItemTitle>
-                  <ListGroup.ItemDescription>{productionTypesPreview}</ListGroup.ItemDescription>
                 </ListGroup.ItemContent>
                 <ListGroup.ItemSuffix>
                   <ChevronRightIcon size={16} />

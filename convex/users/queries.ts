@@ -1,4 +1,4 @@
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { v } from "convex/values";
 
 import type { Id } from "../_generated/dataModel";
@@ -47,7 +47,7 @@ export const getCurrentUser = query({
 
 export const getMyProfile = query({
   args: {},
-  handler: async (ctx): Promise<ViewableProfile | null> => {
+  handler: async (ctx): Promise<Profile | null> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
 
@@ -84,7 +84,6 @@ export const getMyProfile = query({
         city: viewer.city,
         country: viewer.country,
         startYearInDepartment: viewer.startYearInDepartment,
-        productionTypes: viewer.productionTypes,
         spokenLanguages: viewer.spokenLanguages,
         passports: viewer.passports,
         drivingLicences: viewer.drivingLicences,
@@ -112,9 +111,9 @@ export const getMyProfile = query({
   },
 });
 
-export const getViewableProfile = query({
+export const getProfile = query({
   args: { userId: v.id("users") },
-  handler: async (ctx, args): Promise<ViewableProfile | null> => {
+  handler: async (ctx, args): Promise<Profile | null> => {
     const identity = await ctx.auth.getUserIdentity();
     const viewer = identity ? await getUserByExternalId(ctx, identity.subject) : null;
 
@@ -172,7 +171,6 @@ export const getViewableProfile = query({
         imdbId: subject.imdbId,
         cvUrl,
         startYearInDepartment: subject.startYearInDepartment,
-        productionTypes: subject.productionTypes,
         spokenLanguages: subject.spokenLanguages,
         passports: subject.passports,
         drivingLicences: subject.drivingLicences,

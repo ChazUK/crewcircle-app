@@ -1,34 +1,50 @@
-import type { MembershipEntry, ViewableProfile } from "@shared/profile/viewableProfile";
-import { Chip } from "heroui-native";
+import type { CrewProfile } from "@shared/profile/viewableProfile";
+import { Image } from "expo-image";
+import { Surface } from "heroui-native";
+import { BadgeCheckIcon } from "lucide-react-native";
 import { Text, View } from "react-native";
+import { withUniwind } from "uniwind";
 
-type Props = {
-  profile: ViewableProfile;
-};
+import { SmallHeading } from "@/components/ui/SmallHeading";
 
-function hasMemberships(profile: ViewableProfile): profile is Extract<
-  ViewableProfile,
-  { memberships: MembershipEntry[] | undefined }
-> & {
-  memberships: MembershipEntry[];
-} {
-  return (
-    "memberships" in profile && Array.isArray(profile.memberships) && profile.memberships.length > 0
-  );
-}
+type Props = Partial<Pick<CrewProfile, "memberships">>;
 
-export function MembershipsSection({ profile }: Props) {
-  if (!hasMemberships(profile)) return null;
+const StyledImage = withUniwind(Image);
+
+export function MembershipsSection({ memberships }: Props) {
+  if (!memberships || memberships.length === 0) return null;
 
   return (
-    <View className="gap-2">
-      <Text className="text-sm font-medium text-muted">Memberships</Text>
-      <View className="flex-row flex-wrap gap-2">
-        {profile.memberships.map((m) => (
-          <Chip key={m.id} variant="secondary" size="sm">
-            {m.memberNumber ? `${m.name} (${m.memberNumber})` : m.name}
-          </Chip>
-        ))}
+    <View className="gap-1">
+      <SmallHeading>Memberships</SmallHeading>
+      <View className="gap-2">
+        {memberships.map(({ id, name, memberNumber }) => {
+          const logo = require(`@/assets/organisations/bectu.png`);
+          return (
+            <Surface
+              key={id}
+              className="flex-row items-center gap-2 rounded-lg p-2"
+              variant="secondary"
+            >
+              <StyledImage
+                className="size-8 rounded-md bg-surface"
+                source={logo}
+                contentFit="contain"
+              />
+              <View className="flex-1">
+                <Text className="text-sm font-medium text-foreground" numberOfLines={1}>
+                  {name}
+                </Text>
+                {memberNumber ? (
+                  <Text className="text-xs text-muted" numberOfLines={1}>
+                    {memberNumber}
+                  </Text>
+                ) : null}
+              </View>
+              <BadgeCheckIcon size={22} color="#1E96EA" />
+            </Surface>
+          );
+        })}
       </View>
     </View>
   );

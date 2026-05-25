@@ -2,35 +2,16 @@ import type { Id } from "@convex/_generated/dataModel";
 
 import { LanguageProficiencyLevel } from "@/lib/languages/language-proficiency-levels";
 
+import type { CountryCode } from "../countries/countries";
 import type { Department } from "../departments/departments";
 import { LanguageCode } from "./languages";
-
-type ProfileIdentity = {
-  userId: Id<"users">;
-  firstName: string;
-  lastName: string;
-  nickname?: string;
-  profilePictureUrl?: string;
-};
-
-type Location = {
-  city: string | undefined;
-  country: string | undefined;
-};
-
-type BioLinks = {
-  bio: string | undefined;
-  website: string | undefined;
-  imdbId: string | undefined;
-  cvUrl: string | undefined;
-};
 
 export type SpokenLanguageEntry = {
   code: LanguageCode;
   fluency: LanguageProficiencyLevel;
 };
 
-type KitEntry = {
+export type KitEntry = {
   id: string;
   name: string;
 };
@@ -49,50 +30,37 @@ export type MembershipEntry = {
   memberNumber: string | undefined;
 };
 
-type CrewExtras = {
-  startYearInDepartment: number | undefined;
-  productionTypes: string[] | undefined;
-  spokenLanguages: SpokenLanguageEntry[] | undefined;
-  passports: string[] | undefined;
-  drivingLicences: string[] | undefined;
-  workEligibility: string[] | undefined;
-  kit: KitEntry[] | undefined;
-  certifications: CertificationEntry[] | undefined;
-  memberships: MembershipEntry[] | undefined;
+type ProfileData = {
+  userId: Id<"users">;
+  firstName: string;
+  lastName: string;
+  nickname?: string;
+  profilePictureUrl?: string;
+  city?: string;
+  country?: CountryCode;
+  bio?: string | undefined;
+  website?: string | undefined;
+  department?: Department;
+  roles?: string[];
 };
 
-type CrewProfile = ProfileIdentity & {
+export type CrewProfile = ProfileData & {
   userType: "crew";
-  department: Department | undefined;
-  roles: string[] | undefined;
-};
-
-type ProductionManagerProfile = ProfileIdentity &
-  Location & {
-    userType: "production-manager";
-    productionCompany: string | undefined;
-    bio: string | undefined;
-    website: string | undefined;
-  };
-
-export type ViewableProfile =
-  | ({ mode: "self"; isPublic: boolean } & CrewProfile & BioLinks & Location & CrewExtras)
-  | ({ mode: "contact" } & CrewProfile & BioLinks & Location & CrewExtras)
-  | ({ mode: "public-card" } & CrewProfile & Location)
-  | ({ mode: "pm-self" } & ProductionManagerProfile)
-  | ({ mode: "pm-job-linked" } & ProductionManagerProfile);
-
-export type Profile = CrewProfile & {
-  city: string | undefined;
-  country: string | undefined;
-  bio?: string;
-  website?: string;
   imdbId?: string;
   cvUrl?: string;
   certifications?: CertificationEntry[];
-  department?: Department;
-  roles?: string[];
+  memberships?: MembershipEntry[];
+  passports?: CountryCode[];
   drivingLicences?: string[];
   kit?: KitEntry[];
   spokenLanguages?: SpokenLanguageEntry[];
+  workEligibility?: string[];
+  startYearInDepartment?: number;
 };
+
+export type ProductionManagerProfile = ProfileData & {
+  userType: "production-manager";
+  productionCompany: string | undefined;
+};
+
+export type Profile = CrewProfile | ProductionManagerProfile;

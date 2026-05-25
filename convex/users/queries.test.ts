@@ -119,7 +119,7 @@ describe("getMyProfile", () => {
   });
 });
 
-describe("getViewableProfile", () => {
+describe("getProfile", () => {
   test("returns self variant when viewing own user id as crew", async () => {
     const t = convexTest(schema, modules);
     const userId = await t.run((ctx) =>
@@ -132,9 +132,7 @@ describe("getViewableProfile", () => {
         lastName: "Smith",
       }),
     );
-    const result = await t
-      .withIdentity(identity)
-      .query(api.users.queries.getViewableProfile, { userId });
+    const result = await t.withIdentity(identity).query(api.users.queries.getProfile, { userId });
     expect(result?.mode).toBe("self");
     expect(result?.userType).toBe("crew");
   });
@@ -167,7 +165,7 @@ describe("getViewableProfile", () => {
     );
     const result = await t
       .withIdentity(identity)
-      .query(api.users.queries.getViewableProfile, { userId: subjectId });
+      .query(api.users.queries.getProfile, { userId: subjectId });
     expect(result?.mode).toBe("contact");
   });
 
@@ -192,7 +190,7 @@ describe("getViewableProfile", () => {
     );
     const result = await t
       .withIdentity(identity)
-      .query(api.users.queries.getViewableProfile, { userId: subjectId });
+      .query(api.users.queries.getProfile, { userId: subjectId });
     expect(result?.mode).toBe("public-card");
   });
 
@@ -217,7 +215,7 @@ describe("getViewableProfile", () => {
     );
     const result = await t
       .withIdentity(identity)
-      .query(api.users.queries.getViewableProfile, { userId: subjectId });
+      .query(api.users.queries.getProfile, { userId: subjectId });
     expect(result).toBeNull();
   });
 
@@ -241,7 +239,7 @@ describe("getViewableProfile", () => {
     );
     const result = await t
       .withIdentity(identity)
-      .query(api.users.queries.getViewableProfile, { userId: pmId });
+      .query(api.users.queries.getProfile, { userId: pmId });
     expect(result).toBeNull();
   });
 
@@ -266,7 +264,7 @@ describe("getViewableProfile", () => {
     });
     const result = await t
       .withIdentity(identity)
-      .query(api.users.queries.getViewableProfile, { userId: fakeId });
+      .query(api.users.queries.getProfile, { userId: fakeId });
     expect(result).toBeNull();
   });
 });

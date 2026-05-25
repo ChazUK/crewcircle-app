@@ -7,9 +7,9 @@ import { Text, View } from "react-native";
 
 import { Profile } from "@/components/profile/Profile";
 
-export default function ViewableProfileScreen() {
+export default function ProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: Id<"users"> }>();
-  const profile = useQuery(api.users.queries.getViewableProfile, { userId });
+  const profile = useQuery(api.users.queries.getProfile, { userId });
 
   if (profile === undefined) {
     return (

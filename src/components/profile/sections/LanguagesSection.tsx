@@ -5,13 +5,13 @@ import {
   type Fluency,
   type LanguageCode,
 } from "@shared/profile/languages";
-import type { Profile, SpokenLanguageEntry } from "@shared/profile/viewableProfile";
+import type { CrewProfile, SpokenLanguageEntry } from "@shared/profile/viewableProfile";
 import { Chip } from "heroui-native";
 import { Text, View } from "react-native";
 
 import { SmallHeading } from "@/components/ui/SmallHeading";
 
-type Props = Partial<Pick<Profile, "spokenLanguages">>;
+type Props = Partial<Pick<CrewProfile, "spokenLanguages">>;
 
 function sortLanguages(languages: SpokenLanguageEntry[]): SpokenLanguageEntry[] {
   return [...languages].sort((a, b) => {

@@ -40,7 +40,6 @@ export const User = {
   specialSkills: v.optional(v.array(v.string())),
   spokenLanguages: v.optional(v.array(v.object({ code: v.string(), fluency: v.string() }))),
   passports: v.optional(v.array(v.string())),
-  productionTypes: v.optional(v.array(v.string())),
   drivingLicences: v.optional(v.array(v.string())),
   workEligibility: v.optional(v.array(v.string())),
   productionCompany: v.optional(v.string()),

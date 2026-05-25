@@ -1,33 +1,22 @@
-import { COUNTRIES } from "@shared/countries/countries";
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
+import { getCountryName } from "@shared/countries/countries";
+import type { CrewProfile } from "@shared/profile/viewableProfile";
 import { Chip } from "heroui-native";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 
-const COUNTRY_NAME_BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c.name]));
+import { SmallHeading } from "@/components/ui/SmallHeading";
 
-type Props = {
-  profile: ViewableProfile;
-};
+type Props = Partial<Pick<CrewProfile, "passports">>;
 
-function hasPassports(profile: ViewableProfile): profile is Extract<
-  ViewableProfile,
-  { passports: string[] | undefined }
-> & {
-  passports: string[];
-} {
-  return "passports" in profile && Array.isArray(profile.passports) && profile.passports.length > 0;
-}
-
-export function PassportsSection({ profile }: Props) {
-  if (!hasPassports(profile)) return null;
+export function PassportsSection({ passports }: Props) {
+  if (!passports || passports.length === 0) return null;
 
   return (
-    <View className="gap-2">
-      <Text className="text-sm font-medium text-muted">Passports</Text>
+    <View className="gap-1">
+      <SmallHeading>Passports</SmallHeading>
       <View className="flex-row flex-wrap gap-2">
-        {profile.passports.map((code) => (
+        {passports.map((code) => (
           <Chip key={code} variant="secondary" size="sm">
-            {COUNTRY_NAME_BY_CODE.get(code) ?? code}
+            {getCountryName(code)}
           </Chip>
         ))}
       </View>

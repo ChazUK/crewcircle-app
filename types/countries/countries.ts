@@ -255,3 +255,7 @@ export const COUNTRIES = [
 
 export type Country = (typeof COUNTRIES)[number];
 export type CountryCode = Country["code"];
+
+export function getCountryName(code: CountryCode): string {
+  return COUNTRIES.find((c) => c.code === code)?.name ?? code;
+}

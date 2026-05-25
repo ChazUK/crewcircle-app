@@ -100,11 +100,13 @@ _Avoid_: User page, about
 The rule that controls what fields of a Profile a viewer can see. Depends on the subject's user type:
 
 For **Crew Member** Profiles, three viewer relationships:
+
 - **Self** — sees all fields plus edit affordances (section-level edit pencils, profile-picture upload control).
 - **Contact** (the viewer is in the subject's Contacts) — sees all fields, read-only.
 - **Non-contact** — sees only the Public Card. Only viewable at all if the subject's `isPublic` flag is `true`; otherwise the Profile returns "not found."
 
 For **Production Manager** Profiles, two viewer relationships:
+
 - **Self** — sees all PM fields plus edit affordances.
 - **Job-linked Viewer** — a Crew Member who shares a Job with the Production Manager (Requester of that Job, Applicant to it, or Circle Member of the Circle it was broadcast to) sees the PM Profile read-only.
 - **Anyone else** — the Profile returns "not found." Production Manager Profiles are never publicly discoverable; their identity is revealed only in the context of a specific Job. (Enforcement of the Job-linkage check depends on `Job.productionManagerId` and Circle-exposure tracking, both of which are not yet in the schema — until those land, the query treats any non-Self PM Profile view as "not found.")
@@ -151,10 +153,6 @@ _Avoid_: Years experience, years in role, seniority
 **Work Eligibility**:
 A region or scheme under which a Crew Member is legally permitted to accept paid work. Multi-select from a fixed list in `types/profile/workEligibility.ts`. Stored as a string array on the user. No visa expiry is tracked; the flag means "I am currently eligible." Initial list: Right to Work UK, Schengen, Right to Work USA, Right to Work Canada, Right to Work Australia, Right to Work Ireland.
 _Avoid_: Visa, right to work (alone — qualify with region)
-
-**Production Type**:
-A category of production a Crew Member is willing to work on, or that a Job belongs to. Multi-select from a fixed list in `types/profile/productionTypes.ts`. Initial list: Feature Film, TV Drama, TV Comedy, Documentary, Reality / Unscripted, Commercial, Music Video, Short Film, Animation, Branded / Corporate, Live Broadcast.
-_Avoid_: Genre, format, project type
 
 **Driving Licence**:
 A UK driving qualification a Crew Member holds. Multi-select from a fixed list in `types/profile/drivingLicences.ts`. No expiry tracked. Initial list: Car (B), Motorcycle (A), Minibus (D1), Bus (D), HGV Class 2 (C), HGV Class 1 (C+E), Forklift, Trailer (B+E), International Driving Permit.

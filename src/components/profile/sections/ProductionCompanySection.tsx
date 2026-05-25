@@ -1,30 +1,17 @@
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
+import type { ProductionManagerProfile } from "@shared/profile/viewableProfile";
 import { Text, View } from "react-native";
 
-type Props = {
-  profile: ViewableProfile;
-};
+import { SmallHeading } from "@/components/ui/SmallHeading";
 
-function hasProductionCompany(profile: ViewableProfile): profile is Extract<
-  ViewableProfile,
-  { productionCompany: string | undefined }
-> & {
-  productionCompany: string;
-} {
-  return (
-    "productionCompany" in profile &&
-    typeof profile.productionCompany === "string" &&
-    profile.productionCompany.length > 0
-  );
-}
+type Props = Partial<Pick<ProductionManagerProfile, "productionCompany">>;
 
-export function ProductionCompanySection({ profile }: Props) {
-  if (!hasProductionCompany(profile)) return null;
+export function ProductionCompanySection({ productionCompany }: Props) {
+  if (!productionCompany) return null;
 
   return (
     <View className="gap-1">
-      <Text className="text-sm font-medium text-muted">Production Company</Text>
-      <Text className="text-base text-foreground">{profile.productionCompany}</Text>
+      <SmallHeading>Production Company</SmallHeading>
+      <Text className="text-base text-foreground">{productionCompany}</Text>
     </View>
   );
 }

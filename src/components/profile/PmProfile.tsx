@@ -1,4 +1,4 @@
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { ScrollView } from "react-native";
 
 import { usePictureUpload } from "./PictureUploadFlow";
@@ -9,7 +9,7 @@ import { LocationSection } from "./sections/LocationSection";
 import { ProductionCompanySection } from "./sections/ProductionCompanySection";
 
 type Props = {
-  profile: Extract<ViewableProfile, { mode: "pm-self" }>;
+  profile: Extract<Profile, { mode: "pm-self" }>;
 };
 
 export function PmProfile({ profile }: Props) {
