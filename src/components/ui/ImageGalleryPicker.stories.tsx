@@ -56,7 +56,7 @@ const InteractiveRender: Story["render"] = (args) => {
       <Text style={{ fontSize: 11, color: "#888" }}>
         {images.length} image{images.length !== 1 ? "s" : ""}
         {images.length > 0
-          ? ` · storageIds: [${images.map((i) => i.storageId ?? "pending").join(", ")}]`
+          ? ` &middot; storageIds: [${images.map((i) => i.storageId ?? "pending").join(", ")}]`
           : ""}
       </Text>
     </View>

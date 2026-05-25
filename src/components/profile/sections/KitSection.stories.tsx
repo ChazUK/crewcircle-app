@@ -1,79 +1,8 @@
-import type { Id } from "@convex/_generated/dataModel";
 import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
 import { KitSection } from "./KitSection";
-
-const baseCrew = {
-  userId: "user_1" as Id<"users">,
-  firstName: "Ada",
-  lastName: "Lovelace",
-  profilePictureUrl: undefined,
-  userType: "crew" as const,
-  nickname: undefined,
-  department: "Camera" as const,
-  roles: ["Director of Photography"],
-  city: undefined,
-  country: undefined,
-};
-
-const selfWithData: ViewableProfile = {
-  mode: "self",
-  isPublic: false,
-  ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: undefined,
-  spokenLanguages: undefined,
-  passports: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
-  kit: [
-    { id: "kit_1", name: "Arri Alexa Mini" },
-    { id: "kit_2", name: "RED Komodo" },
-    { id: "kit_3", name: "Sony FX6" },
-  ],
-};
-
-const selfEmpty: ViewableProfile = {
-  mode: "self",
-  isPublic: false,
-  ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: undefined,
-  spokenLanguages: undefined,
-  passports: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
-  kit: undefined,
-};
-
-const contactWithData: ViewableProfile = {
-  mode: "contact",
-  ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: undefined,
-  spokenLanguages: undefined,
-  passports: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
-  kit: [
-    { id: "kit_1", name: "Arri Alexa Mini" },
-    { id: "kit_2", name: "Sony FX6" },
-  ],
-};
 
 const meta = {
   title: "Profile/KitSection",
@@ -86,12 +15,21 @@ const meta = {
     ),
   ],
   tags: ["autodocs"],
-  args: { profile: selfWithData },
 } satisfies Meta<typeof KitSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const SelfWithData: Story = { args: { profile: selfWithData } };
-export const SelfEmpty: Story = { args: { profile: selfEmpty } };
-export const ContactWithData: Story = { args: { profile: contactWithData } };
+export const Default: Story = {
+  args: {
+    kit: [
+      { id: "kit_1", name: "Arri Alexa Mini" },
+      { id: "kit_2", name: "RED Komodo" },
+      { id: "kit_3", name: "Sony FX6" },
+    ],
+  },
+};
+
+export const Empty: Story = {
+  args: {},
+};

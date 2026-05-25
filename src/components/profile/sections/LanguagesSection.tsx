@@ -1,81 +1,64 @@
 import {
   FLUENCY_LABELS,
+  FLUENCY_LEVELS,
   LANGUAGE_NAMES,
   type Fluency,
   type LanguageCode,
 } from "@shared/profile/languages";
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
-import { Card, Chip } from "heroui-native";
+import type { Profile, SpokenLanguageEntry } from "@shared/profile/viewableProfile";
+import { Chip } from "heroui-native";
 import { Text, View } from "react-native";
 
-type Props = {
-  profile: ViewableProfile;
-};
+import { SmallHeading } from "@/components/ui/SmallHeading";
 
-type SpokenLanguageEntry = { code: string; fluency: string };
-
-function hasLanguages(profile: ViewableProfile): profile is Extract<
-  ViewableProfile,
-  { spokenLanguages: SpokenLanguageEntry[] | undefined }
-> & {
-  spokenLanguages: SpokenLanguageEntry[];
-} {
-  return (
-    "spokenLanguages" in profile &&
-    Array.isArray(profile.spokenLanguages) &&
-    profile.spokenLanguages.length > 0
-  );
-}
+type Props = Partial<Pick<Profile, "spokenLanguages">>;
 
 function sortLanguages(languages: SpokenLanguageEntry[]): SpokenLanguageEntry[] {
   return [...languages].sort((a, b) => {
-    if (a.fluency === "native" && b.fluency !== "native") return -1;
-    if (a.fluency !== "native" && b.fluency === "native") return 1;
+    const fluencyDiff =
+      FLUENCY_LEVELS.indexOf(a.fluency as Fluency) - FLUENCY_LEVELS.indexOf(b.fluency as Fluency);
+    if (fluencyDiff !== 0) return fluencyDiff;
+
     const nameA = LANGUAGE_NAMES[a.code as LanguageCode] ?? a.code;
     const nameB = LANGUAGE_NAMES[b.code as LanguageCode] ?? b.code;
+
     return nameA.localeCompare(nameB);
   });
 }
 
 const fluencyColor: Record<string, "accent" | "default" | "success" | "warning" | "danger"> = {
-  native: "accent",
-  fluent: "success",
-  professional: "default",
-  conversational: "warning",
-  basic: "default",
+  Native: "accent",
+  Fluent: "success",
+  Professional: "success",
+  Conversational: "warning",
+  Basic: "danger",
 };
 
-export function LanguagesSection({ profile }: Props) {
-  if (hasLanguages(profile)) {
-    const sorted = sortLanguages(profile.spokenLanguages);
-    return (
-      <View className="gap-2">
-        <Text className="text-sm font-medium text-muted">Spoken Languages</Text>
-        <View className="gap-2">
-          {sorted.map((entry) => (
-            <View key={entry.code} className="flex-row items-center justify-between">
-              <Text className="text-sm text-foreground">
+export function LanguagesSection({ spokenLanguages }: Props) {
+  if (!spokenLanguages || spokenLanguages.length === 0) return null;
+
+  const sorted = sortLanguages(spokenLanguages);
+
+  return (
+    <View className="gap-1">
+      <SmallHeading>Spoken Languages</SmallHeading>
+      <View className="flex-row flex-wrap gap-2">
+        {sorted.map((entry) => (
+          <Chip
+            key={entry.code}
+            size="sm"
+            variant="secondary"
+            color={fluencyColor[entry.fluency] ?? "default"}
+          >
+            <Chip.Label>
+              <Text className="font-semibold">
                 {LANGUAGE_NAMES[entry.code as LanguageCode] ?? entry.code}
-              </Text>
-              <Chip variant="secondary" color={fluencyColor[entry.fluency] ?? "default"} size="sm">
-                {FLUENCY_LABELS[entry.fluency as Fluency] ?? entry.fluency}
-              </Chip>
-            </View>
-          ))}
-        </View>
+              </Text>{" "}
+              &middot; {FLUENCY_LABELS[entry.fluency as Fluency] ?? entry.fluency}
+            </Chip.Label>
+          </Chip>
+        ))}
       </View>
-    );
-  }
-
-  if (profile.mode === "self") {
-    return (
-      <Card variant="secondary">
-        <Card.Body>
-          <Text className="text-sm text-muted">Add the languages you speak</Text>
-        </Card.Body>
-      </Card>
-    );
-  }
-
-  return null;
+    </View>
+  );
 }

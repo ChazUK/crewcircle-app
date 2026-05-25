@@ -96,17 +96,17 @@ export function CalendarConnectionList({
         <Accordion.Trigger>
           <View className="flex-1">
             <Text className="text-base font-semibold">Calendars</Text>
-            <Text className="text-xs text-muted">{stats.join(" · ")}</Text>
+            <Text className="text-xs text-muted">{stats.join(" &middot; ")}</Text>
           </View>
           <Accordion.Indicator />
         </Accordion.Trigger>
         <Accordion.Content>
           {connections.length > 0 ? (
             <Fragment>
-              <View className="flex-row items-center gap-3 mb-2">
+              <View className="mb-2 flex-row items-center gap-3">
                 <Text className="flex-1 text-xs uppercase">Source</Text>
-                {SHOW_SWITCH && <Text className="text-xs uppercase text-center w-12">Show</Text>}
-                {BUSY_SWITCH && <Text className="text-xs uppercase text-center w-12">Busy</Text>}
+                {SHOW_SWITCH && <Text className="w-12 text-center text-xs uppercase">Show</Text>}
+                {BUSY_SWITCH && <Text className="w-12 text-center text-xs uppercase">Busy</Text>}
               </View>
               <View className="gap-3">
                 {connections.map((connection, index) => {
@@ -192,7 +192,7 @@ function CalendarConnectionItem({
               <Fragment>
                 <CalendarProviderIcon provider={provider} size={28} />
                 <View
-                  className="size-2 rounded-full absolute -bottom-1 -right-1"
+                  className="absolute -right-1 -bottom-1 size-2 rounded-full"
                   style={{ backgroundColor: color }}
                 ></View>
               </Fragment>

@@ -1,87 +1,7 @@
-import type { Id } from "@convex/_generated/dataModel";
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
 import { LanguagesSection } from "./LanguagesSection";
-
-const baseCrew = {
-  userId: "user_1" as Id<"users">,
-  firstName: "Ada",
-  lastName: "Lovelace",
-  profilePictureUrl: undefined,
-  userType: "crew" as const,
-  nickname: undefined,
-  department: "Camera" as const,
-  roles: ["Director of Photography"],
-  city: undefined,
-  country: undefined,
-};
-
-const selfWithData: ViewableProfile = {
-  mode: "self",
-  isPublic: false,
-  ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: undefined,
-  spokenLanguages: [
-    { code: "fr", fluency: "fluent" },
-    { code: "en", fluency: "native" },
-    { code: "de", fluency: "basic" },
-    { code: "es", fluency: "conversational" },
-    { code: "ja", fluency: "professional" },
-  ],
-  passports: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
-  kit: undefined,
-  certifications: undefined,
-  memberships: undefined,
-};
-
-const selfEmpty: ViewableProfile = {
-  mode: "self",
-  isPublic: false,
-  ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: undefined,
-  spokenLanguages: undefined,
-  passports: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
-  kit: undefined,
-  certifications: undefined,
-  memberships: undefined,
-};
-
-const contactWithData: ViewableProfile = {
-  mode: "contact",
-  ...baseCrew,
-  bio: undefined,
-  website: undefined,
-  imdbId: undefined,
-  cvUrl: undefined,
-  startYearInDepartment: undefined,
-  productionTypes: undefined,
-  spokenLanguages: [
-    { code: "ar", fluency: "native" },
-    { code: "en", fluency: "professional" },
-  ],
-  passports: undefined,
-  drivingLicences: undefined,
-  workEligibility: undefined,
-  kit: undefined,
-  certifications: undefined,
-  memberships: undefined,
-};
 
 const meta = {
   title: "Profile/LanguagesSection",
@@ -94,12 +14,23 @@ const meta = {
     ),
   ],
   tags: ["autodocs"],
-  args: { profile: selfWithData },
 } satisfies Meta<typeof LanguagesSection>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const SelfWithData: Story = { args: { profile: selfWithData } };
-export const SelfEmpty: Story = { args: { profile: selfEmpty } };
-export const ContactWithData: Story = { args: { profile: contactWithData } };
+export const Default: Story = {
+  args: {
+    spokenLanguages: [
+      { code: "de", fluency: "Basic" },
+      { code: "en", fluency: "Fluent" },
+      { code: "es", fluency: "Conversational" },
+      { code: "fr", fluency: "Professional" },
+      { code: "ja", fluency: "Native" },
+    ],
+  },
+};
+
+export const Empty: Story = {
+  args: {},
+};

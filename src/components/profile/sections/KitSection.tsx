@@ -1,29 +1,20 @@
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { Chip } from "heroui-native";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 
-type Props = {
-  profile: ViewableProfile;
-};
+import { SmallHeading } from "@/components/ui/SmallHeading";
 
-function hasKit(profile: ViewableProfile): profile is Extract<
-  ViewableProfile,
-  { kit: { id: string; name: string }[] | undefined }
-> & {
-  kit: { id: string; name: string }[];
-} {
-  return "kit" in profile && Array.isArray(profile.kit) && profile.kit.length > 0;
-}
+type Props = Partial<Pick<Profile, "kit">>;
 
-export function KitSection({ profile }: Props) {
-  if (!hasKit(profile)) return null;
+export function KitSection({ kit }: Props) {
+  if (!kit || kit.length === 0) return null;
 
   return (
-    <View className="gap-2">
-      <Text className="text-sm font-medium text-muted">Kit</Text>
+    <View className="gap-1">
+      <SmallHeading>Kit</SmallHeading>
       <View className="flex-row flex-wrap gap-2">
-        {profile.kit.map((item) => (
-          <Chip key={item.id} variant="secondary" size="sm">
+        {kit.map((item) => (
+          <Chip key={item.id} variant="secondary" color="default" size="sm">
             {item.name}
           </Chip>
         ))}

@@ -1,23 +1,7 @@
-import type { Id } from "@convex/_generated/dataModel";
 import type { Meta, StoryObj } from "@storybook/react-native";
 import { View } from "react-native";
 
 import { LinksSection } from "./LinksSection";
-
-const baseCrew = {
-  userId: "user_1" as Id<"users">,
-  firstName: "Ada",
-  lastName: "Lovelace",
-  profilePictureUrl: undefined,
-  userType: "crew" as const,
-  nickname: undefined,
-  department: "Camera" as const,
-  roles: ["Director of Photography"],
-  bio: undefined,
-  cvUrl: undefined,
-  city: undefined,
-  country: undefined,
-};
 
 const meta = {
   title: "Profile/LinksSection",
@@ -37,84 +21,30 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    profile: {
-      mode: "self",
-      isPublic: false,
-      ...baseCrew,
-      website: "https://adalovelace.com",
-      imdbId: "nm0000123",
-      startYearInDepartment: undefined,
-      productionTypes: undefined,
-      spokenLanguages: undefined,
-      passports: undefined,
-      drivingLicences: undefined,
-      workEligibility: undefined,
-      kit: undefined,
-      certifications: undefined,
-      memberships: undefined,
-    },
+    website: "https://adalovelace.com",
+    imdbId: "nm0000001",
+    cvUrl: "https://file-examples.com/wp-content/storage/2017/10/file-sample_150kB.pdf",
   },
 };
 
 export const WebsiteOnly: Story = {
   args: {
-    profile: {
-      mode: "self",
-      isPublic: false,
-      ...baseCrew,
-      website: "https://adalovelace.com",
-      imdbId: undefined,
-      startYearInDepartment: undefined,
-      productionTypes: undefined,
-      spokenLanguages: undefined,
-      passports: undefined,
-      drivingLicences: undefined,
-      workEligibility: undefined,
-      kit: undefined,
-      certifications: undefined,
-      memberships: undefined,
-    },
+    website: "https://adalovelace.com",
   },
 };
 
 export const IMDBOnly: Story = {
   args: {
-    profile: {
-      mode: "self",
-      isPublic: false,
-      ...baseCrew,
-      website: undefined,
-      imdbId: "nm0000100",
-      startYearInDepartment: undefined,
-      productionTypes: undefined,
-      spokenLanguages: undefined,
-      passports: undefined,
-      drivingLicences: undefined,
-      workEligibility: undefined,
-      kit: undefined,
-      certifications: undefined,
-      memberships: undefined,
-    },
+    imdbId: "nm0000001",
+  },
+};
+
+export const CVOnly: Story = {
+  args: {
+    cvUrl: "https://file-examples.com/wp-content/storage/2017/10/file-sample_150kB.pdf",
   },
 };
 
 export const Empty: Story = {
-  args: {
-    profile: {
-      mode: "self",
-      isPublic: false,
-      ...baseCrew,
-      website: undefined,
-      imdbId: undefined,
-      startYearInDepartment: undefined,
-      productionTypes: undefined,
-      spokenLanguages: undefined,
-      passports: undefined,
-      drivingLicences: undefined,
-      workEligibility: undefined,
-      kit: undefined,
-      certifications: undefined,
-      memberships: undefined,
-    },
-  },
+  args: {},
 };

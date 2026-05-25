@@ -1,48 +1,24 @@
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
-import { Image } from "expo-image";
-import { GlobeIcon } from "lucide-react-native";
-import { Linking, Pressable, Text, View } from "react-native";
+import { imdbUrl } from "@shared/profile/imdbUrl";
+import type { Profile } from "@shared/profile/viewableProfile";
+import { View } from "react-native";
 
-type Props = {
-  profile: ViewableProfile;
-};
+import { SmallHeading } from "@/components/ui/SmallHeading";
 
-type ProfileWithLinks = Extract<ViewableProfile, { website: string | undefined }>;
+import { ProfileLink } from "./ProfileLink";
 
-function hasLinks(profile: ViewableProfile): profile is ProfileWithLinks {
-  return "website" in profile || "imdbId" in profile;
-}
+type Props = Partial<Pick<Profile, "website" | "cvUrl" | "imdbId">>;
 
-function imdbUrl(id: string): string {
-  return `https://www.imdb.com/name/${id}/`;
-}
-
-export function LinksSection({ profile }: Props) {
-  if (!hasLinks(profile)) return null;
+export function LinksSection({ website, cvUrl, imdbId }: Props) {
+  if (!website && !cvUrl && !imdbId) return null;
 
   return (
-    <View className="gap-2">
-      <Text className="text-sm font-medium text-muted">Links</Text>
-      {profile.website ? (
-        <Pressable
-          className="flex-row items-center gap-2"
-          onPress={() => Linking.openURL(profile.website!)}
-          accessibilityRole="link"
-        >
-          <GlobeIcon size={16} className="text-primary" />
-          <Text className="text-primary text-base">{profile.website}</Text>
-        </Pressable>
-      ) : null}
-      {"imdbId" in profile && profile.imdbId ? (
-        <Pressable
-          className="flex-row items-center gap-2"
-          onPress={() => Linking.openURL(imdbUrl(profile.imdbId!))}
-          accessibilityRole="link"
-        >
-          <Image source={require("@/assets/icons/imdb.svg")} style={{ width: 16, height: 16 }} />
-          <Text className="text-primary text-base">IMDB Profile</Text>
-        </Pressable>
-      ) : null}
+    <View className="gap-1">
+      <SmallHeading>Links</SmallHeading>
+      <View className="flex-row flex-wrap gap-2">
+        {website ? <ProfileLink url={website} type="url" /> : null}
+        {imdbId ? <ProfileLink url={imdbUrl(imdbId)} type="imdb" /> : null}
+        {cvUrl ? <ProfileLink url={cvUrl} type="download" /> : null}
+      </View>
     </View>
   );
 }

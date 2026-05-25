@@ -1,58 +1,36 @@
-import type { ViewableProfile } from "@shared/profile/viewableProfile";
-import { Avatar } from "heroui-native";
-import { Pressable, Text, View } from "react-native";
+import { getDisplayName } from "@shared/profile/getDisplayName";
+import { getInitials } from "@shared/profile/getInitials";
+import type { Profile } from "@shared/profile/viewableProfile";
+import { Image } from "expo-image";
+import { Avatar, Chip } from "heroui-native";
+import { Text, View } from "react-native";
 
 type Props = {
-  profile: ViewableProfile;
-  onPicturePress?: () => void;
+  profile: Pick<Profile, "firstName" | "lastName"> &
+    Partial<Pick<Profile, "profilePictureUrl" | "nickname">>;
 };
 
-function getInitials(profile: ViewableProfile) {
-  const first = profile.firstName?.[0] ?? "";
-  const last = profile.lastName?.[0] ?? "";
-  const combined = `${first}${last}`.trim();
-  if (combined) return combined.toUpperCase();
-  return "?";
-}
-
-function getDisplayName(profile: ViewableProfile) {
-  const parts: string[] = [];
-  if (profile.firstName) parts.push(profile.firstName);
-  if (profile.lastName) parts.push(profile.lastName);
-  const fullName = parts.join(" ");
-  if (profile.nickname) return `${fullName} (${profile.nickname})`.trim();
-  return fullName;
-}
-
-function isSelfMode(profile: ViewableProfile) {
-  return profile.mode === "self" || profile.mode === "pm-self";
-}
-
-export function IdentitySection({ profile, onPicturePress }: Props) {
-  const displayName = getDisplayName(profile);
-  const canEdit = isSelfMode(profile) && onPicturePress;
-
-  const avatar = (
-    <Avatar size="lg" alt={displayName || "Profile"}>
-      {profile.profilePictureUrl ? (
-        <Avatar.Image source={{ uri: profile.profilePictureUrl }} />
-      ) : null}
-      <Avatar.Fallback>{getInitials(profile)}</Avatar.Fallback>
-    </Avatar>
-  );
+export function IdentitySection({ profile }: Props) {
+  const displayName = getDisplayName({ profile });
 
   return (
-    <View className="items-center gap-3">
-      {canEdit ? (
-        <Pressable onPress={onPicturePress} accessibilityLabel="Change profile picture">
-          {avatar}
-        </Pressable>
-      ) : (
-        avatar
-      )}
-      {displayName ? (
-        <Text className="text-lg font-semibold text-foreground">{displayName}</Text>
-      ) : null}
+    <View className="gap-2">
+      <View className="relative self-start">
+        <Avatar className="size-24 rounded-2xl shadow-md" alt={displayName || "Profile"}>
+          {profile.profilePictureUrl ? (
+            <Avatar.Image source={{ uri: profile.profilePictureUrl }} asChild>
+              <Image style={{ width: "100%", height: "100%" }} contentFit="cover" />
+            </Avatar.Image>
+          ) : null}
+          <Avatar.Fallback delayMs={200}>{getInitials({ profile })}</Avatar.Fallback>
+        </Avatar>
+        <Chip className="absolute -right-1 -bottom-1 bg-green-400" size="sm">
+          <Chip.Label className="text-surface-foreground">Open</Chip.Label>
+        </Chip>
+      </View>
+      <Text className="text-lg font-semibold text-foreground" numberOfLines={1}>
+        {displayName}
+      </Text>
     </View>
   );
 }

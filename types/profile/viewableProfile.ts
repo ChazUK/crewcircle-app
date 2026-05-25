@@ -1,13 +1,16 @@
 import type { Id } from "@convex/_generated/dataModel";
 
+import { LanguageProficiencyLevel } from "@/lib/languages/language-proficiency-levels";
+
 import type { Department } from "../departments/departments";
+import { LanguageCode } from "./languages";
 
 type ProfileIdentity = {
   userId: Id<"users">;
-  firstName: string | undefined;
-  lastName: string | undefined;
-  nickname: string | undefined;
-  profilePictureUrl: string | undefined;
+  firstName: string;
+  lastName: string;
+  nickname?: string;
+  profilePictureUrl?: string;
 };
 
 type Location = {
@@ -22,9 +25,9 @@ type BioLinks = {
   cvUrl: string | undefined;
 };
 
-type SpokenLanguageEntry = {
-  code: string;
-  fluency: string;
+export type SpokenLanguageEntry = {
+  code: LanguageCode;
+  fluency: LanguageProficiencyLevel;
 };
 
 type KitEntry = {
@@ -79,4 +82,17 @@ export type ViewableProfile =
   | ({ mode: "pm-self" } & ProductionManagerProfile)
   | ({ mode: "pm-job-linked" } & ProductionManagerProfile);
 
-export type Profile = CrewProfile & BioLinks;
+export type Profile = CrewProfile & {
+  city: string | undefined;
+  country: string | undefined;
+  bio?: string;
+  website?: string;
+  imdbId?: string;
+  cvUrl?: string;
+  certifications?: CertificationEntry[];
+  department?: Department;
+  roles?: string[];
+  drivingLicences?: string[];
+  kit?: KitEntry[];
+  spokenLanguages?: SpokenLanguageEntry[];
+};

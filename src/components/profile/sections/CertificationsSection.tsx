@@ -1,12 +1,11 @@
-import type { CertificationEntry, ViewableProfile } from "@shared/profile/viewableProfile";
-import { Chip } from "heroui-native";
+import type { CertificationEntry, Profile } from "@shared/profile/viewableProfile";
+import { Chip, Surface } from "heroui-native";
 import { Text, View } from "react-native";
 
+import { SmallHeading } from "@/components/ui/SmallHeading";
 import { formatCertificationExpiry } from "@/lib/profile/formatCertificationExpiry";
 
-type Props = {
-  profile: ViewableProfile;
-};
+type Props = Partial<Pick<Profile, "certifications">>;
 
 const STATUS_COLOR = {
   "no-expiry": "default",
@@ -15,46 +14,61 @@ const STATUS_COLOR = {
   expired: "danger",
 } as const;
 
-function hasCertifications(profile: ViewableProfile): profile is Extract<
-  ViewableProfile,
-  { certifications: CertificationEntry[] | undefined }
-> & {
-  certifications: CertificationEntry[];
-} {
-  return (
-    "certifications" in profile &&
-    Array.isArray(profile.certifications) &&
-    profile.certifications.length > 0
-  );
-}
-
-export function CertificationsSection({ profile }: Props) {
-  if (!hasCertifications(profile)) return null;
-
-  const now = Date.now();
+export function CertificationsSection({ certifications }: Props) {
+  if (!certifications || certifications.length === 0) return null;
 
   return (
-    <View className="gap-2">
-      <Text className="text-sm font-medium text-muted">Certifications</Text>
-      <View className="gap-3">
-        {profile.certifications.map((cert) => {
-          const expiry = formatCertificationExpiry(cert.expiresAt, now);
-          return (
-            <View key={cert.id} className="gap-1">
-              <View className="flex-row items-center gap-2">
-                <Text className="text-base font-medium text-foreground">{cert.name}</Text>
-                <Chip size="sm" variant="secondary" color={STATUS_COLOR[expiry.status]}>
-                  {expiry.label}
-                </Chip>
-              </View>
-              {cert.issuer && <Text className="text-sm text-muted">{cert.issuer}</Text>}
-              {cert.referenceNumber && (
-                <Text className="text-sm text-muted">Ref: {cert.referenceNumber}</Text>
-              )}
-            </View>
-          );
+    <View className="gap-1">
+      <SmallHeading>Certifications</SmallHeading>
+      <View className="gap-2">
+        {certifications.map((certificate) => {
+          return <CertificateCard key={certificate.id} certificate={certificate} />;
         })}
       </View>
     </View>
+  );
+}
+
+type CertificateCardProps = {
+  certificate: CertificationEntry;
+};
+
+function CertificateCard({ certificate }: CertificateCardProps) {
+  const now = new Date();
+  const expiry = formatCertificationExpiry(certificate.expiresAt, now.getTime());
+
+  return (
+    <Surface className="flex-row gap-2 rounded-xl p-3">
+      <View className="flex flex-1 gap-1">
+        <Text className="text-sm font-medium text-foreground">{certificate.name}</Text>
+
+        <View className="flex-row gap-1">
+          {certificate.issuer && (
+            <Text className="text-xs text-muted" numberOfLines={1}>
+              {certificate.issuer}
+            </Text>
+          )}
+          {certificate.issuer && certificate.referenceNumber && (
+            <Text className="text-xs text-muted">•</Text>
+          )}
+          {certificate.referenceNumber && (
+            <Text className="text-xs text-muted" numberOfLines={1}>
+              Ref: {certificate.referenceNumber}
+            </Text>
+          )}
+        </View>
+      </View>
+
+      {certificate.expiresAt && (
+        <Chip
+          className="self-center"
+          size="sm"
+          variant="secondary"
+          color={STATUS_COLOR[expiry.status]}
+        >
+          {expiry.label}
+        </Chip>
+      )}
+    </Surface>
   );
 }

@@ -8,5 +8,6 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "never",
     "source.fixAll.oxc": "explicit"
-  }
+  },
+  "terminal.integrated.gpuAcceleration": "off"
 }

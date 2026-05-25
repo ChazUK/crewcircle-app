@@ -6,7 +6,6 @@ import { ScrollView } from "react-native";
 import { usePictureUpload } from "./PictureUploadFlow";
 import { BioSection } from "./sections/BioSection";
 import { CertificationsSection } from "./sections/CertificationsSection";
-import { CvSection } from "./sections/CvSection";
 import { DepartmentRolesSection } from "./sections/DepartmentRolesSection";
 import { DrivingLicencesSection } from "./sections/DrivingLicencesSection";
 import { IdentitySection } from "./sections/IdentitySection";
@@ -47,7 +46,6 @@ export function Profile({ profile }: Props) {
       <LocationSection profile={profile} />
       <BioSection profile={profile} />
       <LinksSection profile={profile} />
-      <CvSection profile={profile} />
       {profile.mode === "self" && (
         <VisibilityToggleSection
           isPublic={profile.isPublic}
