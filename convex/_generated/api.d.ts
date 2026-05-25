@@ -112,10 +112,8 @@ import type * as users_mutations_updateProfileDrivingLicences from "../users/mut
 import type * as users_mutations_updateProfileLanguages from "../users/mutations/updateProfileLanguages.js";
 import type * as users_mutations_updateProfileLocation from "../users/mutations/updateProfileLocation.js";
 import type * as users_mutations_updateProfilePassports from "../users/mutations/updateProfilePassports.js";
-import type * as users_mutations_updateProfileProductionTypes from "../users/mutations/updateProfileProductionTypes.js";
 import type * as users_mutations_updateProfileVisibility from "../users/mutations/updateProfileVisibility.js";
 import type * as users_mutations_updateProfileWorkEligibility from "../users/mutations/updateProfileWorkEligibility.js";
-import type * as users_mutations_updateProfileYears from "../users/mutations/updateProfileYears.js";
 import type * as users_queries from "../users/queries.js";
 import type * as users_syncVerifiedPhone from "../users/syncVerifiedPhone.js";
 import type * as users_webhooks from "../users/webhooks.js";
@@ -232,10 +230,8 @@ declare const fullApi: ApiFromModules<{
   "users/mutations/updateProfileLanguages": typeof users_mutations_updateProfileLanguages;
   "users/mutations/updateProfileLocation": typeof users_mutations_updateProfileLocation;
   "users/mutations/updateProfilePassports": typeof users_mutations_updateProfilePassports;
-  "users/mutations/updateProfileProductionTypes": typeof users_mutations_updateProfileProductionTypes;
   "users/mutations/updateProfileVisibility": typeof users_mutations_updateProfileVisibility;
   "users/mutations/updateProfileWorkEligibility": typeof users_mutations_updateProfileWorkEligibility;
-  "users/mutations/updateProfileYears": typeof users_mutations_updateProfileYears;
   "users/queries": typeof users_queries;
   "users/syncVerifiedPhone": typeof users_syncVerifiedPhone;
   "users/webhooks": typeof users_webhooks;

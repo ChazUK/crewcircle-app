@@ -146,10 +146,6 @@ _Avoid_: Language
 A travel document held by a Crew Member, indicating international work eligibility. Stored as an array of ISO 3166-1 alpha-2 country codes on the user. Drawn from a closed list in `types/profile/countries.ts`; free-text countries are not allowed.
 _Avoid_: Travel document
 
-**Years in Department**:
-The number of years a Crew Member has worked within their current Department. Stored on the user as `startYearInDepartment: number` (the four-digit year they started in this Department, e.g. `2018`). Display layer derives the year count on read so it auto-increments and never goes stale. Wiped when Department changes. Replaces the legacy `yearsExperience` and `yearsInRole` fields, both of which are removed.
-_Avoid_: Years experience, years in role, seniority
-
 **Work Eligibility**:
 A region or scheme under which a Crew Member is legally permitted to accept paid work. Multi-select from a fixed list in `types/profile/workEligibility.ts`. Stored as a string array on the user. No visa expiry is tracked; the flag means "I am currently eligible." Initial list: Right to Work UK, Schengen, Right to Work USA, Right to Work Canada, Right to Work Australia, Right to Work Ireland.
 _Avoid_: Visa, right to work (alone — qualify with region)

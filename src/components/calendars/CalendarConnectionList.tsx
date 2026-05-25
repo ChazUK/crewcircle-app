@@ -96,7 +96,7 @@ export function CalendarConnectionList({
         <Accordion.Trigger>
           <View className="flex-1">
             <Text className="text-base font-semibold">Calendars</Text>
-            <Text className="text-xs text-muted">{stats.join(" &middot; ")}</Text>
+            <Text className="text-xs text-muted">{stats.join(" · ")}</Text>
           </View>
           <Accordion.Indicator />
         </Accordion.Trigger>

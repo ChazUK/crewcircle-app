@@ -6,11 +6,11 @@ type Props = Partial<Pick<Profile, "department" | "roles">>;
 export function DepartmentRolesSection({ department, roles }: Props) {
   if (!department) return null;
 
-  const position = [...(roles || [])].join(" &middot; ");
+  const position = [...(roles || [])].join(" · ");
 
   return (
     <Text className="text-sm text-muted">
-      {position && `${position} &middot; `}
+      {position && `${position} · `}
       <Text className="font-medium text-foreground">{department} dept</Text>
     </Text>
   );

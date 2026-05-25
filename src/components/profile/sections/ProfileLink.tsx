@@ -30,7 +30,9 @@ export function ProfileLink({ type, url }: Props) {
       ? url.replace(/^https?:\/\//, "")
       : type === "download"
         ? "CV"
-        : lastPathSegment(url);
+        : type === "imdb"
+          ? "IMDb"
+          : null;
   const onPress =
     type === "download"
       ? async () => {

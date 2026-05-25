@@ -1,7 +1,6 @@
 import type { Profile } from "@shared/profile/viewableProfile";
-import { Text, View } from "react-native";
-
-import { SmallHeading } from "@/components/ui/SmallHeading";
+import { Surface } from "heroui-native";
+import { Text } from "react-native";
 
 type Props = Partial<Pick<Profile, "bio">>;
 
@@ -9,9 +8,8 @@ export function BioSection({ bio }: Props) {
   if (!bio) return null;
 
   return (
-    <View className="gap-1">
-      <SmallHeading>Bio</SmallHeading>
-      <Text className="text-base text-foreground">{bio}</Text>
-    </View>
+    <Surface className="rounded-md p-2" variant="secondary">
+      <Text className="text-sm text-foreground">{bio}</Text>
+    </Surface>
   );
 }

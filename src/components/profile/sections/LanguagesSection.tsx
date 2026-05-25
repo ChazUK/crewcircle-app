@@ -41,22 +41,19 @@ export function LanguagesSection({ spokenLanguages }: Props) {
 
   return (
     <View className="gap-1">
-      <SmallHeading>Spoken Languages</SmallHeading>
-      <View className="flex-row flex-wrap gap-2">
+      <SmallHeading>Languages</SmallHeading>
+      <View className="gap-2">
         {sorted.map((entry) => (
-          <Chip
-            key={entry.code}
-            size="sm"
-            variant="secondary"
-            color={fluencyColor[entry.fluency] ?? "default"}
-          >
-            <Chip.Label>
-              <Text className="font-semibold">
-                {LANGUAGE_NAMES[entry.code as LanguageCode] ?? entry.code}
-              </Text>{" "}
-              &middot; {FLUENCY_LABELS[entry.fluency as Fluency] ?? entry.fluency}
-            </Chip.Label>
-          </Chip>
+          <View key={entry.code} className="flex-row items-center gap-2">
+            <Text className="flex-1 font-semibold text-foreground">
+              {LANGUAGE_NAMES[entry.code as LanguageCode] ?? entry.code}
+            </Text>
+            <Chip color="default" size="sm">
+              <Chip.Label className="text-foreground">
+                {FLUENCY_LABELS[entry.fluency as Fluency] ?? entry.fluency}
+              </Chip.Label>
+            </Chip>
+          </View>
         ))}
       </View>
     </View>

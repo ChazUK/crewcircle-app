@@ -16,16 +16,12 @@ export function MembershipsSection({ memberships }: Props) {
 
   return (
     <View className="gap-1">
-      <SmallHeading>Memberships</SmallHeading>
+      <SmallHeading>Unions & Memberships</SmallHeading>
       <View className="gap-2">
         {memberships.map(({ id, name, memberNumber }) => {
           const logo = require(`@/assets/organisations/bectu.png`);
           return (
-            <Surface
-              key={id}
-              className="flex-row items-center gap-2 rounded-lg p-2"
-              variant="secondary"
-            >
+            <Surface key={id} className="flex-row items-center gap-2 rounded-lg p-2">
               <StyledImage
                 className="size-8 rounded-md bg-surface"
                 source={logo}

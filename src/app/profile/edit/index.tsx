@@ -5,7 +5,6 @@ import { ListGroup, PressableFeedback, Spinner } from "heroui-native";
 import {
   BriefcaseIcon,
   BuildingIcon,
-  CalendarIcon,
   ChevronRightIcon,
   FileIcon,
   FileTextIcon,
@@ -41,11 +40,6 @@ export default function EditProfileHubScreen() {
 
   const deptRolesPreview =
     profile.userType === "crew" && profile.department ? profile.department : "Not added";
-
-  const yearsPreview =
-    profile.mode === "self" && profile.startYearInDepartment !== undefined
-      ? `Started ${profile.startYearInDepartment}`
-      : "Not added";
 
   const languagesPreview =
     profile.mode === "self" && profile.spokenLanguages && profile.spokenLanguages.length > 0
@@ -97,25 +91,6 @@ export default function EditProfileHubScreen() {
                 <ListGroup.ItemContent>
                   <ListGroup.ItemTitle>Department & Roles</ListGroup.ItemTitle>
                   <ListGroup.ItemDescription>{deptRolesPreview}</ListGroup.ItemDescription>
-                </ListGroup.ItemContent>
-                <ListGroup.ItemSuffix>
-                  <ChevronRightIcon size={16} />
-                </ListGroup.ItemSuffix>
-              </ListGroup.Item>
-            </PressableFeedback.Scale>
-          </PressableFeedback>
-        ) : null}
-
-        {profile.userType === "crew" ? (
-          <PressableFeedback animation={false} onPress={() => router.push("/profile/edit/years")}>
-            <PressableFeedback.Scale>
-              <ListGroup.Item>
-                <ListGroup.ItemPrefix>
-                  <CalendarIcon size={20} />
-                </ListGroup.ItemPrefix>
-                <ListGroup.ItemContent>
-                  <ListGroup.ItemTitle>Years in Department</ListGroup.ItemTitle>
-                  <ListGroup.ItemDescription>{yearsPreview}</ListGroup.ItemDescription>
                 </ListGroup.ItemContent>
                 <ListGroup.ItemSuffix>
                   <ChevronRightIcon size={16} />

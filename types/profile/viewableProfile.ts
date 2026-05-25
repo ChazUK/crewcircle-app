@@ -51,6 +51,5 @@ export type Profile = {
   kit?: KitEntry[];
   spokenLanguages?: SpokenLanguageEntry[];
   workEligibility?: string[];
-  startYearInDepartment?: number;
   productionCompany: string | undefined;
 };

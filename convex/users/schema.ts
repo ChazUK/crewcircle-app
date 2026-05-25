@@ -16,18 +16,14 @@ export const User = {
   email: v.string(),
   externalAuthId: v.string(),
   pushToken: v.optional(v.string()),
-
   profilePictureFileId: v.optional(v.id("_storage")),
   firstName: v.optional(v.string()),
   lastName: v.optional(v.string()),
   nickname: v.optional(v.string()),
-
   userType: v.optional(v.union(v.literal("crew"), v.literal("production-manager"))),
   department: v.optional(departmentValidator),
   roles: v.optional(v.array(v.string())),
-  startYearInDepartment: v.optional(v.number()),
   yearsExperience: v.optional(v.number()),
-  yearsInRole: v.optional(v.number()),
   country: v.optional(v.string()),
   city: v.optional(v.string()),
   locationBases: v.optional(v.array(v.string())),
@@ -43,7 +39,6 @@ export const User = {
   drivingLicences: v.optional(v.array(v.string())),
   workEligibility: v.optional(v.array(v.string())),
   productionCompany: v.optional(v.string()),
-
   hasCompletedOnboarding: v.boolean(),
   isPublic: v.optional(v.boolean()),
 };
