@@ -1,6 +1,6 @@
 import { useUser } from "@clerk/expo";
 import { useRouter } from "expo-router";
-import { ListGroup, PressableFeedback, Separator } from "heroui-native";
+import { ListGroup, PressableFeedback } from "heroui-native";
 import { KeyRoundIcon, ShieldCheckIcon, TrashIcon } from "lucide-react-native";
 import { ScrollView, Text, View } from "react-native";
 
@@ -23,28 +23,6 @@ export default function AccountSettings() {
               </Text>
             </ListGroup.ItemSuffix>
           </ListGroup.Item>
-
-          <Separator className="mx-4" />
-
-          <PressableFeedback animation={false} onPress={() => {}}>
-            <PressableFeedback.Scale>
-              <ListGroup.Item disabled>
-                <ListGroup.ItemPrefix>
-                  <ShieldCheckIcon size={20} />
-                </ListGroup.ItemPrefix>
-                <ListGroup.ItemContent className="flex-row items-center justify-between">
-                  <ListGroup.ItemTitle numberOfLines={1}>
-                    Two-factor authentication
-                  </ListGroup.ItemTitle>
-                  <Text className="text-muted" numberOfLines={1}>
-                    Off
-                  </Text>
-                </ListGroup.ItemContent>
-                <ListGroup.ItemSuffix />
-              </ListGroup.Item>
-            </PressableFeedback.Scale>
-            <PressableFeedback.Ripple />
-          </PressableFeedback>
         </ListGroup>
       </View>
 

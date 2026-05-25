@@ -24,14 +24,7 @@ const extra = Constants.expoConfig?.extra as { privacyUrl?: string; termsUrl?: s
 const SETTING_GROUPS: { title: string; items: SettingsItem[] }[] = [
   {
     title: "Account",
-    items: [
-      {
-        title: "Account",
-        description: "Email, phone, password",
-        icon: UserIcon,
-        href: "/settings/account",
-      },
-    ],
+    items: [{ title: "Account", icon: UserIcon, href: "/settings/account" }],
   },
   {
     title: "Preferences",
@@ -101,11 +94,6 @@ export default function Settings() {
                             </ListGroup.ItemPrefix>
                             <ListGroup.ItemContent>
                               <ListGroup.ItemTitle>{item.title}</ListGroup.ItemTitle>
-                              {item.description && (
-                                <ListGroup.ItemDescription>
-                                  {item.description}
-                                </ListGroup.ItemDescription>
-                              )}
                             </ListGroup.ItemContent>
                             <ListGroup.ItemSuffix />
                           </ListGroup.Item>
