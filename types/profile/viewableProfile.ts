@@ -32,6 +32,7 @@ export type MembershipEntry = {
 
 export type Profile = {
   userId: Id<"users">;
+  userType: "crew" | "production-manager";
   firstName: string;
   lastName: string;
   nickname?: string;

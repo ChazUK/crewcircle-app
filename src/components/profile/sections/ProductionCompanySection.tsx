@@ -1,9 +1,9 @@
-import type { ProductionManagerProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { Text, View } from "react-native";
 
 import { SmallHeading } from "@/components/ui/SmallHeading";
 
-type Props = Partial<Pick<ProductionManagerProfile, "productionCompany">>;
+type Props = Partial<Pick<Profile, "productionCompany">>;
 
 export function ProductionCompanySection({ productionCompany }: Props) {
   if (!productionCompany) return null;

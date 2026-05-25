@@ -1,20 +1,136 @@
 import { api } from "@convex/_generated/api";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { useQuery } from "convex/react";
-import { useRouter } from "expo-router";
+import { Href, useRouter } from "expo-router";
 import { ListGroup, PressableFeedback, Spinner } from "heroui-native";
 import {
   BriefcaseIcon,
   BuildingIcon,
+  CarIcon,
   ChevronRightIcon,
   FileIcon,
   FileTextIcon,
+  GlobeIcon,
+  IdCardIcon,
   LanguagesIcon,
+  LucideIcon,
   MapPinIcon,
   UserIcon,
 } from "lucide-react-native";
 import { ScrollView, View } from "react-native";
 
 import { Title } from "@/components/ui/Title";
+
+type UserType = Profile["userType"];
+
+type EditRow = {
+  key: string;
+  icon: LucideIcon;
+  title: string;
+  preview: string;
+  href: Href;
+  visibleFor: UserType | "all";
+};
+
+function buildRows(profile: Profile): EditRow[] {
+  return [
+    {
+      key: "identity",
+      icon: UserIcon,
+      title: "Identity",
+      preview:
+        profile.firstName || profile.lastName
+          ? [profile.firstName, profile.lastName].filter(Boolean).join(" ")
+          : "Not added",
+      href: "/profile/edit/identity",
+      visibleFor: "all",
+    },
+    {
+      key: "department-and-roles",
+      icon: BriefcaseIcon,
+      title: "Department & Roles",
+      preview: profile.department ?? "Not added",
+      href: "/profile/edit/department-and-roles",
+      visibleFor: "crew",
+    },
+    {
+      key: "languages",
+      icon: LanguagesIcon,
+      title: "Spoken Languages",
+      preview:
+        profile.spokenLanguages && profile.spokenLanguages.length > 0
+          ? `${profile.spokenLanguages.length} added`
+          : "Not added",
+      href: "/profile/edit/languages",
+      visibleFor: "crew",
+    },
+    {
+      key: "location",
+      icon: MapPinIcon,
+      title: "Location",
+      preview: profile.city ?? "Not added",
+      href: "/profile/edit/location",
+      visibleFor: "all",
+    },
+    {
+      key: "production-company",
+      icon: BuildingIcon,
+      title: "Production Company",
+      preview: profile.productionCompany ?? "Not added",
+      href: "/profile/edit/production-company",
+      visibleFor: "production-manager",
+    },
+    {
+      key: "bio-links",
+      icon: FileTextIcon,
+      title: "Bio & Links",
+      preview: profile.bio ? profile.bio.slice(0, 40) : "Not added",
+      href: "/profile/edit/bio-links",
+      visibleFor: "all",
+    },
+    {
+      key: "cv",
+      icon: FileIcon,
+      title: "CV",
+      preview: profile.cvUrl ? "Uploaded" : "Not added",
+      href: "/profile/edit/cv",
+      visibleFor: "crew",
+    },
+    {
+      key: "passports",
+      icon: IdCardIcon,
+      title: "Passports",
+      preview:
+        profile.passports && profile.passports.length > 0
+          ? `${profile.passports.length} added`
+          : "Not added",
+      href: "/profile/edit/passports",
+      visibleFor: "crew",
+    },
+    {
+      key: "driving-licences",
+      icon: CarIcon,
+      title: "Driving Licences",
+      preview:
+        profile.drivingLicences && profile.drivingLicences.length > 0
+          ? `${profile.drivingLicences.length} added`
+          : "Not added",
+      href: "/profile/edit/driving-licences",
+      visibleFor: "crew",
+    },
+    {
+      key: "work-eligibility",
+      icon: GlobeIcon,
+      title: "Work Eligibility",
+      preview:
+        profile.workEligibility && profile.workEligibility.length > 0
+          ? `${profile.workEligibility.length} added`
+          : "Not added",
+      href: "/profile/edit/work-eligibility",
+      visibleFor: "crew",
+    },
+  ];
+}
 
 export default function EditProfileHubScreen() {
   const router = useRouter();
@@ -36,166 +152,38 @@ export default function EditProfileHubScreen() {
     );
   }
 
-  const identityPreview = profile.nickname ?? "Not added";
-
-  const deptRolesPreview =
-    profile.userType === "crew" && profile.department ? profile.department : "Not added";
-
-  const languagesPreview =
-    profile.mode === "self" && profile.spokenLanguages && profile.spokenLanguages.length > 0
-      ? `${profile.spokenLanguages.length} added`
-      : "Not added";
-
-  const locationPreview = "city" in profile && profile.city ? profile.city : "Not added";
-
-  const bioPreview = "bio" in profile && profile.bio ? profile.bio.slice(0, 40) : "Not added";
-
-  const productionCompanyPreview =
-    "productionCompany" in profile && profile.productionCompany
-      ? profile.productionCompany
-      : "Not added";
-
-  const cvPreview =
-    profile.mode === "self" && "cvUrl" in profile && profile.cvUrl ? "Uploaded" : "Not added";
+  const rows = buildRows(profile).filter(
+    (row) => row.visibleFor === "all" || row.visibleFor === profile.userType,
+  );
 
   return (
     <ScrollView className="flex-1" contentContainerClassName="p-4 gap-4">
       <ListGroup>
-        <PressableFeedback animation={false} onPress={() => router.push("/profile/edit/identity")}>
-          <PressableFeedback.Scale>
-            <ListGroup.Item>
-              <ListGroup.ItemPrefix>
-                <UserIcon size={20} />
-              </ListGroup.ItemPrefix>
-              <ListGroup.ItemContent>
-                <ListGroup.ItemTitle>Identity</ListGroup.ItemTitle>
-                <ListGroup.ItemDescription>{identityPreview}</ListGroup.ItemDescription>
-              </ListGroup.ItemContent>
-              <ListGroup.ItemSuffix>
-                <ChevronRightIcon size={16} />
-              </ListGroup.ItemSuffix>
-            </ListGroup.Item>
-          </PressableFeedback.Scale>
-        </PressableFeedback>
-
-        {profile.userType === "crew" ? (
-          <PressableFeedback
-            animation={false}
-            onPress={() => router.push("/profile/edit/department-and-roles")}
-          >
-            <PressableFeedback.Scale>
-              <ListGroup.Item>
-                <ListGroup.ItemPrefix>
-                  <BriefcaseIcon size={20} />
-                </ListGroup.ItemPrefix>
-                <ListGroup.ItemContent>
-                  <ListGroup.ItemTitle>Department & Roles</ListGroup.ItemTitle>
-                  <ListGroup.ItemDescription>{deptRolesPreview}</ListGroup.ItemDescription>
-                </ListGroup.ItemContent>
-                <ListGroup.ItemSuffix>
-                  <ChevronRightIcon size={16} />
-                </ListGroup.ItemSuffix>
-              </ListGroup.Item>
-            </PressableFeedback.Scale>
-          </PressableFeedback>
-        ) : null}
-
-        {profile.userType === "crew" ? (
-          <PressableFeedback
-            animation={false}
-            onPress={() => router.push("/profile/edit/languages")}
-          >
-            <PressableFeedback.Scale>
-              <ListGroup.Item>
-                <ListGroup.ItemPrefix>
-                  <LanguagesIcon size={20} />
-                </ListGroup.ItemPrefix>
-                <ListGroup.ItemContent>
-                  <ListGroup.ItemTitle>Spoken Languages</ListGroup.ItemTitle>
-                  <ListGroup.ItemDescription>{languagesPreview}</ListGroup.ItemDescription>
-                </ListGroup.ItemContent>
-                <ListGroup.ItemSuffix>
-                  <ChevronRightIcon size={16} />
-                </ListGroup.ItemSuffix>
-              </ListGroup.Item>
-            </PressableFeedback.Scale>
-          </PressableFeedback>
-        ) : null}
-
-        <PressableFeedback animation={false} onPress={() => router.push("/profile/edit/location")}>
-          <PressableFeedback.Scale>
-            <ListGroup.Item>
-              <ListGroup.ItemPrefix>
-                <MapPinIcon size={20} />
-              </ListGroup.ItemPrefix>
-              <ListGroup.ItemContent>
-                <ListGroup.ItemTitle>Location</ListGroup.ItemTitle>
-                <ListGroup.ItemDescription>{locationPreview}</ListGroup.ItemDescription>
-              </ListGroup.ItemContent>
-              <ListGroup.ItemSuffix>
-                <ChevronRightIcon size={16} />
-              </ListGroup.ItemSuffix>
-            </ListGroup.Item>
-          </PressableFeedback.Scale>
-        </PressableFeedback>
-
-        {profile.userType === "production-manager" ? (
-          <PressableFeedback
-            animation={false}
-            onPress={() => router.push("/profile/edit/production-company")}
-          >
-            <PressableFeedback.Scale>
-              <ListGroup.Item>
-                <ListGroup.ItemPrefix>
-                  <BuildingIcon size={20} />
-                </ListGroup.ItemPrefix>
-                <ListGroup.ItemContent>
-                  <ListGroup.ItemTitle>Production Company</ListGroup.ItemTitle>
-                  <ListGroup.ItemDescription>{productionCompanyPreview}</ListGroup.ItemDescription>
-                </ListGroup.ItemContent>
-                <ListGroup.ItemSuffix>
-                  <ChevronRightIcon size={16} />
-                </ListGroup.ItemSuffix>
-              </ListGroup.Item>
-            </PressableFeedback.Scale>
-          </PressableFeedback>
-        ) : null}
-
-        <PressableFeedback animation={false} onPress={() => router.push("/profile/edit/bio-links")}>
-          <PressableFeedback.Scale>
-            <ListGroup.Item>
-              <ListGroup.ItemPrefix>
-                <FileTextIcon size={20} />
-              </ListGroup.ItemPrefix>
-              <ListGroup.ItemContent>
-                <ListGroup.ItemTitle>Bio & Links</ListGroup.ItemTitle>
-                <ListGroup.ItemDescription>{bioPreview}</ListGroup.ItemDescription>
-              </ListGroup.ItemContent>
-              <ListGroup.ItemSuffix>
-                <ChevronRightIcon size={16} />
-              </ListGroup.ItemSuffix>
-            </ListGroup.Item>
-          </PressableFeedback.Scale>
-        </PressableFeedback>
-
-        {profile.userType === "crew" ? (
-          <PressableFeedback animation={false} onPress={() => router.push("/profile/edit/cv")}>
-            <PressableFeedback.Scale>
-              <ListGroup.Item>
-                <ListGroup.ItemPrefix>
-                  <FileIcon size={20} />
-                </ListGroup.ItemPrefix>
-                <ListGroup.ItemContent>
-                  <ListGroup.ItemTitle>CV</ListGroup.ItemTitle>
-                  <ListGroup.ItemDescription>{cvPreview}</ListGroup.ItemDescription>
-                </ListGroup.ItemContent>
-                <ListGroup.ItemSuffix>
-                  <ChevronRightIcon size={16} />
-                </ListGroup.ItemSuffix>
-              </ListGroup.Item>
-            </PressableFeedback.Scale>
-          </PressableFeedback>
-        ) : null}
+        {rows.map((row) => {
+          const Icon = row.icon;
+          return (
+            <PressableFeedback
+              key={row.key}
+              animation={false}
+              onPress={() => router.push(row.href)}
+            >
+              <PressableFeedback.Scale>
+                <ListGroup.Item disabled>
+                  <ListGroup.ItemPrefix>
+                    <Icon size={20} />
+                  </ListGroup.ItemPrefix>
+                  <ListGroup.ItemContent>
+                    <ListGroup.ItemTitle>{row.title}</ListGroup.ItemTitle>
+                    <ListGroup.ItemDescription>{row.preview}</ListGroup.ItemDescription>
+                  </ListGroup.ItemContent>
+                  <ListGroup.ItemSuffix>
+                    <ChevronRightIcon size={16} />
+                  </ListGroup.ItemSuffix>
+                </ListGroup.Item>
+              </PressableFeedback.Scale>
+            </PressableFeedback>
+          );
+        })}
       </ListGroup>
     </ScrollView>
   );
