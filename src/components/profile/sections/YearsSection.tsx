@@ -1,11 +1,10 @@
-import type { CrewProfile, Profile } from "@shared/profile/viewableProfile";
-import { Card } from "heroui-native";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { Text, View } from "react-native";
 
 import { SmallHeading } from "@/components/ui/SmallHeading";
 import { computeYearsInDepartment } from "@/lib/profile/computeYearsInDepartment";
 
-type Props = Partial<Pick<CrewProfile, "department" | "startYearInDepartment">>;
+type Props = Partial<Pick<Profile, "department" | "startYearInDepartment">>;
 
 export function YearsSection({ startYearInDepartment, department }: Props) {
   if (!startYearInDepartment || !department) return null;

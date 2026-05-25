@@ -1,10 +1,10 @@
-import type { CrewProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { Chip } from "heroui-native";
 import { View } from "react-native";
 
 import { SmallHeading } from "@/components/ui/SmallHeading";
 
-type Props = Partial<Pick<CrewProfile, "kit">>;
+type Props = Partial<Pick<Profile, "kit">>;
 
 export function KitSection({ kit }: Props) {
   if (!kit || kit.length === 0) return null;

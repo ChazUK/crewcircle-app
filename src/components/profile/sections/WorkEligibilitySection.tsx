@@ -1,10 +1,10 @@
-import type { CrewProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { Chip } from "heroui-native";
 import { View } from "react-native";
 
 import { SmallHeading } from "@/components/ui/SmallHeading";
 
-type Props = Partial<Pick<CrewProfile, "workEligibility">>;
+type Props = Partial<Pick<Profile, "workEligibility">>;
 
 export function WorkEligibilitySection({ workEligibility }: Props) {
   if (!workEligibility || workEligibility.length === 0) return null;

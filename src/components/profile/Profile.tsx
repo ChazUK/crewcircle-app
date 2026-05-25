@@ -1,6 +1,4 @@
-import { api } from "@convex/_generated/api";
 import type { Profile } from "@shared/profile/viewableProfile";
-import { useMutation } from "convex/react";
 import { ScrollView } from "react-native";
 
 import { usePictureUpload } from "./PictureUploadFlow";
@@ -15,7 +13,6 @@ import { LinksSection } from "./sections/LinksSection";
 import { LocationSection } from "./sections/LocationSection";
 import { MembershipsSection } from "./sections/MembershipsSection";
 import { PassportsSection } from "./sections/PassportsSection";
-import { VisibilityToggleSection } from "./sections/VisibilityToggleSection";
 import { WorkEligibilitySection } from "./sections/WorkEligibilitySection";
 import { YearsSection } from "./sections/YearsSection";
 
@@ -25,31 +22,22 @@ type Props = {
 
 export function Profile({ profile }: Props) {
   const pickAndUpload = usePictureUpload();
-  const updateVisibility = useMutation(
-    api.users.mutations.updateProfileVisibility.updateProfileVisibility,
-  );
 
   return (
     <ScrollView contentContainerClassName="gap-4 p-4">
       <IdentitySection profile={profile} onPicturePress={pickAndUpload} />
-      <DepartmentRolesSection profile={profile} />
-      <YearsSection profile={profile} />
-      <PassportsSection profile={profile} />
-      <DrivingLicencesSection profile={profile} />
-      <WorkEligibilitySection profile={profile} />
-      <KitSection profile={profile} />
-      <LanguagesSection profile={profile} />
-      <CertificationsSection profile={profile} />
-      <MembershipsSection profile={profile} />
-      <LocationSection profile={profile} />
-      <BioSection profile={profile} />
-      <LinksSection profile={profile} />
-      {profile.mode === "self" && (
-        <VisibilityToggleSection
-          isPublic={profile.isPublic}
-          onToggle={(value) => updateVisibility({ isPublic: value })}
-        />
-      )}
+      <DepartmentRolesSection {...profile} />
+      <YearsSection {...profile} />
+      <PassportsSection {...profile} />
+      <DrivingLicencesSection {...profile} />
+      <WorkEligibilitySection {...profile} />
+      <KitSection {...profile} />
+      <LanguagesSection {...profile} />
+      <CertificationsSection {...profile} />
+      <MembershipsSection {...profile} />
+      <LocationSection {...profile} />
+      <BioSection {...profile} />
+      <LinksSection {...profile} />
     </ScrollView>
   );
 }

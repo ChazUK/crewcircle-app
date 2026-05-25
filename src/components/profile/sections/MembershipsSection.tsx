@@ -1,4 +1,4 @@
-import type { CrewProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { Image } from "expo-image";
 import { Surface } from "heroui-native";
 import { BadgeCheckIcon } from "lucide-react-native";
@@ -7,7 +7,7 @@ import { withUniwind } from "uniwind";
 
 import { SmallHeading } from "@/components/ui/SmallHeading";
 
-type Props = Partial<Pick<CrewProfile, "memberships">>;
+type Props = Partial<Pick<Profile, "memberships">>;
 
 const StyledImage = withUniwind(Image);
 

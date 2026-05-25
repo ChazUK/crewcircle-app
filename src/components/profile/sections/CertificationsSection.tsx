@@ -1,11 +1,11 @@
-import type { CertificationEntry, CrewProfile } from "@shared/profile/viewableProfile";
+import type { CertificationEntry, Profile } from "@shared/profile/viewableProfile";
 import { Chip, Surface } from "heroui-native";
 import { Text, View } from "react-native";
 
 import { SmallHeading } from "@/components/ui/SmallHeading";
 import { formatCertificationExpiry } from "@/lib/profile/formatCertificationExpiry";
 
-type Props = Partial<Pick<CrewProfile, "certifications">>;
+type Props = Partial<Pick<Profile, "certifications">>;
 
 const STATUS_COLOR = {
   "no-expiry": "default",

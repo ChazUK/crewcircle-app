@@ -1,12 +1,12 @@
 import { imdbUrl } from "@shared/profile/imdbUrl";
-import type { CrewProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { View } from "react-native";
 
 import { SmallHeading } from "@/components/ui/SmallHeading";
 
 import { ProfileLink } from "./ProfileLink";
 
-type Props = Partial<Pick<CrewProfile, "website" | "cvUrl" | "imdbId">>;
+type Props = Partial<Pick<Profile, "website" | "cvUrl" | "imdbId">>;
 
 export function LinksSection({ website, cvUrl, imdbId }: Props) {
   if (!website && !cvUrl && !imdbId) return null;

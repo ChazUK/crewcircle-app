@@ -30,7 +30,7 @@ export type MembershipEntry = {
   memberNumber: string | undefined;
 };
 
-type ProfileData = {
+export type Profile = {
   userId: Id<"users">;
   firstName: string;
   lastName: string;
@@ -42,10 +42,6 @@ type ProfileData = {
   website?: string | undefined;
   department?: Department;
   roles?: string[];
-};
-
-export type CrewProfile = ProfileData & {
-  userType: "crew";
   imdbId?: string;
   cvUrl?: string;
   certifications?: CertificationEntry[];
@@ -56,11 +52,5 @@ export type CrewProfile = ProfileData & {
   spokenLanguages?: SpokenLanguageEntry[];
   workEligibility?: string[];
   startYearInDepartment?: number;
-};
-
-export type ProductionManagerProfile = ProfileData & {
-  userType: "production-manager";
   productionCompany: string | undefined;
 };
-
-export type Profile = CrewProfile | ProductionManagerProfile;

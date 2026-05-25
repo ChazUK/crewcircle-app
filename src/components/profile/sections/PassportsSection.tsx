@@ -1,11 +1,11 @@
 import { getCountryName } from "@shared/countries/countries";
-import type { CrewProfile } from "@shared/profile/viewableProfile";
+import type { Profile } from "@shared/profile/viewableProfile";
 import { Chip } from "heroui-native";
 import { View } from "react-native";
 
 import { SmallHeading } from "@/components/ui/SmallHeading";
 
-type Props = Partial<Pick<CrewProfile, "passports">>;
+type Props = Partial<Pick<Profile, "passports">>;
 
 export function PassportsSection({ passports }: Props) {
   if (!passports || passports.length === 0) return null;
